@@ -23,9 +23,21 @@
     .view { display: none; }
     .view.ativa { display: flex; }
     [data-lucide] { display: inline-block; }
+    body.pausado [data-escrita] { opacity: .45; cursor: not-allowed; }
   </style>
 </head>
 <body class="min-h-screen">
+
+  <!-- ===================================================== AVISOS DO SISTEMA (em todas as telas) -->
+  <div id="faixa-sistema" class="sticky top-0 z-[45]">
+    <div id="aviso-sistema" class="hidden"></div>
+    <div id="aviso-versao" class="hidden bg-indigo-700 text-white border-b border-indigo-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <p class="text-sm font-semibold flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i>Saiu uma versão nova do sistema. Termine o que estiver fazendo e clique em Atualizar.</p>
+        <button onclick="atualizarPagina()" class="bg-white text-indigo-800 hover:bg-indigo-50 text-xs font-extrabold px-3.5 py-2 rounded-xl shadow cursor-pointer flex items-center gap-1.5 self-end sm:self-auto"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>Atualizar</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================================================== CONFIG PENDENTE -->
   <div id="view-config" class="view min-h-screen items-center justify-center p-4">
@@ -186,7 +198,7 @@
             <button onclick="exportarCSV()" class="bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3.5 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Baixar planilha para o Excel">
               <i data-lucide="file-spreadsheet" class="w-4 h-4"></i><span>Planilha</span>
             </button>
-            <button onclick="abrirImportar()" class="bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Trazer as guias do controle antigo (arquivo de backup)">
+            <button onclick="abrirImportar()" data-escrita class="bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Trazer as guias do controle antigo (arquivo de backup)">
               <i data-lucide="file-up" class="w-4 h-4"></i><span>Importar antigo</span>
             </button>
             <button id="btn-admin" onclick="abrirAdmin()" class="hidden relative bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Liberar acessos e cadastrar unidades">
@@ -275,13 +287,13 @@
       <!-- Barra de ferramentas -->
       <section class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="abrirFormulario()" class="bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm px-5 py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer">
+          <button onclick="abrirFormulario()" data-escrita class="bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm px-5 py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer">
             <i data-lucide="circle-plus" class="w-5 h-5"></i><span>Cadastrar guia</span>
           </button>
           <button onclick="definirFiltro('todas')" id="btn-todas" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl transition cursor-pointer">
             Ver todas (<span id="n-todas">0</span>)
           </button>
-          <button id="btn-confirmar-malote" onclick="confirmarChegadaTodas()" class="hidden bg-sky-50 hover:bg-sky-100 text-sky-800 font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl border border-sky-200 transition flex items-center gap-1.5 cursor-pointer">
+          <button id="btn-confirmar-malote" onclick="confirmarChegadaTodas()" data-escrita class="hidden bg-sky-50 hover:bg-sky-100 text-sky-800 font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl border border-sky-200 transition flex items-center gap-1.5 cursor-pointer">
             <i data-lucide="package-check" class="w-4 h-4"></i><span id="txt-confirmar-malote">Confirmar chegada de todas</span>
           </button>
           <button onclick="recarregarGuias(true)" class="text-slate-500 hover:text-teal-700 hover:bg-slate-100 p-3 rounded-xl transition cursor-pointer" title="Atualizar agora">
@@ -456,13 +468,49 @@
         <button onclick="fecharModal('modal-admin')" class="text-white/80 hover:text-white p-1 rounded-lg cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <div class="px-6 pt-4">
-        <div class="inline-grid grid-cols-2 bg-slate-100 rounded-xl p-1 text-sm font-semibold">
+        <div class="inline-grid grid-cols-3 bg-slate-100 rounded-xl p-1 text-sm font-semibold">
           <button id="aba-acessos" onclick="trocarAbaAdmin('acessos')" class="px-4 py-2 rounded-lg bg-white shadow-sm text-slate-800 cursor-pointer">Acessos</button>
           <button id="aba-unidades" onclick="trocarAbaAdmin('unidades')" class="px-4 py-2 rounded-lg text-slate-600 cursor-pointer">Unidades</button>
+          <button id="aba-aviso" onclick="trocarAbaAdmin('aviso')" class="px-4 py-2 rounded-lg text-slate-600 cursor-pointer">Aviso</button>
         </div>
       </div>
       <div id="admin-acessos" class="p-6 max-h-[70vh] overflow-auto"></div>
       <div id="admin-unidades" class="hidden p-6 max-h-[70vh] overflow-auto"></div>
+      <div id="admin-aviso" class="hidden p-6 max-h-[70vh] overflow-auto">
+        <div class="max-w-2xl space-y-4">
+          <p class="text-sm text-slate-600">Ligue antes de mexer no sistema. O aviso aparece no topo para todos, inclusive na tela de entrar: na hora para quem está com o sistema aberto e em até 2 minutos para os demais. No tipo <strong>Manutenção</strong>, só o administrador altera guias; os outros só consultam.</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Modelos:</span>
+            <button type="button" onclick="modeloAviso('atualizacao')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 cursor-pointer">Atualização rápida</button>
+            <button type="button" onclick="modeloAviso('instabilidade')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 cursor-pointer">Pode ficar instável</button>
+            <button type="button" onclick="modeloAviso('manutencao')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 cursor-pointer">Manutenção</button>
+          </div>
+          <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer"><input type="checkbox" id="av-ativo" class="w-4 h-4" /> Mostrar o aviso</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="av-nivel" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Tipo</label>
+              <select id="av-nivel" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm bg-white">
+                <option value="info">Informativo (azul)</option>
+                <option value="atencao">Atenção (amarelo)</option>
+                <option value="manutencao">Manutenção: pausa as alterações (vermelho)</option>
+              </select>
+            </div>
+            <div>
+              <label for="av-fim" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Previsão de término (opcional)</label>
+              <input type="datetime-local" id="av-fim" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+            </div>
+          </div>
+          <div>
+            <label for="av-mensagem" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Mensagem</label>
+            <textarea id="av-mensagem" rows="3" maxlength="500" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm"></textarea>
+          </div>
+          <p id="av-info" class="text-xs text-slate-500"></p>
+          <div class="flex flex-wrap justify-end gap-2">
+            <button type="button" onclick="salvarAviso(true)" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer">Desligar aviso</button>
+            <button type="button" onclick="salvarAviso()" class="bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer flex items-center gap-2"><i data-lucide="megaphone" class="w-4 h-4"></i> Salvar aviso</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -500,7 +548,9 @@
       DIAS_HISTORICO: 90,         // guias finalizadas carregadas na tela
       LOTE: 10,                   // ações em lote vão de 10 em 10...
       PAUSA_LOTE_MS: 1500,        // ...com pausa, para não passar de 100 avisos/s do tempo real (plano gratuito)
-      VERSAO: '1.1 (19/11/2026)'
+      AVISO_CONSULTA_MS: 2 * 60 * 1000,    // aviso do sistema: confere a cada 2 min (e na hora, pelo tempo real)
+      VERSAO_CONSULTA_MS: 10 * 60 * 1000,  // versão nova publicada: confere a cada 10 min
+      VERSAO: '1.2 (19/11/2026)'
     };
 
     // =========================================================================
@@ -509,7 +559,8 @@
     const S = {
       sb: null, user: null, perfil: null, unidades: [], guias: [],
       filtro: 'aguardando', unidadeFiltro: 'todas', limite: 200, mostrarResumo: false,
-      canal: null, falandoId: null, usuarioCarregado: null, ultimoDia: null, timers: []
+      canal: null, falandoId: null, usuarioCarregado: null, ultimoDia: null, timers: [],
+      aviso: null, avisoFechado: null, versaoNova: false
     };
 
     const STATUS_TXT = {
@@ -614,8 +665,84 @@
       if (/row-level security|permission denied/i.test(m)) return 'Você não tem permissão para isso.';
       if (/Failed to fetch|NetworkError|network/i.test(m)) return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
       if (/rate limit/i.test(m)) return 'Muitas tentativas seguidas. Aguarde alguns minutos.';
+      if (/Sistema em manutenção/.test(m)) setTimeout(carregarAviso, 0);   // o banco recusou: traz o aviso para a tela
       return m;
     }
+
+    // =========================================================================
+    // AVISO DO SISTEMA E VERSÃO NOVA
+    // O administrador liga o aviso (Acessos > Aviso) antes de mexer no sistema.
+    // No tipo "manutencao", o banco recusa alterações de quem não é administrador.
+    // =========================================================================
+    const NIVEL_AVISO = {
+      info:       { titulo: 'Aviso', icone: 'info', cor: 'bg-sky-700 text-white border-sky-800', fechar: true },
+      atencao:    { titulo: 'Atenção', icone: 'triangle-alert', cor: 'bg-amber-400 text-amber-950 border-amber-500', fechar: true },
+      manutencao: { titulo: 'Sistema em manutenção', icone: 'wrench', cor: 'bg-rose-700 text-white border-rose-800', fechar: false }
+    };
+    const avisoLigado = () => !!(S.aviso && S.aviso.ativo && (S.aviso.mensagem || S.aviso.nivel === 'manutencao'));
+    const alteracoesPausadas = () => avisoLigado() && S.aviso.nivel === 'manutencao' && !ehAdmin();
+
+    function pausado() {
+      if (!alteracoesPausadas()) return false;
+      if (Date.now() - (S.ultimoAvisoPausa || 0) > 4000) {   // não empilha a mesma mensagem a cada clique
+        S.ultimoAvisoPausa = Date.now();
+        toast('Sistema em manutenção: por enquanto dá só para consultar. As alterações voltam quando o aviso vermelho sair da tela.', 'aviso');
+      }
+      return true;
+    }
+
+    async function carregarAviso() {
+      if (!S.sb) return;
+      const { data, error } = await S.sb.from('aviso_sistema').select('*').eq('id', 1).maybeSingle();
+      if (!error) aplicarAviso(data);
+    }
+
+    function aplicarAviso(novo, som = true) {
+      const chave = (a) => a ? `${a.ativo}|${a.atualizado_em}` : '';
+      const mudou = chave(S.aviso) !== chave(novo);
+      const tinhaAntes = !!S.aviso;
+      S.aviso = novo;
+      renderizarAviso();
+      if (som && mudou && tinhaAntes && novo && novo.ativo && S.usuarioCarregado) bipe('alerta');
+    }
+
+    function renderizarAviso() {
+      const el = $('aviso-sistema');
+      const a = S.aviso;
+      document.body.classList.toggle('pausado', alteracoesPausadas());
+      if (!avisoLigado() || S.avisoFechado === a.atualizado_em) { el.className = 'hidden'; el.innerHTML = ''; return; }
+      const n = NIVEL_AVISO[a.nivel] || NIVEL_AVISO.info;
+      const extra = a.nivel === 'manutencao'
+        ? (ehAdmin() ? 'Você é administrador: suas alterações continuam liberadas.' : 'Dá para consultar as guias, mas as alterações estão pausadas até o fim da manutenção.')
+        : '';
+      const fim = a.previsao_fim ? `Previsão de término: ${instanteBR(a.previsao_fim)}.` : '';
+      el.className = `border-b shadow-sm ${n.cor}`;
+      el.innerHTML = `
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-start justify-between gap-3">
+          <div class="flex items-start gap-3 min-w-0">
+            <i data-lucide="${n.icone}" class="w-5 h-5 shrink-0 mt-0.5"></i>
+            <div class="text-sm min-w-0">
+              <p class="font-extrabold">${n.titulo}</p>
+              ${a.mensagem ? `<p class="font-medium whitespace-pre-line break-words">${esc(a.mensagem)}</p>` : ''}
+              ${extra || fim ? `<p class="text-xs mt-0.5 opacity-90">${esc([extra, fim].filter(Boolean).join(' '))}</p>` : ''}
+            </div>
+          </div>
+          ${n.fechar ? `<button onclick="S.avisoFechado = S.aviso.atualizado_em; renderizarAviso()" class="opacity-80 hover:opacity-100 p-1 rounded-lg cursor-pointer shrink-0" title="Ocultar este aviso"><i data-lucide="x" class="w-4 h-4"></i></button>` : ''}
+        </div>`;
+      icones();
+    }
+
+    // Compara a VERSAO desta página com a publicada (só quando aberta pelo link, não pelo arquivo).
+    async function verificarVersaoNova() {
+      if (!/^https?:$/.test(location.protocol) || S.versaoNova) return;
+      try {
+        const r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) return;
+        const m = (await r.text()).match(/VERSAO:\s*'([^']+)'/);
+        if (m && m[1] !== CONFIG.VERSAO) { S.versaoNova = true; $('aviso-versao').classList.remove('hidden'); icones(); }
+      } catch (e) { /* sem internet agora: tenta na próxima */ }
+    }
+    function atualizarPagina() { location.replace(location.pathname + '?v=' + Date.now()); }
 
     // =========================================================================
     // SOM E VOZ
@@ -744,6 +871,7 @@
         S.user = null; S.perfil = null; S.usuarioCarregado = null; S.guias = [];
         pararCanal(); pararTimers();
         mostrarView('view-login');
+        renderizarAviso();
         carregarUnidadesCadastro();
         return;
       }
@@ -832,11 +960,14 @@
           }
           renderizar();
         })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'aviso_sistema' }, (p) => {
+          if (p.new && p.new.id) aplicarAviso(p.new);
+        })
         .subscribe((status) => {
           const ok = status === 'SUBSCRIBED';
           $('ponto-ao-vivo').className = `w-2 h-2 rounded-full ${ok ? 'bg-emerald-300' : 'bg-amber-300'}`;
           $('texto-ao-vivo').textContent = ok ? 'Ao vivo' : 'Reconectando';
-          if (ok) recarregarGuias(false);
+          if (ok) { recarregarGuias(false); carregarAviso(); }
         });
     }
     function pararCanal() {
@@ -864,6 +995,7 @@
       $('barra-central').classList.toggle('hidden', !podeTodas());
       $('btn-protocolo').classList.toggle('hidden', !podeTodas());
       $('btn-admin').classList.toggle('hidden', !ehAdmin());
+      renderizarAviso();   // o texto e a trava dependem do papel de quem entrou
       document.querySelectorAll('[data-periodo]').forEach(el => el.textContent = `Últimos ${CONFIG.DIAS_HISTORICO} dias`);
       S.filtro = 'aguardando';
       montarSelectUnidades();
@@ -1042,7 +1174,7 @@
       else if (g.status === 'retirada') borda = 'border-emerald-200 bg-emerald-50/20';
       const falando = S.falandoId === g.id;
       const id = g.id;
-      const b = (cls, onclick, ic, txt, title = '') => `<button onclick="${onclick}" title="${esc(title)}" class="${cls} text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"><i data-lucide="${ic}" class="w-4 h-4 shrink-0"></i><span>${txt}</span></button>`;
+      const b = (cls, onclick, ic, txt, title = '') => `<button onclick="${onclick}" ${onclick.startsWith('falar') ? '' : 'data-escrita'} title="${esc(title)}" class="${cls} text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"><i data-lucide="${ic}" class="w-4 h-4 shrink-0"></i><span>${txt}</span></button>`;
 
       let acoes = '';
       if (g.status === 'enviada') {
@@ -1064,8 +1196,8 @@
       const rodape = `
         <div class="flex items-center justify-end gap-1 pt-1">
           <button onclick="verHistorico('${id}')" class="text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"><i data-lucide="history" class="w-3.5 h-3.5"></i>Histórico</button>
-          <button onclick="abrirFormulario('${id}')" class="text-slate-500 hover:text-teal-800 hover:bg-teal-50 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Editar</button>
-          ${podeTodas() ? `<button onclick="excluirGuia('${id}')" class="text-slate-400 hover:text-rose-700 hover:bg-rose-50 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Excluir</button>` : ''}
+          <button onclick="abrirFormulario('${id}')" data-escrita class="text-slate-500 hover:text-teal-800 hover:bg-teal-50 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Editar</button>
+          ${podeTodas() ? `<button onclick="excluirGuia('${id}')" data-escrita class="text-slate-400 hover:text-rose-700 hover:bg-rose-50 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Excluir</button>` : ''}
         </div>`;
 
       return `
@@ -1104,6 +1236,7 @@
     // AÇÕES NAS GUIAS
     // =========================================================================
     async function atualizarGuia(id, campos, msgOk, tipo = 'sucesso') {
+      if (pausado()) return null;
       const { data, error } = await S.sb.from('guias').update(campos).eq('id', id).select().single();
       if (error) { toast(traduzirErro(error), 'erro'); return null; }
       guardarLocal(data); renderizar();
@@ -1114,6 +1247,7 @@
     function confirmarChegada(id) { atualizarGuia(id, { status: 'aguardando' }, 'Chegada confirmada. O prazo de retirada começou a contar.'); }
 
     function confirmarChegadaTodas() {
+      if (pausado()) return;
       const visao = guiasDaVisao().filter(g => g.status === 'enviada');
       if (!visao.length) return;
       const unidade = podeTodas() ? nomeUnidade(Number(S.unidadeFiltro)) : nomeUnidade(S.perfil.unidade_id);
@@ -1139,6 +1273,7 @@
       if (g) { bipe('sucesso'); toast(`Guia de ${g.paciente_nome} marcada como RETIRADA.`, 'sucesso'); }
     }
     function marcarNaoRetirada(id) {
+      if (pausado()) return;
       const g = S.guias.find(x => x.id === id); if (!g) return;
       confirmar('Guia não retirada', `Marcar a guia de ${g.paciente_nome} (${g.procedimento}) como NÃO RETIRADA? Isso conta como vaga perdida.`,
         () => atualizarGuia(id, { status: 'nao_retirada' }, 'Guia marcada como não retirada.', 'aviso'), 'Marcar não retirada');
@@ -1146,6 +1281,7 @@
     function reabrir(id) { atualizarGuia(id, { status: 'aguardando' }, 'Guia voltou para aguardando retirada.', 'info'); }
 
     function excluirGuia(id) {
+      if (pausado()) return;
       const g = S.guias.find(x => x.id === id); if (!g) return;
       confirmar('Excluir guia', `Excluir o registro de ${g.paciente_nome} (${g.procedimento})? O histórico guarda quem excluiu. Para guia que perdeu o efeito, prefira a situação "Cancelada".`, async () => {
         if (S.falandoId === id) pararFala();
@@ -1157,6 +1293,7 @@
     }
 
     function enviarWhatsApp(id, reforco) {
+      if (pausado()) return;
       const g = S.guias.find(x => x.id === id); if (!g) return;
       const tel = telefoneWhatsApp(g.telefone);
       if (tel.length < 12) { toast('Telefone incompleto para WhatsApp. Corrija em Editar.', 'erro'); return; }
@@ -1188,6 +1325,7 @@
     // FORMULÁRIO
     // =========================================================================
     function abrirFormulario(id = null) {
+      if (pausado()) return;
       $('form-guia').reset();
       const g = id ? S.guias.find(x => x.id === id) : null;
       $('f-id').value = g ? g.id : '';
@@ -1219,6 +1357,7 @@
 
     async function salvarGuia(ev) {
       ev.preventDefault();
+      if (pausado()) return;
       const id = $('f-id').value;
       const atual = id ? S.guias.find(x => x.id === id) : null;
       const unidadeId = podeTodas() ? Number($('f-unidade').value) : S.perfil.unidade_id;
@@ -1345,6 +1484,7 @@
     // =========================================================================
     let importacao = [];
     function abrirImportar() {
+      if (pausado()) return;
       importacao = [];
       $('i-arquivo').value = '';
       $('i-resumo').textContent = '';
@@ -1416,11 +1556,53 @@
       el.textContent = count || '';
     }
     function trocarAbaAdmin(aba) {
-      const a = aba === 'acessos';
-      $('admin-acessos').classList.toggle('hidden', !a);
-      $('admin-unidades').classList.toggle('hidden', a);
-      $('aba-acessos').className = `px-4 py-2 rounded-lg cursor-pointer ${a ? 'bg-white shadow-sm text-slate-800' : 'text-slate-600'}`;
-      $('aba-unidades').className = `px-4 py-2 rounded-lg cursor-pointer ${!a ? 'bg-white shadow-sm text-slate-800' : 'text-slate-600'}`;
+      ['acessos', 'unidades', 'aviso'].forEach(k => {
+        $('admin-' + k).classList.toggle('hidden', k !== aba);
+        $('aba-' + k).className = `px-4 py-2 rounded-lg cursor-pointer ${k === aba ? 'bg-white shadow-sm text-slate-800' : 'text-slate-600'}`;
+      });
+      if (aba === 'aviso') preencherFormAviso();
+    }
+
+    // Aba "Aviso"
+    const MODELOS_AVISO = {
+      atualizacao:   { nivel: 'info', minutos: 15, mensagem: 'Estamos atualizando o sistema. Quando aparecer a faixa "Saiu uma versão nova", clique em Atualizar.' },
+      instabilidade: { nivel: 'atencao', minutos: 60, mensagem: 'O sistema pode ficar lento ou sair do ar por alguns minutos. Se algo não salvar, tente de novo daqui a pouco.' },
+      manutencao:    { nivel: 'manutencao', minutos: 30, mensagem: 'Estamos fazendo uma manutenção. Anote no papel o que precisar registrar e lance aqui depois que este aviso sair.' }
+    };
+    function valorDataHoraLocal(d) {   // para <input type="datetime-local">
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+    function modeloAviso(k) {
+      const m = MODELOS_AVISO[k];
+      $('av-ativo').checked = true;
+      $('av-nivel').value = m.nivel;
+      $('av-mensagem').value = m.mensagem;
+      $('av-fim').value = valorDataHoraLocal(new Date(Date.now() + m.minutos * 60000));
+    }
+    function preencherFormAviso() {
+      const a = S.aviso || { ativo: false, nivel: 'info', mensagem: '' };
+      $('av-ativo').checked = !!a.ativo;
+      $('av-nivel').value = a.nivel || 'info';
+      $('av-mensagem').value = a.mensagem || '';
+      $('av-fim').value = a.previsao_fim ? valorDataHoraLocal(new Date(a.previsao_fim)) : '';
+      $('av-info').textContent = a.atualizado_em
+        ? `Agora: ${a.ativo ? 'LIGADO' : 'desligado'}. Última alteração em ${instanteBR(a.atualizado_em)}, por ${a.atualizado_por || '—'}.`
+        : '';
+    }
+    async function salvarAviso(desligar = false) {
+      const dados = desligar ? { ativo: false } : {
+        ativo: $('av-ativo').checked,
+        nivel: $('av-nivel').value,
+        mensagem: $('av-mensagem').value.trim(),
+        previsao_fim: $('av-fim').value ? new Date($('av-fim').value).toISOString() : null
+      };
+      if (dados.ativo && !dados.mensagem && dados.nivel !== 'manutencao') { toast('Escreva a mensagem do aviso.', 'erro'); return; }
+      const { data, error } = await S.sb.from('aviso_sistema').update(dados).eq('id', 1).select().single();
+      if (error) { toast(traduzirErro(error), 'erro'); return; }
+      S.avisoFechado = null;
+      aplicarAviso(data, false);
+      preencherFormAviso();
+      toast(data.ativo ? 'Aviso ligado. Quem está com o sistema aberto vê na hora; os demais, em até 2 minutos.' : 'Aviso desligado.', 'sucesso');
     }
     async function abrirAdmin() {
       trocarAbaAdmin('acessos');
@@ -1509,7 +1691,12 @@
       if (e.key === 'Escape') ['modal-confirmar', 'modal-guia', 'modal-historico', 'modal-protocolo', 'modal-importar', 'modal-admin']
         .some(id => { if (!$(id).classList.contains('hidden')) { fecharModal(id); return true; } return false; });
     });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden && S.usuarioCarregado) recarregarGuias(false); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      if (S.usuarioCarregado) recarregarGuias(false);
+      carregarAviso();
+      verificarVersaoNova();
+    });
 
     function iniciar() {
       icones();
@@ -1522,6 +1709,11 @@
           setTimeout(() => aoMudarSessao(sessao), 0);   // fora do callback (recomendação do supabase-js)
         }
       });
+      // Aviso do sistema e versão nova: valem para todas as telas, mesmo antes de entrar.
+      carregarAviso();
+      setInterval(carregarAviso, CONFIG.AVISO_CONSULTA_MS);
+      setTimeout(verificarVersaoNova, 30000);
+      setInterval(verificarVersaoNova, CONFIG.VERSAO_CONSULTA_MS);
     }
     iniciar();
   </script>
