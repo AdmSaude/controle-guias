@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Guias - Saúde Assis Chateaubriand</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.3/dist/index.global.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.64.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f4f9f9; color: #0f172a; }
+    @keyframes pulse-border { 0%, 100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.35); } 50% { box-shadow: 0 0 0 6px rgba(225, 29, 72, 0); } }
+    .urgent-card-glow { animation: pulse-border 2.2s infinite; }
+    @keyframes sound-wave { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1.25); } }
+    .wave-bar { animation: sound-wave 0.75s ease-in-out infinite; }
+    .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    .view { display: none; }
+    .view.ativa { display: flex; }
+    [data-lucide] { display: inline-block; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- ===================================================== CONFIG PENDENTE -->
+  <div id="view-config" class="view min-h-screen items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 max-w-md w-full p-8 text-center">
+      <div class="bg-amber-50 text-amber-600 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="settings" class="w-7 h-7"></i>
+      </div>
+      <h1 class="text-lg font-bold">Sistema ainda não configurado</h1>
+      <p class="text-sm text-slate-600 mt-2">Falta informar o endereço e a chave pública do banco (Supabase) no início do código desta página.</p>
+    </div>
+  </div>
+
+  <!-- ===================================================== CARREGANDO -->
+  <div id="view-carregando" class="view ativa min-h-screen items-center justify-center p-4">
+    <div class="flex items-center gap-3 text-teal-700 font-semibold">
+      <i data-lucide="loader-circle" class="w-6 h-6 animate-spin"></i>
+      <span>Carregando...</span>
+    </div>
+  </div>
+
+  <!-- ===================================================== LOGIN / CADASTRO -->
+  <div id="view-login" class="view min-h-screen items-center justify-center p-4 bg-gradient-to-br from-[#0f766e] via-[#0d9488] to-[#0e7490]">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="px-7 pt-7 pb-4 text-center">
+        <div class="bg-teal-50 text-teal-700 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <i data-lucide="clipboard-list" class="w-7 h-7"></i>
+        </div>
+        <h1 class="text-xl font-extrabold tracking-tight">Controle de Guias</h1>
+        <p class="text-xs text-slate-500 mt-1">Secretaria Municipal de Saúde de Assis Chateaubriand</p>
+      </div>
+      <div class="px-7">
+        <div class="grid grid-cols-2 bg-slate-100 rounded-xl p-1 text-sm font-semibold">
+          <button id="aba-entrar" onclick="trocarAbaLogin('entrar')" class="py-2 rounded-lg bg-white shadow-sm text-teal-800 cursor-pointer">Entrar</button>
+          <button id="aba-cadastrar" onclick="trocarAbaLogin('cadastrar')" class="py-2 rounded-lg text-slate-600 cursor-pointer">Pedir acesso</button>
+        </div>
+      </div>
+
+      <form id="form-entrar" onsubmit="entrar(event)" class="px-7 py-6 space-y-4">
+        <div>
+          <label for="l-email" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">E-mail</label>
+          <input id="l-email" type="email" required autocomplete="username" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+        </div>
+        <div>
+          <label for="l-senha" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Senha</label>
+          <input id="l-senha" type="password" required autocomplete="current-password" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+        </div>
+        <button type="submit" class="w-full bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer">
+          <i data-lucide="lock" class="w-4 h-4"></i> Entrar
+        </button>
+        <p class="text-xs text-slate-500 text-center">Esqueceu a senha? Fale com o administrador do sistema na Secretaria.</p>
+      </form>
+
+      <form id="form-cadastrar" onsubmit="cadastrar(event)" class="hidden px-7 py-6 space-y-4">
+        <div>
+          <label for="c-nome" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nome completo</label>
+          <input id="c-nome" type="text" required maxlength="120" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+        </div>
+        <div>
+          <label for="c-unidade" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Unidade onde trabalha</label>
+          <select id="c-unidade" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-teal-500 outline-none"></select>
+        </div>
+        <div>
+          <label for="c-email" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">E-mail</label>
+          <input id="c-email" type="email" required autocomplete="username" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="c-senha" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Senha</label>
+            <input id="c-senha" type="password" required minlength="8" autocomplete="new-password" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label for="c-senha2" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Repita</label>
+            <input id="c-senha2" type="password" required minlength="8" autocomplete="new-password" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+        </div>
+        <p class="text-xs text-slate-500">Mínimo de 8 caracteres. O acesso só funciona depois que o administrador liberar.</p>
+        <button type="submit" class="w-full bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Pedir acesso
+        </button>
+      </form>
+      <div id="login-msg" class="hidden mx-7 mb-6 -mt-2 text-sm rounded-xl px-4 py-3"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================== AGUARDANDO LIBERAÇÃO -->
+  <div id="view-pendente" class="view min-h-screen items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 max-w-md w-full p-8 text-center">
+      <div class="bg-amber-50 text-amber-600 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="hourglass" class="w-7 h-7"></i>
+      </div>
+      <h1 id="pendente-titulo" class="text-lg font-bold">Acesso aguardando liberação</h1>
+      <p id="pendente-texto" class="text-sm text-slate-600 mt-2"></p>
+      <div class="mt-6 flex items-center justify-center gap-2">
+        <button onclick="recarregarPerfil()" class="bg-[#0f766e] hover:bg-[#115e59] text-white font-semibold text-sm px-4 py-2.5 rounded-xl cursor-pointer flex items-center gap-2">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Verificar de novo
+        </button>
+        <button onclick="sair()" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================== APLICATIVO -->
+  <div id="view-app" class="view min-h-screen flex-col">
+
+    <!-- Barra de leitura em voz alta -->
+    <div id="tts-floating-bar" class="hidden fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-[420px] z-50 bg-teal-950 text-white p-4 rounded-2xl shadow-2xl border border-teal-700">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 overflow-hidden">
+          <div class="flex items-end gap-1 h-6 shrink-0 px-1.5 py-1 bg-teal-900 rounded-lg">
+            <span class="w-1 h-4 bg-emerald-400 rounded-full wave-bar"></span>
+            <span class="w-1 h-5 bg-emerald-400 rounded-full wave-bar"></span>
+            <span class="w-1 h-3 bg-emerald-400 rounded-full wave-bar"></span>
+            <span class="w-1 h-4 bg-emerald-400 rounded-full wave-bar"></span>
+          </div>
+          <div class="truncate">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-teal-300">Lendo aviso em voz alta...</p>
+            <p id="tts-patient-label" class="text-sm font-bold truncate">Paciente</p>
+          </div>
+        </div>
+        <button onclick="pararFala()" class="shrink-0 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="square" class="w-3.5 h-3.5"></i> Parar voz
+        </button>
+      </div>
+      <p class="mt-2.5 text-[11px] text-teal-100 bg-teal-900/70 px-3 py-1.5 rounded-xl border border-teal-800">
+        Dica: segure o microfone do WhatsApp perto do alto-falante para mandar o recado em áudio.
+      </p>
+    </div>
+
+    <!-- Cabeçalho -->
+    <header class="bg-gradient-to-r from-[#0f766e] via-[#0d9488] to-[#0e7490] text-white shadow-md">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="bg-white/15 p-3 rounded-2xl border border-white/25 shrink-0">
+              <i data-lucide="clipboard-list" class="w-7 h-7 text-white"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Controle de Guias</h1>
+                <span id="selo-ao-vivo" class="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-white/25 flex items-center gap-1.5">
+                  <span id="ponto-ao-vivo" class="w-2 h-2 rounded-full bg-amber-300"></span><span id="texto-ao-vivo">Conectando</span>
+                </span>
+              </div>
+              <p class="text-teal-50 text-xs sm:text-sm font-medium mt-0.5 flex items-center gap-1.5">
+                <i data-lucide="building-2" class="w-3.5 h-3.5 shrink-0 text-teal-200"></i>
+                <span id="cab-unidade" class="truncate"></span>
+              </p>
+              <p class="text-teal-100 text-[11px] mt-0.5" id="cab-usuario"></p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="verificarUrgencias(true)" class="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer" title="Tocar o alerta e mostrar guias urgentes">
+              <i data-lucide="volume-2" class="w-4 h-4"></i><span>Alerta</span>
+            </button>
+            <button id="btn-protocolo" onclick="abrirProtocolo()" class="hidden bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3.5 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Imprimir a lista das guias que vão no malote">
+              <i data-lucide="printer" class="w-4 h-4"></i><span>Protocolo do malote</span>
+            </button>
+            <button onclick="exportarCSV()" class="bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3.5 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Baixar planilha para o Excel">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i><span>Planilha</span>
+            </button>
+            <button onclick="abrirImportar()" class="bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Trazer as guias do controle antigo (arquivo de backup)">
+              <i data-lucide="file-up" class="w-4 h-4"></i><span>Importar antigo</span>
+            </button>
+            <button id="btn-admin" onclick="abrirAdmin()" class="hidden relative bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Liberar acessos e cadastrar unidades">
+              <i data-lucide="users" class="w-4 h-4"></i><span>Acessos</span>
+              <span id="badge-pendentes" class="hidden absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-extrabold rounded-full min-w-5 h-5 px-1 flex items-center justify-center"></span>
+            </button>
+            <button onclick="sair()" class="bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3 py-2.5 rounded-xl border border-white/25 transition flex items-center gap-1.5 cursor-pointer" title="Sair">
+              <i data-lucide="log-out" class="w-4 h-4"></i><span>Sair</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Avisos do topo -->
+    <div id="banner-malote" class="hidden bg-sky-700 text-white border-b border-sky-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="bg-white/20 p-2 rounded-xl shrink-0"><i data-lucide="truck" class="w-5 h-5"></i></div>
+          <p id="banner-malote-texto" class="text-sm font-semibold"></p>
+        </div>
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <button onclick="definirFiltro('malote')" class="bg-white text-sky-800 hover:bg-sky-50 text-xs font-extrabold px-3.5 py-2 rounded-xl shadow cursor-pointer">Ver guias do malote</button>
+        </div>
+      </div>
+    </div>
+    <div id="banner-urgente" class="hidden bg-rose-600 text-white border-b border-rose-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="bg-white/20 p-2 rounded-xl shrink-0"><i data-lucide="bell-ring" class="w-5 h-5 animate-bounce"></i></div>
+          <p id="banner-urgente-texto" class="text-sm font-semibold"></p>
+        </div>
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <button onclick="definirFiltro('urgentes')" class="bg-white text-rose-700 hover:bg-rose-50 text-xs font-extrabold px-3.5 py-2 rounded-xl shadow cursor-pointer">Ver urgentes</button>
+          <button onclick="const b = document.getElementById('banner-urgente'); b.dataset.fechado = '1'; b.classList.add('hidden')" class="text-white/80 hover:text-white p-1.5 rounded-lg cursor-pointer" title="Ocultar"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+      <!-- Filtro de unidade (central) -->
+      <section id="barra-central" class="hidden bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 space-y-3">
+        <div class="flex flex-col md:flex-row md:items-center gap-3 justify-between">
+          <div class="flex items-center gap-2 flex-1">
+            <i data-lucide="building" class="w-4 h-4 text-teal-700 shrink-0"></i>
+            <label for="filtro-unidade" class="text-xs font-bold uppercase tracking-wider text-slate-700 shrink-0">Unidade</label>
+            <select id="filtro-unidade" onchange="S.unidadeFiltro = this.value; renderizar()" class="flex-1 max-w-md px-3 py-2 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-teal-500 outline-none"></select>
+          </div>
+          <button onclick="S.mostrarResumo = !S.mostrarResumo; renderizar()" class="text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 px-3.5 py-2 rounded-xl border border-teal-200 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="list-checks" class="w-4 h-4"></i><span id="txt-resumo">Resumo por unidade</span>
+          </button>
+        </div>
+        <div id="resumo-unidades" class="hidden overflow-x-auto"></div>
+      </section>
+
+      <!-- Cartões de resumo -->
+      <section class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <button onclick="definirFiltro('malote')" id="card-malote" class="text-left bg-white p-4 rounded-2xl shadow-xs border-2 border-transparent hover:shadow-md transition cursor-pointer">
+          <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-sky-700">No malote</p><i data-lucide="truck" class="w-5 h-5 text-sky-500"></i></div>
+          <p id="n-malote" class="text-3xl font-extrabold text-sky-700 mt-1">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Enviadas, chegada não confirmada</p>
+        </button>
+        <button onclick="definirFiltro('aguardando')" id="card-aguardando" class="text-left bg-white p-4 rounded-2xl shadow-xs border-2 border-transparent hover:shadow-md transition cursor-pointer">
+          <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Aguardando</p><i data-lucide="clock" class="w-5 h-5 text-teal-600"></i></div>
+          <p id="n-aguardando" class="text-3xl font-extrabold text-teal-700 mt-1">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">No posto, esperando o paciente</p>
+        </button>
+        <button onclick="definirFiltro('urgentes')" id="card-urgentes" class="text-left bg-white p-4 rounded-2xl shadow-xs border-2 border-transparent hover:shadow-md transition cursor-pointer">
+          <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Urgentes</p><i data-lucide="triangle-alert" class="w-5 h-5 text-amber-500"></i></div>
+          <p id="n-urgentes" class="text-3xl font-extrabold text-amber-600 mt-1">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Prazo hoje, amanhã, atrasadas ou malote parado</p>
+        </button>
+        <button onclick="definirFiltro('retirada')" id="card-retirada" class="text-left bg-white p-4 rounded-2xl shadow-xs border-2 border-transparent hover:shadow-md transition cursor-pointer">
+          <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Retiradas</p><i data-lucide="circle-check" class="w-5 h-5 text-emerald-500"></i></div>
+          <p id="n-retirada" class="text-3xl font-extrabold text-emerald-600 mt-1">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5" data-periodo>Últimos 90 dias</p>
+        </button>
+        <button onclick="definirFiltro('nao_retirada')" id="card-nao_retirada" class="text-left bg-white p-4 rounded-2xl shadow-xs border-2 border-transparent hover:shadow-md transition cursor-pointer col-span-2 lg:col-span-1">
+          <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-rose-700">Não retiradas</p><i data-lucide="user-x" class="w-5 h-5 text-rose-500"></i></div>
+          <p id="n-nao_retirada" class="text-3xl font-extrabold text-rose-600 mt-1">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5" data-periodo>Últimos 90 dias</p>
+        </button>
+      </section>
+
+      <!-- Barra de ferramentas -->
+      <section class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="abrirFormulario()" class="bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm px-5 py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer">
+            <i data-lucide="circle-plus" class="w-5 h-5"></i><span>Cadastrar guia</span>
+          </button>
+          <button onclick="definirFiltro('todas')" id="btn-todas" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl transition cursor-pointer">
+            Ver todas (<span id="n-todas">0</span>)
+          </button>
+          <button id="btn-confirmar-malote" onclick="confirmarChegadaTodas()" class="hidden bg-sky-50 hover:bg-sky-100 text-sky-800 font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl border border-sky-200 transition flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="package-check" class="w-4 h-4"></i><span id="txt-confirmar-malote">Confirmar chegada de todas</span>
+          </button>
+          <button onclick="recarregarGuias(true)" class="text-slate-500 hover:text-teal-700 hover:bg-slate-100 p-3 rounded-xl transition cursor-pointer" title="Atualizar agora">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          <input type="text" id="busca" oninput="S.limite = 200; renderizar()" placeholder="Buscar paciente, telefone, exame, local ou nº da guia..." class="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition" />
+          <button onclick="document.getElementById('busca').value=''; renderizar()" id="btn-limpar-busca" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer" title="Limpar busca"><i data-lucide="circle-x" class="w-4 h-4"></i></button>
+        </div>
+      </section>
+
+      <div class="flex items-center justify-between">
+        <h2 id="titulo-lista" class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2"></h2>
+        <span id="contador" class="text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full">0 registros</span>
+      </div>
+
+      <section id="grade-guias" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section>
+      <div id="mais-guias" class="hidden text-center">
+        <button onclick="S.limite += 200; renderizar()" class="bg-white border border-slate-300 hover:bg-slate-50 text-sm font-semibold px-5 py-2.5 rounded-xl cursor-pointer">Mostrar mais</button>
+      </div>
+
+      <div id="vazio" class="hidden bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center max-w-lg mx-auto my-8">
+        <div class="bg-teal-50 text-teal-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"><i data-lucide="folder-open" class="w-8 h-8"></i></div>
+        <h3 class="text-lg font-bold text-slate-800">Nenhuma guia neste filtro</h3>
+        <p class="text-sm text-slate-500 mt-1">Cadastre uma guia ou escolha outro cartão acima.</p>
+      </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-12 py-5">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+        <p class="font-semibold text-slate-700">Secretaria Municipal de Saúde de Assis Chateaubriand • Controle de Guias</p>
+        <p class="flex items-center gap-1.5"><i data-lucide="shield-check" class="w-4 h-4 text-teal-600"></i>Dados de pacientes (LGPD): uso restrito ao serviço. Não compartilhe sua senha e clique em Sair ao terminar.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===================================================== MODAL: GUIA -->
+  <div id="modal-guia" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden my-auto">
+      <div class="bg-[#0f766e] text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5"><i data-lucide="file-text" class="w-5 h-5"></i><h3 id="modal-guia-titulo" class="text-lg font-bold">Cadastrar guia</h3></div>
+        <button onclick="fecharModal('modal-guia')" class="text-white/80 hover:text-white p-1 rounded-lg cursor-pointer" title="Fechar"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="form-guia" onsubmit="salvarGuia(event)" class="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
+        <input type="hidden" id="f-id" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2" id="f-unidade-bloco">
+            <label for="f-unidade" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Unidade que entrega ao paciente <span class="text-rose-500">*</span></label>
+            <select id="f-unidade" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-teal-500 outline-none"></select>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="f-paciente" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nome do paciente <span class="text-rose-500">*</span></label>
+            <input type="text" id="f-paciente" required maxlength="150" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label for="f-telefone" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Telefone / WhatsApp <span class="text-rose-500">*</span></label>
+            <input type="tel" id="f-telefone" required maxlength="15" oninput="mascararTelefone(this)" placeholder="(44) 99999-9999" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label for="f-procedimento" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Consulta ou exame <span class="text-rose-500">*</span></label>
+            <input type="text" id="f-procedimento" required maxlength="150" placeholder="Ex.: Cardiologista, Ultrassom" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label for="f-atendimento" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Data e hora do atendimento</label>
+            <input type="datetime-local" id="f-atendimento" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label for="f-local" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Local do atendimento</label>
+            <input type="text" id="f-local" maxlength="150" placeholder="Ex.: CISCOPAR, Hospital, CIASP" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label for="f-numero" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nº da guia / protocolo</label>
+            <input type="text" id="f-numero" maxlength="60" placeholder="Opcional" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label for="f-prazo" class="block text-xs font-bold uppercase tracking-wider text-amber-700 mb-1">Prazo para retirar</label>
+            <input type="date" id="f-prazo" class="w-full px-3.5 py-2.5 border border-amber-300 bg-amber-50/40 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
+            <p id="f-prazo-dica" class="text-[11px] text-slate-500 mt-1">Em branco: 2 dias depois de chegar no posto.</p>
+          </div>
+          <div>
+            <label for="f-status" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Situação</label>
+            <select id="f-status" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-teal-500 outline-none">
+              <option value="enviada">No malote (enviada pela central)</option>
+              <option value="aguardando">Aguardando retirada no posto</option>
+              <option value="retirada">Retirada pelo paciente</option>
+              <option value="nao_retirada">Não retirada / vaga perdida</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+          <div class="flex flex-col justify-center">
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Avisos por WhatsApp</span>
+            <div class="flex flex-wrap items-center gap-4 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200">
+              <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" id="f-aviso1" class="w-4 h-4" /> 1º aviso enviado</label>
+              <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" id="f-aviso2" class="w-4 h-4" /> Reforço enviado</label>
+            </div>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="f-orientacoes" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Orientações ao paciente (preparo, documentos)</label>
+            <textarea id="f-orientacoes" rows="3" maxlength="1000" placeholder="Ex.: Jejum de 8 horas. Levar documento com foto, Cartão SUS e exames anteriores." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="f-observacao" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Observação interna</label>
+            <input type="text" id="f-observacao" maxlength="300" placeholder="Não vai para o paciente" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+        </div>
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-3">
+          <button type="button" onclick="fecharModal('modal-guia')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancelar</button>
+          <button type="submit" id="btn-salvar-guia" class="bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer">
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================== MODAL: HISTÓRICO -->
+  <div id="modal-historico" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden my-auto">
+      <div class="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5"><i data-lucide="history" class="w-5 h-5"></i><h3 class="text-lg font-bold">Histórico da guia</h3></div>
+        <button onclick="fecharModal('modal-historico')" class="text-white/80 hover:text-white p-1 rounded-lg cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="historico-corpo" class="p-6 max-h-[75vh] overflow-y-auto text-sm"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================== MODAL: PROTOCOLO DO MALOTE -->
+  <div id="modal-protocolo" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
+      <div class="flex items-center gap-2.5"><i data-lucide="printer" class="w-5 h-5 text-teal-700"></i><h3 class="text-lg font-bold">Protocolo do malote</h3></div>
+      <p class="text-sm text-slate-600">Lista das guias enviadas para uma unidade num dia, com espaço para assinatura de quem envia e de quem recebe.</p>
+      <div>
+        <label for="p-unidade" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Unidade</label>
+        <select id="p-unidade" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-white"></select>
+      </div>
+      <div>
+        <label for="p-data" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Dia do envio</label>
+        <input type="date" id="p-data" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="fecharModal('modal-protocolo')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancelar</button>
+        <button onclick="imprimirProtocolo()" class="bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================== MODAL: IMPORTAR ANTIGO -->
+  <div id="modal-importar" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
+      <div class="flex items-center gap-2.5"><i data-lucide="file-up" class="w-5 h-5 text-teal-700"></i><h3 class="text-lg font-bold">Importar do controle antigo</h3></div>
+      <p class="text-sm text-slate-600">No controle antigo (a página que salvava só no computador), clique em <strong>Backup</strong> e escolha aqui o arquivo <code>.json</code> baixado. Os 2 pacientes de exemplo são ignorados.</p>
+      <div id="i-unidade-bloco">
+        <label for="i-unidade" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Unidade dessas guias</label>
+        <select id="i-unidade" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-white"></select>
+      </div>
+      <input type="file" id="i-arquivo" accept=".json,application/json" class="block w-full text-sm" />
+      <p id="i-resumo" class="text-sm text-slate-700"></p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="fecharModal('modal-importar')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancelar</button>
+        <button id="btn-importar" onclick="importarAntigo()" class="bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer flex items-center gap-2"><i data-lucide="upload" class="w-4 h-4"></i> Importar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================== MODAL: ADMINISTRAÇÃO -->
+  <div id="modal-admin" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl overflow-hidden my-auto">
+      <div class="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5"><i data-lucide="users" class="w-5 h-5"></i><h3 class="text-lg font-bold">Acessos e unidades</h3></div>
+        <button onclick="fecharModal('modal-admin')" class="text-white/80 hover:text-white p-1 rounded-lg cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="px-6 pt-4">
+        <div class="inline-grid grid-cols-2 bg-slate-100 rounded-xl p-1 text-sm font-semibold">
+          <button id="aba-acessos" onclick="trocarAbaAdmin('acessos')" class="px-4 py-2 rounded-lg bg-white shadow-sm text-slate-800 cursor-pointer">Acessos</button>
+          <button id="aba-unidades" onclick="trocarAbaAdmin('unidades')" class="px-4 py-2 rounded-lg text-slate-600 cursor-pointer">Unidades</button>
+        </div>
+      </div>
+      <div id="admin-acessos" class="p-6 max-h-[70vh] overflow-auto"></div>
+      <div id="admin-unidades" class="hidden p-6 max-h-[70vh] overflow-auto"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================== MODAL: CONFIRMAÇÃO -->
+  <div id="modal-confirmar" class="hidden fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6">
+      <div class="flex items-start gap-3.5">
+        <div class="bg-rose-100 text-rose-600 p-3 rounded-xl shrink-0"><i data-lucide="triangle-alert" class="w-6 h-6"></i></div>
+        <div>
+          <h3 id="confirmar-titulo" class="text-lg font-bold text-slate-900">Confirmar</h3>
+          <p id="confirmar-texto" class="text-sm text-slate-600 mt-1"></p>
+        </div>
+      </div>
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button onclick="fecharModal('modal-confirmar')" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancelar</button>
+        <button id="confirmar-ok" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm px-5 py-2 rounded-xl shadow cursor-pointer">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="fixed top-4 right-4 z-[70] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <script>
+    // =========================================================================
+    // CONFIGURAÇÃO
+    // A chave abaixo é a chave PÚBLICA (publishable/anon) do projeto Supabase.
+    // Ela pode ficar na página: quem protege os dados são as regras do banco
+    // (RLS). NUNCA colocar aqui a chave secreta (service_role / sb_secret_...).
+    // =========================================================================
+    const CONFIG = {
+      SUPABASE_URL: 'https://lyblipgttbzqnqrahobc.supabase.co',
+      SUPABASE_KEY: 'sb_publishable_0gIZPeONvcL41zke-zi_ww_ZiaICHzF',
+      PRAZO_PADRAO_DIAS: 2,       // prazo de retirada quando não informado
+      MALOTE_ALERTA_DIAS: 2,      // malote sem confirmação há mais de N dias vira urgente
+      DIAS_HISTORICO: 90,         // guias finalizadas carregadas na tela
+      LOTE: 10,                   // ações em lote vão de 10 em 10...
+      PAUSA_LOTE_MS: 1500,        // ...com pausa, para não passar de 100 avisos/s do tempo real (plano gratuito)
+      VERSAO: '1.0 (19/11/2026)'
+    };
+
+    // =========================================================================
+    // ESTADO
+    // =========================================================================
+    const S = {
+      sb: null, user: null, perfil: null, unidades: [], guias: [],
+      filtro: 'aguardando', unidadeFiltro: 'todas', limite: 200, mostrarResumo: false,
+      canal: null, falandoId: null, usuarioCarregado: null, ultimoDia: null, timers: []
+    };
+
+    const STATUS_TXT = {
+      enviada: 'No malote', aguardando: 'Aguardando retirada', retirada: 'Retirada',
+      nao_retirada: 'Não retirada', cancelada: 'Cancelada'
+    };
+    const PAPEL_TXT = { pendente: 'Aguardando liberação', ubs: 'UBS', central: 'Central de agendamento', admin: 'Administrador', bloqueado: 'Bloqueado' };
+
+    // =========================================================================
+    // UTILITÁRIOS
+    // =========================================================================
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const icones = () => { try { lucide.createIcons(); } catch (e) { /* sem ícones */ } };
+
+    function isoLocal(d) {
+      const x = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+      return x.toISOString().slice(0, 10);
+    }
+    const hojeISO = () => isoLocal(new Date());
+    function somarDias(iso, n) {
+      const d = new Date((iso || hojeISO()) + 'T12:00:00');
+      d.setDate(d.getDate() + n);
+      return isoLocal(d);
+    }
+    function dataBR(iso) {
+      if (!iso) return 'A definir';
+      const p = String(iso).slice(0, 10).split('-');
+      return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : String(iso);
+    }
+    function dataHoraBR(iso) {   // timestamp sem fuso: "2026-11-20T08:30:00"
+      if (!iso) return 'A definir';
+      const [d, h] = String(iso).split('T');
+      return h ? `${dataBR(d)} às ${h.slice(0, 5)}` : dataBR(d);
+    }
+    function instanteBR(ts) {    // timestamptz
+      if (!ts) return '—';
+      const d = new Date(ts);
+      return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+    const diaLocalDe = (ts) => ts ? isoLocal(new Date(ts)) : null;
+    function diasAte(iso) {
+      if (!iso) return 999;
+      const hoje = new Date(hojeISO() + 'T00:00:00'), alvo = new Date(String(iso).slice(0, 10) + 'T00:00:00');
+      return Math.round((alvo - hoje) / 86400000);
+    }
+    function diasDesde(ts) {
+      if (!ts) return 0;
+      return Math.round((new Date(hojeISO() + 'T00:00:00') - new Date(diaLocalDe(ts) + 'T00:00:00')) / 86400000);
+    }
+    function mascararTelefone(input) {
+      let v = input.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length > 10) input.value = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+      else if (v.length > 6) input.value = `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
+      else if (v.length > 2) input.value = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+      else if (v.length > 0) input.value = `(${v}`;
+      else input.value = '';
+    }
+    function telefoneWhatsApp(tel) {
+      const d = (tel || '').replace(/\D/g, '');
+      if (!d) return '';
+      return d.startsWith('55') && d.length >= 12 ? d : `55${d}`;
+    }
+    const nomeUnidade = (id) => (S.unidades.find(u => u.id === id) || {}).nome || `Unidade ${id}`;
+    const podeTodas = () => S.perfil && ['central', 'admin'].includes(S.perfil.papel);
+    const ehAdmin = () => S.perfil && S.perfil.papel === 'admin';
+    const configOk = () => /^https:\/\//.test(CONFIG.SUPABASE_URL) && !CONFIG.SUPABASE_KEY.startsWith('COLE_');
+
+    function mostrarView(id) {
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('ativa', v.id === id));
+      // Na tela de "aguardando liberação", confere sozinho a cada 30 s.
+      clearInterval(S.timerPendente);
+      if (id === 'view-pendente') S.timerPendente = setInterval(() => recarregarPerfil().catch(() => {}), 30000);
+      icones();
+    }
+    function abrirModal(id) { $(id).classList.remove('hidden'); icones(); }
+    function fecharModal(id) { $(id).classList.add('hidden'); }
+
+    function toast(msg, tipo = 'info') {
+      const cores = { sucesso: 'bg-emerald-600', erro: 'bg-rose-600', aviso: 'bg-amber-500', info: 'bg-slate-800' };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto ${cores[tipo] || cores.info} text-white text-sm font-semibold px-4 py-3 rounded-xl shadow-lg transition-opacity duration-500`;
+      el.textContent = msg;
+      $('toasts').appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 600); }, tipo === 'erro' ? 7000 : 3500);
+    }
+
+    function confirmar(titulo, texto, acao, rotulo = 'Confirmar') {
+      $('confirmar-titulo').textContent = titulo;
+      $('confirmar-texto').textContent = texto;
+      $('confirmar-ok').textContent = rotulo;
+      $('confirmar-ok').onclick = () => { fecharModal('modal-confirmar'); acao(); };
+      abrirModal('modal-confirmar');
+    }
+
+    function traduzirErro(error) {
+      const m = (error && (error.message || error.error_description || String(error))) || 'Erro desconhecido';
+      if (/Invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.';
+      if (/already registered|already been registered/i.test(m)) return 'Este e-mail já tem acesso. Use a aba Entrar.';
+      if (/Email not confirmed/i.test(m)) return 'O e-mail ainda não foi confirmado. Abra o link enviado ao seu e-mail.';
+      if (/Password should be|weak password/i.test(m)) return 'Senha fraca. Use pelo menos 8 caracteres, misturando letras e números.';
+      if (/row-level security|permission denied/i.test(m)) return 'Você não tem permissão para isso.';
+      if (/Failed to fetch|NetworkError|network/i.test(m)) return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
+      if (/rate limit/i.test(m)) return 'Muitas tentativas seguidas. Aguarde alguns minutos.';
+      return m;
+    }
+
+    // =========================================================================
+    // SOM E VOZ
+    // =========================================================================
+    function bipe(tipo = 'alerta') {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx(), agora = ctx.currentTime;
+        const tom = (f, ini, dur, pico) => {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.setValueAtTime(f, ini);
+          g.gain.setValueAtTime(0.001, ini);
+          g.gain.exponentialRampToValueAtTime(pico, ini + 0.025);
+          g.gain.exponentialRampToValueAtTime(0.001, ini + dur);
+          o.connect(g); g.connect(ctx.destination); o.start(ini); o.stop(ini + dur);
+        };
+        if (tipo === 'sucesso') { tom(523.25, agora, 0.22, 0.2); tom(659.25, agora + 0.14, 0.30, 0.22); }
+        else { tom(659.25, agora, 0.24, 0.26); tom(880.0, agora + 0.26, 0.34, 0.28); }
+      } catch (e) { /* navegador bloqueou o som até o primeiro clique */ }
+    }
+
+    function textoFalado(g) {
+      const unidade = nomeUnidade(g.unidade_id);
+      const atend = g.data_atendimento ? `O seu atendimento está marcado para o dia ${dataHoraBR(g.data_atendimento)}` : 'A data do atendimento consta na guia';
+      const local = g.local_atendimento ? `, no local: ${g.local_atendimento}.` : '.';
+      const prep = g.orientacoes ? `Atenção às orientações: ${g.orientacoes}.` : 'Lembre-se de levar documento com foto e o Cartão do SUS.';
+      const prazo = g.prazo_retirada ? `O prazo para vir buscar a guia é até o dia ${dataBR(g.prazo_retirada)}. ` : '';
+      return `Olá, ${g.paciente_nome}. Aqui é da ${unidade}. ` +
+        `Informamos que a sua guia de ${g.procedimento} já chegou e está pronta para retirada aqui no posto. ` +
+        `${prazo}${atend}${local} ${prep} Por favor, venha retirar sua guia o quanto antes para não perder a vaga. Muito obrigado!`;
+    }
+
+    function falar(id) {
+      if (!('speechSynthesis' in window)) { toast('Este navegador não lê em voz alta.', 'erro'); return; }
+      if (S.falandoId === id && speechSynthesis.speaking) { pararFala(); return; }
+      speechSynthesis.cancel();
+      const g = S.guias.find(x => x.id === id); if (!g) return;
+      const u = new SpeechSynthesisUtterance(textoFalado(g));
+      u.lang = 'pt-BR'; u.rate = 0.9;
+      const vozes = speechSynthesis.getVoices();
+      const v = vozes.find(x => x.lang.includes('pt-BR')) || vozes.find(x => x.lang.startsWith('pt'));
+      if (v) u.voice = v;
+      u.onstart = () => { S.falandoId = id; $('tts-patient-label').textContent = g.paciente_nome; $('tts-floating-bar').classList.remove('hidden'); renderizar(); };
+      u.onend = u.onerror = () => { S.falandoId = null; $('tts-floating-bar').classList.add('hidden'); renderizar(); };
+      speechSynthesis.speak(u);
+    }
+    function pararFala() {
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      S.falandoId = null; $('tts-floating-bar').classList.add('hidden'); renderizar();
+    }
+    if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+
+    // =========================================================================
+    // AUTENTICAÇÃO
+    // =========================================================================
+    function trocarAbaLogin(aba) {
+      const entrar = aba === 'entrar';
+      $('form-entrar').classList.toggle('hidden', !entrar);
+      $('form-cadastrar').classList.toggle('hidden', entrar);
+      $('aba-entrar').className = `py-2 rounded-lg cursor-pointer ${entrar ? 'bg-white shadow-sm text-teal-800' : 'text-slate-600'}`;
+      $('aba-cadastrar').className = `py-2 rounded-lg cursor-pointer ${!entrar ? 'bg-white shadow-sm text-teal-800' : 'text-slate-600'}`;
+      msgLogin('');
+    }
+    function msgLogin(texto, tipo = 'erro') {
+      const el = $('login-msg');
+      if (!texto) { el.classList.add('hidden'); return; }
+      el.className = `mx-7 mb-6 -mt-2 text-sm rounded-xl px-4 py-3 ${tipo === 'erro' ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'}`;
+      el.textContent = texto;
+    }
+
+    async function carregarUnidadesCadastro() {
+      const { data, error } = await S.sb.from('unidades').select('id,nome,tipo,ativa').eq('ativa', true).order('tipo').order('nome');
+      const sel = $('c-unidade');
+      if (error) { sel.innerHTML = '<option value="">Não foi possível carregar</option>'; return; }
+      sel.innerHTML = '<option value="">Escolha...</option>' + data.map(u => `<option value="${u.id}">${esc(u.nome)}</option>`).join('');
+    }
+
+    async function entrar(ev) {
+      ev.preventDefault();
+      msgLogin('');
+      const { error } = await S.sb.auth.signInWithPassword({ email: $('l-email').value.trim(), password: $('l-senha').value });
+      if (error) msgLogin(traduzirErro(error));
+      $('l-senha').value = '';
+    }
+
+    async function cadastrar(ev) {
+      ev.preventDefault();
+      msgLogin('');
+      if ($('c-senha').value !== $('c-senha2').value) { msgLogin('As duas senhas não são iguais.'); return; }
+      if (!$('c-unidade').value) { msgLogin('Escolha a unidade.'); return; }
+      const { data, error } = await S.sb.auth.signUp({
+        email: $('c-email').value.trim(),
+        password: $('c-senha').value,
+        options: { data: { nome: $('c-nome').value.trim(), unidade_id: $('c-unidade').value } }
+      });
+      $('c-senha').value = ''; $('c-senha2').value = '';
+      if (error) { msgLogin(traduzirErro(error)); return; }
+      if (!data.session) {
+        trocarAbaLogin('entrar');
+        msgLogin('Pedido registrado. Se chegar um e-mail de confirmação, abra o link. Depois que o administrador liberar, entre com seu e-mail e senha.', 'ok');
+      }
+    }
+
+    async function sair() {
+      pararCanal();
+      await S.sb.auth.signOut();
+    }
+
+    async function carregarPerfil() {
+      const { data, error } = await S.sb.from('perfis').select('*').eq('user_id', S.user.id).maybeSingle();
+      if (error) throw error;
+      S.perfil = data;
+    }
+
+    async function recarregarPerfil() {
+      S.usuarioCarregado = null; S.emCarga = null;
+      // Com o usuário já conhecido, não passa pelo getSession (que pode ficar esperando o bloqueio interno do supabase-js).
+      if (S.user) { await aoMudarSessao({ user: S.user }); return; }
+      const { data: { session } } = await S.sb.auth.getSession();
+      await aoMudarSessao(session);
+    }
+
+    async function aoMudarSessao(session) {
+      if (!session) {
+        S.user = null; S.perfil = null; S.usuarioCarregado = null; S.guias = [];
+        pararCanal(); pararTimers();
+        mostrarView('view-login');
+        carregarUnidadesCadastro();
+        return;
+      }
+      if (S.usuarioCarregado === session.user.id || S.emCarga === session.user.id) return;
+      S.emCarga = session.user.id;
+      try { await prepararSessao(session); } finally { S.emCarga = null; }
+    }
+
+    async function prepararSessao(session) {
+      S.user = session.user;
+      try {
+        await carregarPerfil();
+      } catch (e) {
+        mostrarView('view-pendente');
+        $('pendente-titulo').textContent = 'Não foi possível ler seu acesso';
+        $('pendente-texto').textContent = traduzirErro(e);
+        return;
+      }
+      const p = S.perfil;
+      if (!p || p.papel === 'pendente' || p.papel === 'bloqueado' || (p.papel === 'ubs' && !p.unidade_id)) {
+        await carregarUnidades().catch(() => {});
+        const pedida = p && p.unidade_pedida_id ? nomeUnidade(p.unidade_pedida_id) : 'não informada';
+        $('pendente-titulo').textContent = p && p.papel === 'bloqueado' ? 'Acesso bloqueado' : 'Acesso aguardando liberação';
+        $('pendente-texto').textContent = p && p.papel === 'bloqueado'
+          ? 'Seu acesso foi suspenso pelo administrador.'
+          : `${p ? p.nome || session.user.email : session.user.email}, seu pedido de acesso (unidade: ${pedida}) foi registrado. Assim que o administrador liberar, clique em "Verificar de novo".`;
+        mostrarView('view-pendente');
+        return;
+      }
+      S.usuarioCarregado = session.user.id;
+      await abrirAplicativo();
+    }
+
+    // =========================================================================
+    // DADOS
+    // =========================================================================
+    async function carregarUnidades() {
+      const { data, error } = await S.sb.from('unidades').select('*').order('tipo').order('nome');
+      if (error) throw error;
+      S.unidades = data;
+    }
+
+    async function carregarGuias() {
+      const desde = new Date(Date.now() - CONFIG.DIAS_HISTORICO * 86400000).toISOString();
+      const passo = 1000; let de = 0, todas = [];
+      for (;;) {
+        const { data, error } = await S.sb.from('guias').select('*')
+          .or(`status.in.(enviada,aguardando),atualizado_em.gte."${desde}"`)
+          .order('criado_em', { ascending: false })
+          .range(de, de + passo - 1);
+        if (error) throw error;
+        todas = todas.concat(data);
+        if (data.length < passo) break;
+        de += passo;
+      }
+      S.guias = todas;
+    }
+
+    async function recarregarGuias(avisar = false) {
+      try {
+        await carregarGuias();
+        if (ehAdmin()) atualizarPendentes();
+        renderizar();
+        if (avisar) toast('Lista atualizada.', 'sucesso');
+      } catch (e) { if (avisar) toast(traduzirErro(e), 'erro'); }
+    }
+
+    function guardarLocal(g) {
+      const i = S.guias.findIndex(x => x.id === g.id);
+      if (i >= 0) S.guias[i] = g; else S.guias.unshift(g);
+    }
+
+    function iniciarCanal() {
+      pararCanal();
+      S.canal = S.sb.channel('guias-' + S.user.id)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'guias' }, (p) => {
+          if (p.eventType === 'DELETE') {
+            S.guias = S.guias.filter(g => g.id !== (p.old && p.old.id));
+          } else if (p.new && p.new.id) {
+            const nova = !S.guias.some(g => g.id === p.new.id);
+            guardarLocal(p.new);
+            if (nova && p.eventType === 'INSERT' && p.new.criado_por !== S.user.id) {
+              if (p.new.status === 'enviada') { bipe('alerta'); toast(`Nova guia no malote: ${p.new.paciente_nome}`, 'info'); }
+              else toast(`Nova guia cadastrada: ${p.new.paciente_nome}`, 'info');
+            }
+          }
+          renderizar();
+        })
+        .subscribe((status) => {
+          const ok = status === 'SUBSCRIBED';
+          $('ponto-ao-vivo').className = `w-2 h-2 rounded-full ${ok ? 'bg-emerald-300' : 'bg-amber-300'}`;
+          $('texto-ao-vivo').textContent = ok ? 'Ao vivo' : 'Reconectando';
+          if (ok) recarregarGuias(false);
+        });
+    }
+    function pararCanal() {
+      if (S.canal && S.sb) { S.sb.removeChannel(S.canal); }
+      S.canal = null;
+    }
+    function pararTimers() { S.timers.forEach(clearInterval); S.timers = []; }
+
+    async function abrirAplicativo() {
+      mostrarView('view-carregando');
+      try {
+        await carregarUnidades();
+        await carregarGuias();
+      } catch (e) {
+        mostrarView('view-pendente');
+        $('pendente-titulo').textContent = 'Não foi possível carregar as guias';
+        $('pendente-texto').textContent = traduzirErro(e);
+        return;
+      }
+      const p = S.perfil;
+      $('cab-unidade').textContent = podeTodas()
+        ? (p.unidade_id ? `${nomeUnidade(p.unidade_id)} • todas as unidades` : 'Central • todas as unidades')
+        : nomeUnidade(p.unidade_id);
+      $('cab-usuario').textContent = `${p.nome || S.user.email} • ${PAPEL_TXT[p.papel] || p.papel}`;
+      $('barra-central').classList.toggle('hidden', !podeTodas());
+      $('btn-protocolo').classList.toggle('hidden', !podeTodas());
+      $('btn-admin').classList.toggle('hidden', !ehAdmin());
+      document.querySelectorAll('[data-periodo]').forEach(el => el.textContent = `Últimos ${CONFIG.DIAS_HISTORICO} dias`);
+      S.filtro = 'aguardando';
+      montarSelectUnidades();
+      mostrarView('view-app');
+      definirFiltro(S.filtro);
+      iniciarCanal();
+      if (ehAdmin()) atualizarPendentes();
+      pararTimers();
+      S.ultimoDia = hojeISO();
+      S.timers.push(setInterval(() => recarregarGuias(false), 5 * 60 * 1000));
+      S.timers.push(setInterval(() => { if (hojeISO() !== S.ultimoDia) { S.ultimoDia = hojeISO(); renderizar(); } }, 60 * 1000));
+      setTimeout(() => verificarUrgencias(false), 800);
+    }
+
+    function montarSelectUnidades() {
+      const ativas = S.unidades.filter(u => u.ativa);
+      const ubs = ativas.filter(u => u.tipo === 'ubs');
+      $('filtro-unidade').innerHTML = '<option value="todas">Todas as unidades</option>' +
+        ubs.map(u => `<option value="${u.id}">${esc(u.nome)}</option>`).join('');
+      $('filtro-unidade').value = S.unidadeFiltro;
+      const opcoes = ubs.map(u => `<option value="${u.id}">${esc(u.nome)}</option>`).join('');
+      $('f-unidade').innerHTML = '<option value="">Escolha a unidade...</option>' + opcoes;
+      $('p-unidade').innerHTML = opcoes;
+      $('i-unidade').innerHTML = opcoes;
+    }
+
+    // =========================================================================
+    // FILTROS E CONTAGENS
+    // =========================================================================
+    function maloteAtrasado(g) { return g.status === 'enviada' && diasDesde(g.enviada_em || g.criado_em) > CONFIG.MALOTE_ALERTA_DIAS; }
+    function urgente(g) { return (g.status === 'aguardando' && diasAte(g.prazo_retirada) <= 1) || maloteAtrasado(g); }
+
+    function guiasDaVisao() {
+      if (!podeTodas() || S.unidadeFiltro === 'todas') return S.guias;
+      const id = Number(S.unidadeFiltro);
+      return S.guias.filter(g => g.unidade_id === id);
+    }
+
+    function definirFiltro(f) {
+      S.filtro = f; S.limite = 200;
+      ['malote', 'aguardando', 'urgentes', 'retirada', 'nao_retirada'].forEach(k => {
+        const el = $('card-' + k);
+        el.classList.remove('border-sky-500', 'border-teal-600', 'border-amber-500', 'border-emerald-500', 'border-rose-500');
+        el.classList.add('border-transparent');
+      });
+      const borda = { malote: 'border-sky-500', aguardando: 'border-teal-600', urgentes: 'border-amber-500', retirada: 'border-emerald-500', nao_retirada: 'border-rose-500' };
+      if (borda[f]) { $('card-' + f).classList.remove('border-transparent'); $('card-' + f).classList.add(borda[f]); }
+      renderizar();
+    }
+
+    function ordenar(lista) {
+      const peso = { enviada: 0, aguardando: 1, retirada: 2, nao_retirada: 3, cancelada: 4 };
+      return lista.sort((a, b) => {
+        if (peso[a.status] !== peso[b.status] && S.filtro === 'todas') return peso[a.status] - peso[b.status];
+        if (a.status === 'aguardando' && b.status === 'aguardando') return String(a.prazo_retirada || '9999').localeCompare(String(b.prazo_retirada || '9999'));
+        if (a.status === 'enviada' && b.status === 'enviada') return String(a.enviada_em || '').localeCompare(String(b.enviada_em || ''));
+        return String(b.atualizado_em || '').localeCompare(String(a.atualizado_em || ''));
+      });
+    }
+
+    // =========================================================================
+    // RENDERIZAÇÃO
+    // =========================================================================
+    function renderizar() {
+      if (!S.perfil || !$('view-app').classList.contains('ativa')) return;
+      const visao = guiasDaVisao();
+      const n = {
+        malote: visao.filter(g => g.status === 'enviada').length,
+        aguardando: visao.filter(g => g.status === 'aguardando').length,
+        urgentes: visao.filter(urgente).length,
+        retirada: visao.filter(g => g.status === 'retirada').length,
+        nao_retirada: visao.filter(g => g.status === 'nao_retirada').length
+      };
+      Object.keys(n).forEach(k => $('n-' + k).textContent = n[k]);
+      $('n-todas').textContent = visao.length;
+
+      // avisos do topo
+      const atrasados = visao.filter(maloteAtrasado).length;
+      $('banner-malote').classList.toggle('hidden', n.malote === 0);
+      $('banner-malote-texto').textContent = podeTodas()
+        ? `${n.malote} guia(s) no malote sem confirmação de chegada${atrasados ? `, ${atrasados} há mais de ${CONFIG.MALOTE_ALERTA_DIAS} dias` : ''}.`
+        : `${n.malote} guia(s) a caminho no malote. Quando chegarem, confirme a chegada para começar a contar o prazo.`;
+      const urgPrazo = visao.filter(g => g.status === 'aguardando' && diasAte(g.prazo_retirada) <= 1).length;
+      $('banner-urgente').classList.toggle('hidden', urgPrazo === 0 || $('banner-urgente').dataset.fechado === '1');
+      $('banner-urgente-texto').textContent = `Atenção: ${urgPrazo} guia(s) com prazo de retirada vencendo hoje, amanhã ou já atrasadas.`;
+
+      // botão confirmar todas do malote (só faz sentido com uma unidade definida)
+      const podeConfirmarTodas = S.filtro === 'malote' && n.malote > 0 && (!podeTodas() || S.unidadeFiltro !== 'todas');
+      $('btn-confirmar-malote').classList.toggle('hidden', !podeConfirmarTodas);
+      $('txt-confirmar-malote').textContent = `Confirmar chegada de todas (${n.malote})`;
+
+      renderizarResumo();
+
+      const titulos = {
+        malote: 'Guias no malote (enviadas, chegada não confirmada)', aguardando: 'Guias aguardando retirada',
+        urgentes: 'Guias urgentes', retirada: 'Guias retiradas', nao_retirada: 'Guias não retiradas', todas: 'Todas as guias'
+      };
+      const cor = { malote: 'bg-sky-600', aguardando: 'bg-teal-600', urgentes: 'bg-amber-500', retirada: 'bg-emerald-500', nao_retirada: 'bg-rose-500', todas: 'bg-slate-500' };
+      $('titulo-lista').innerHTML = `<span class="w-2.5 h-2.5 rounded-full ${cor[S.filtro]}"></span>${titulos[S.filtro]}`;
+
+      const busca = $('busca').value.trim().toLowerCase();
+      $('btn-limpar-busca').classList.toggle('hidden', !busca);
+      let lista = visao.filter(g => {
+        if (S.filtro === 'malote' && g.status !== 'enviada') return false;
+        if (S.filtro === 'aguardando' && g.status !== 'aguardando') return false;
+        if (S.filtro === 'urgentes' && !urgente(g)) return false;
+        if (S.filtro === 'retirada' && g.status !== 'retirada') return false;
+        if (S.filtro === 'nao_retirada' && g.status !== 'nao_retirada') return false;
+        if (busca) {
+          const t = `${g.paciente_nome} ${g.procedimento} ${g.local_atendimento || ''} ${g.telefone} ${g.numero_guia || ''} ${podeTodas() ? nomeUnidade(g.unidade_id) : ''}`.toLowerCase();
+          return t.includes(busca);
+        }
+        return true;
+      });
+      lista = ordenar(lista);
+      $('contador').textContent = `${lista.length} ${lista.length === 1 ? 'registro' : 'registros'}`;
+      $('vazio').classList.toggle('hidden', lista.length > 0);
+      $('mais-guias').classList.toggle('hidden', lista.length <= S.limite);
+      $('grade-guias').innerHTML = lista.slice(0, S.limite).map(cartao).join('');
+      icones();
+    }
+
+    function renderizarResumo() {
+      const caixa = $('resumo-unidades');
+      if (!podeTodas() || !S.mostrarResumo) { caixa.classList.add('hidden'); $('txt-resumo').textContent = 'Resumo por unidade'; return; }
+      $('txt-resumo').textContent = 'Esconder resumo';
+      caixa.classList.remove('hidden');
+      const linhas = S.unidades.filter(u => u.tipo === 'ubs' && u.ativa).map(u => {
+        const gs = S.guias.filter(g => g.unidade_id === u.id);
+        const c = (f) => gs.filter(f).length;
+        const ret = c(g => g.status === 'retirada'), nao = c(g => g.status === 'nao_retirada');
+        const pct = ret + nao ? Math.round(100 * nao / (ret + nao)) + '%' : '—';
+        return { u, malote: c(g => g.status === 'enviada'), atraso: c(maloteAtrasado), ag: c(g => g.status === 'aguardando'), urg: c(urgente), ret, nao, pct };
+      });
+      const num = (v, cls = '') => `<td class="px-3 py-2 text-right tabular-nums ${v && cls ? cls : ''}">${v}</td>`;
+      caixa.innerHTML = `
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+            <th class="px-3 py-2">Unidade</th><th class="px-3 py-2 text-right">No malote</th><th class="px-3 py-2 text-right">Malote parado</th>
+            <th class="px-3 py-2 text-right">Aguardando</th><th class="px-3 py-2 text-right">Urgentes</th><th class="px-3 py-2 text-right">Retiradas</th>
+            <th class="px-3 py-2 text-right">Não retiradas</th><th class="px-3 py-2 text-right">% perdidas</th></tr></thead>
+          <tbody>${linhas.map(l => `
+            <tr class="border-b border-slate-100 hover:bg-teal-50/50 cursor-pointer" onclick="S.unidadeFiltro='${l.u.id}'; document.getElementById('filtro-unidade').value='${l.u.id}'; renderizar()">
+              <td class="px-3 py-2 font-medium">${esc(l.u.nome)}</td>${num(l.malote)}${num(l.atraso, 'text-orange-600 font-bold')}${num(l.ag)}
+              ${num(l.urg, 'text-amber-600 font-bold')}${num(l.ret)}${num(l.nao, 'text-rose-600 font-bold')}<td class="px-3 py-2 text-right">${l.pct}</td>
+            </tr>`).join('')}</tbody>
+        </table>
+        <p class="text-[11px] text-slate-500 mt-2">Retiradas e não retiradas: últimos ${CONFIG.DIAS_HISTORICO} dias. Clique numa linha para ver só aquela unidade.</p>`;
+    }
+
+    function selo(g) {
+      const s = (cls, ic, txt) => `<span class="inline-flex items-center gap-1 ${cls} text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i> ${txt}</span>`;
+      if (g.status === 'retirada') return s('bg-emerald-100 text-emerald-800', 'circle-check', 'Retirada');
+      if (g.status === 'nao_retirada') return s('bg-rose-100 text-rose-800', 'circle-x', 'Não retirada');
+      if (g.status === 'cancelada') return s('bg-slate-200 text-slate-700', 'ban', 'Cancelada');
+      if (g.status === 'enviada') {
+        const d = diasDesde(g.enviada_em || g.criado_em);
+        return maloteAtrasado(g) ? s('bg-orange-500 text-white', 'truck', `Malote parado (${d} dias)`) : s('bg-sky-100 text-sky-800', 'truck', d ? `No malote há ${d} dia${d > 1 ? 's' : ''}` : 'Enviada hoje');
+      }
+      const d = diasAte(g.prazo_retirada);
+      if (!g.prazo_retirada) return s('bg-teal-100 text-teal-800', 'calendar-clock', 'Sem prazo');
+      if (d < 0) return s('bg-rose-600 text-white', 'octagon-alert', `ATRASADA (${-d} ${d === -1 ? 'dia' : 'dias'})`);
+      if (d === 0) return s('bg-rose-500 text-white animate-pulse', 'bell-ring', 'VENCE HOJE!');
+      if (d === 1) return s('bg-amber-500 text-white', 'clock', 'Vence amanhã');
+      return s('bg-teal-100 text-teal-800', 'calendar-clock', `Faltam ${d} dias`);
+    }
+
+    function cartao(g) {
+      const d = diasAte(g.prazo_retirada);
+      const critico = g.status === 'aguardando' && d <= 0;
+      const alerta = (g.status === 'aguardando' && d === 1) || maloteAtrasado(g);
+      let borda = 'border-slate-200';
+      if (critico) borda = 'border-rose-400 urgent-card-glow';
+      else if (alerta) borda = 'border-amber-400';
+      else if (g.status === 'enviada') borda = 'border-sky-200';
+      else if (g.status === 'retirada') borda = 'border-emerald-200 bg-emerald-50/20';
+      const falando = S.falandoId === g.id;
+      const id = g.id;
+      const b = (cls, onclick, ic, txt, title = '') => `<button onclick="${onclick}" title="${esc(title)}" class="${cls} text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"><i data-lucide="${ic}" class="w-4 h-4 shrink-0"></i><span>${txt}</span></button>`;
+
+      let acoes = '';
+      if (g.status === 'enviada') {
+        acoes = `<div class="grid grid-cols-1 gap-2">${b('bg-sky-600 hover:bg-sky-700 text-white', `confirmarChegada('${id}')`, 'package-check', 'Chegou no posto', 'Confirmar que a guia chegou no malote')}</div>`;
+      } else if (g.status === 'aguardando') {
+        acoes = `
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            ${b('bg-emerald-600 hover:bg-emerald-700 text-white', `enviarWhatsApp('${id}', false)`, 'message-circle', 'WhatsApp (1º aviso)')}
+            ${b('bg-amber-500 hover:bg-amber-600 text-white', `enviarWhatsApp('${id}', true)`, 'send', 'WhatsApp (reforço)')}
+            ${b(falando ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200', `falar('${id}')`, falando ? 'square' : 'volume-2', falando ? 'Parar voz' : 'Ouvir aviso')}
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            ${b('bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200', `marcarRetirada('${id}')`, 'circle-check-big', 'Paciente retirou')}
+            ${b('bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200', `marcarNaoRetirada('${id}')`, 'user-x', 'Não retirou')}
+          </div>`;
+      } else {
+        acoes = `<div class="grid grid-cols-1 gap-2">${b('bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200', `reabrir('${id}')`, 'undo-2', 'Voltar para aguardando retirada')}</div>`;
+      }
+      const rodape = `
+        <div class="flex items-center justify-end gap-1 pt-1">
+          <button onclick="verHistorico('${id}')" class="text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"><i data-lucide="history" class="w-3.5 h-3.5"></i>Histórico</button>
+          <button onclick="abrirFormulario('${id}')" class="text-slate-500 hover:text-teal-800 hover:bg-teal-50 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Editar</button>
+          ${podeTodas() ? `<button onclick="excluirGuia('${id}')" class="text-slate-400 hover:text-rose-700 hover:bg-rose-50 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Excluir</button>` : ''}
+        </div>`;
+
+      return `
+        <article class="bg-white rounded-2xl shadow-xs border-2 ${borda} p-5 flex flex-col justify-between transition hover:shadow-md">
+          <div>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                ${podeTodas() ? `<p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">${esc(nomeUnidade(g.unidade_id))}</p>` : ''}
+                <h3 class="text-base sm:text-lg font-extrabold text-slate-900 leading-snug">${esc(g.paciente_nome)}</h3>
+                <p class="text-sm font-bold text-[#0f766e] mt-0.5 flex items-center gap-1.5"><i data-lucide="stethoscope" class="w-4 h-4 shrink-0"></i>${esc(g.procedimento)}</p>
+              </div>
+              <div class="shrink-0">${selo(g)}</div>
+            </div>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+              <div class="flex items-center gap-2 text-slate-700"><i data-lucide="phone" class="w-4 h-4 text-slate-400 shrink-0"></i><span class="font-semibold">${esc(g.telefone || 'Sem telefone')}</span></div>
+              <div class="flex items-center gap-2 text-slate-700 min-w-0"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0"></i><span class="truncate" title="${esc(g.local_atendimento || '')}">${esc(g.local_atendimento || 'Local a confirmar')}</span></div>
+              <div class="flex items-center gap-2 text-slate-700"><i data-lucide="calendar" class="w-4 h-4 text-teal-600 shrink-0"></i><span>Atendimento: <strong class="text-slate-900">${dataHoraBR(g.data_atendimento)}</strong></span></div>
+              <div class="flex items-center gap-2 text-slate-700"><i data-lucide="hourglass" class="w-4 h-4 text-amber-600 shrink-0"></i><span>Retirar até: <strong class="${critico ? 'text-rose-600' : 'text-slate-900'}">${g.prazo_retirada ? dataBR(g.prazo_retirada) : (g.status === 'enviada' ? `${CONFIG.PRAZO_PADRAO_DIAS} dias após chegar` : '—')}</strong></span></div>
+              ${g.numero_guia ? `<div class="flex items-center gap-2 text-slate-700 sm:col-span-2"><i data-lucide="hash" class="w-4 h-4 text-slate-400 shrink-0"></i><span>Guia/protocolo: <strong>${esc(g.numero_guia)}</strong></span></div>` : ''}
+            </div>
+            ${g.orientacoes ? `<div class="mt-3 text-xs text-slate-700 bg-teal-50/70 border border-teal-200/70 rounded-xl p-3 flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 text-teal-700 shrink-0 mt-0.5"></i><p><strong class="text-teal-950">Orientações:</strong> ${esc(g.orientacoes)}</p></div>` : ''}
+            ${g.observacao ? `<div class="mt-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-2.5"><strong>Obs. interna:</strong> ${esc(g.observacao)}</div>` : ''}
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+              <span>${g.status === 'enviada' ? `Enviada: <strong>${instanteBR(g.enviada_em)}</strong>` : `Chegou no posto: <strong>${g.recebida_em ? instanteBR(g.recebida_em) : '—'}</strong>`}${g.retirada_em ? ` • Retirada: <strong>${instanteBR(g.retirada_em)}</strong>` : ''}</span>
+              <div class="flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded-md font-semibold ${g.primeiro_aviso_em ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}">${g.primeiro_aviso_em ? '✓ 1º aviso' : '1º aviso pendente'}</span>
+                <span class="px-2 py-0.5 rounded-md font-semibold ${g.reforco_em ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'}">${g.reforco_em ? '✓ Reforço' : 'Sem reforço'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3.5 border-t border-slate-100 space-y-2">${acoes}${rodape}</div>
+        </article>`;
+    }
+
+    // =========================================================================
+    // AÇÕES NAS GUIAS
+    // =========================================================================
+    async function atualizarGuia(id, campos, msgOk, tipo = 'sucesso') {
+      const { data, error } = await S.sb.from('guias').update(campos).eq('id', id).select().single();
+      if (error) { toast(traduzirErro(error), 'erro'); return null; }
+      guardarLocal(data); renderizar();
+      if (msgOk) toast(msgOk, tipo);
+      return data;
+    }
+
+    function confirmarChegada(id) { atualizarGuia(id, { status: 'aguardando' }, 'Chegada confirmada. O prazo de retirada começou a contar.'); }
+
+    function confirmarChegadaTodas() {
+      const visao = guiasDaVisao().filter(g => g.status === 'enviada');
+      if (!visao.length) return;
+      const unidade = podeTodas() ? nomeUnidade(Number(S.unidadeFiltro)) : nomeUnidade(S.perfil.unidade_id);
+      confirmar('Confirmar chegada do malote', `Confirmar que as ${visao.length} guia(s) chegaram em ${unidade}?`, async () => {
+        const ids = visao.map(g => g.id);
+        const btn = $('btn-confirmar-malote'); btn.disabled = true; btn.classList.add('opacity-60');
+        let feitas = 0;
+        for (let i = 0; i < ids.length; i += CONFIG.LOTE) {
+          if (ids.length > CONFIG.LOTE) $('txt-confirmar-malote').textContent = `Confirmando... ${feitas} de ${ids.length}`;
+          const { data, error } = await S.sb.from('guias').update({ status: 'aguardando' }).in('id', ids.slice(i, i + CONFIG.LOTE)).select();
+          if (error) { toast(`Parou em ${feitas} de ${ids.length}: ${traduzirErro(error)}`, 'erro'); break; }
+          data.forEach(guardarLocal); feitas += data.length;
+          if (i + CONFIG.LOTE < ids.length) await new Promise(r => setTimeout(r, CONFIG.PAUSA_LOTE_MS));
+        }
+        btn.disabled = false; btn.classList.remove('opacity-60');
+        if (feitas) { bipe('sucesso'); toast(`${feitas} guia(s) confirmadas.`, 'sucesso'); }
+        definirFiltro('aguardando');
+      }, 'Confirmar chegada');
+    }
+
+    async function marcarRetirada(id) {
+      const g = await atualizarGuia(id, { status: 'retirada' });
+      if (g) { bipe('sucesso'); toast(`Guia de ${g.paciente_nome} marcada como RETIRADA.`, 'sucesso'); }
+    }
+    function marcarNaoRetirada(id) {
+      const g = S.guias.find(x => x.id === id); if (!g) return;
+      confirmar('Guia não retirada', `Marcar a guia de ${g.paciente_nome} (${g.procedimento}) como NÃO RETIRADA? Isso conta como vaga perdida.`,
+        () => atualizarGuia(id, { status: 'nao_retirada' }, 'Guia marcada como não retirada.', 'aviso'), 'Marcar não retirada');
+    }
+    function reabrir(id) { atualizarGuia(id, { status: 'aguardando' }, 'Guia voltou para aguardando retirada.', 'info'); }
+
+    function excluirGuia(id) {
+      const g = S.guias.find(x => x.id === id); if (!g) return;
+      confirmar('Excluir guia', `Excluir o registro de ${g.paciente_nome} (${g.procedimento})? O histórico guarda quem excluiu. Para guia que perdeu o efeito, prefira a situação "Cancelada".`, async () => {
+        if (S.falandoId === id) pararFala();
+        const { error } = await S.sb.from('guias').delete().eq('id', id);
+        if (error) { toast(traduzirErro(error), 'erro'); return; }
+        S.guias = S.guias.filter(x => x.id !== id); renderizar();
+        toast('Registro excluído.', 'info');
+      }, 'Excluir');
+    }
+
+    function enviarWhatsApp(id, reforco) {
+      const g = S.guias.find(x => x.id === id); if (!g) return;
+      const tel = telefoneWhatsApp(g.telefone);
+      if (tel.length < 12) { toast('Telefone incompleto para WhatsApp. Corrija em Editar.', 'erro'); return; }
+      const unidade = nomeUnidade(g.unidade_id);
+      const prazo = g.prazo_retirada ? dataBR(g.prazo_retirada) : 'o quanto antes';
+      const local = g.local_atendimento ? `\n📍 *Local do atendimento:* ${g.local_atendimento}` : '';
+      const obs = g.orientacoes ? `\n📋 *Orientações:* ${g.orientacoes}` : '';
+      const atend = dataHoraBR(g.data_atendimento);
+      const msg = !reforco
+        ? `Olá, *${g.paciente_nome}*! Tudo bem?\n\nAqui é da *${unidade}*.\nSua guia de *${g.procedimento}* já chegou e está disponível para retirada aqui no posto! 🏥\n\n⏳ *Data limite para buscar a guia:* até *${prazo}*\n📅 *Data da consulta/exame:* ${atend}${local}${obs}\n\nPor favor, venha retirar sua guia trazendo documento com foto e Cartão SUS. Qualquer dúvida, estamos à disposição!`
+        : `⚠️ *LEMBRETE URGENTE - ${unidade}*\n\nOlá, *${g.paciente_nome}*! Consta em nosso controle que sua guia de *${g.procedimento}* ainda *não foi retirada* no posto.\n\n🚨 *ATENÇÃO AO PRAZO:* você precisa buscar a guia até *${prazo}*.\n📅 *Data marcada:* ${atend}${local}${obs}\n\nPor favor, compareça o quanto antes para não perder a vaga. Se não puder comparecer, avise-nos imediatamente!`;
+      window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+      atualizarGuia(id, reforco ? { reforco_em: new Date().toISOString() } : { primeiro_aviso_em: new Date().toISOString() });
+    }
+
+    function verificarUrgencias(manual) {
+      const urg = guiasDaVisao().filter(urgente);
+      if (urg.length) {
+        $('banner-urgente').dataset.fechado = '';
+        bipe('alerta');
+        if (manual) { definirFiltro('urgentes'); toast(`${urg.length} guia(s) urgente(s).`, 'aviso'); }
+      } else if (manual) {
+        bipe('sucesso'); toast('Nenhuma guia urgente agora.', 'sucesso');
+      }
+      renderizar();
+    }
+
+    // =========================================================================
+    // FORMULÁRIO
+    // =========================================================================
+    function abrirFormulario(id = null) {
+      $('form-guia').reset();
+      const g = id ? S.guias.find(x => x.id === id) : null;
+      $('f-id').value = g ? g.id : '';
+      $('modal-guia-titulo').textContent = g ? 'Editar guia' : 'Cadastrar guia';
+      $('f-unidade-bloco').classList.toggle('hidden', !podeTodas());
+      $('f-unidade').required = podeTodas();
+      if (g) {
+        $('f-unidade').value = g.unidade_id;
+        $('f-paciente').value = g.paciente_nome;
+        $('f-telefone').value = g.telefone || '';
+        $('f-procedimento').value = g.procedimento;
+        $('f-numero').value = g.numero_guia || '';
+        $('f-atendimento').value = g.data_atendimento ? String(g.data_atendimento).slice(0, 16) : '';
+        $('f-local').value = g.local_atendimento || '';
+        $('f-prazo').value = g.prazo_retirada || '';
+        $('f-status').value = g.status;
+        $('f-aviso1').checked = !!g.primeiro_aviso_em;
+        $('f-aviso2').checked = !!g.reforco_em;
+        $('f-orientacoes').value = g.orientacoes || '';
+        $('f-observacao').value = g.observacao || '';
+      } else {
+        $('f-unidade').value = podeTodas() && S.unidadeFiltro !== 'todas' ? S.unidadeFiltro : '';
+        $('f-status').value = podeTodas() ? 'enviada' : 'aguardando';
+        $('f-prazo').value = podeTodas() ? '' : somarDias(hojeISO(), CONFIG.PRAZO_PADRAO_DIAS);
+      }
+      abrirModal('modal-guia');
+      setTimeout(() => (podeTodas() && !g ? $('f-unidade') : $('f-paciente')).focus(), 80);
+    }
+
+    async function salvarGuia(ev) {
+      ev.preventDefault();
+      const id = $('f-id').value;
+      const atual = id ? S.guias.find(x => x.id === id) : null;
+      const unidadeId = podeTodas() ? Number($('f-unidade').value) : S.perfil.unidade_id;
+      if (!unidadeId) { toast('Escolha a unidade.', 'erro'); return; }
+      const agora = new Date().toISOString();
+      const dados = {
+        unidade_id: unidadeId,
+        paciente_nome: $('f-paciente').value.trim(),
+        telefone: $('f-telefone').value.trim(),
+        procedimento: $('f-procedimento').value.trim(),
+        numero_guia: $('f-numero').value.trim() || null,
+        data_atendimento: $('f-atendimento').value || null,
+        local_atendimento: $('f-local').value.trim() || null,
+        prazo_retirada: $('f-prazo').value || null,
+        status: $('f-status').value,
+        orientacoes: $('f-orientacoes').value.trim() || null,
+        observacao: $('f-observacao').value.trim() || null,
+        primeiro_aviso_em: $('f-aviso1').checked ? ((atual && atual.primeiro_aviso_em) || agora) : null,
+        reforco_em: $('f-aviso2').checked ? ((atual && atual.reforco_em) || agora) : null
+      };
+      const btn = $('btn-salvar-guia'); btn.disabled = true; btn.classList.add('opacity-60');
+      const q = id ? S.sb.from('guias').update(dados).eq('id', id).select().single()
+                   : S.sb.from('guias').insert(dados).select().single();
+      const { data, error } = await q;
+      btn.disabled = false; btn.classList.remove('opacity-60');
+      if (error) { toast(traduzirErro(error), 'erro'); return; }
+      guardarLocal(data);
+      fecharModal('modal-guia');
+      toast(id ? 'Guia atualizada.' : (data.status === 'enviada' ? 'Guia cadastrada no malote.' : 'Guia cadastrada.'), 'sucesso');
+      if (!id && data.status === 'enviada' && S.filtro !== 'malote' && S.filtro !== 'todas') definirFiltro('malote');
+      else renderizar();
+    }
+
+    // =========================================================================
+    // HISTÓRICO
+    // =========================================================================
+    const CAMPOS = {
+      unidade_id: 'Unidade', paciente_nome: 'Paciente', telefone: 'Telefone', procedimento: 'Consulta/exame',
+      numero_guia: 'Nº da guia', local_atendimento: 'Local', data_atendimento: 'Atendimento', orientacoes: 'Orientações',
+      prazo_retirada: 'Prazo de retirada', status: 'Situação', observacao: 'Observação', enviada_em: 'Enviada em',
+      recebida_em: 'Chegou no posto em', retirada_em: 'Retirada em', primeiro_aviso_em: '1º aviso', reforco_em: 'Reforço'
+    };
+    function valorCampo(k, v) {
+      if (v === null || v === undefined || v === '') return '(vazio)';
+      if (k === 'status') return STATUS_TXT[v] || v;
+      if (k === 'unidade_id') return nomeUnidade(v);
+      if (k === 'prazo_retirada') return dataBR(v);
+      if (k === 'data_atendimento') return dataHoraBR(v);
+      if (k.endsWith('_em')) return instanteBR(v);
+      return String(v);
+    }
+    async function verHistorico(id) {
+      $('historico-corpo').innerHTML = '<p class="text-slate-500">Carregando...</p>';
+      abrirModal('modal-historico');
+      const { data, error } = await S.sb.from('guias_historico').select('*').eq('guia_id', id).order('quando');
+      if (error) { $('historico-corpo').innerHTML = `<p class="text-rose-700">${esc(traduzirErro(error))}</p>`; return; }
+      if (!data.length) { $('historico-corpo').innerHTML = '<p class="text-slate-500">Sem registros.</p>'; return; }
+      $('historico-corpo').innerHTML = '<ol class="space-y-4">' + data.map(h => {
+        let det = '';
+        if (h.acao === 'criou') det = `Cadastrou a guia como <strong>${esc(STATUS_TXT[h.para_status] || h.para_status)}</strong>.`;
+        else if (h.acao === 'excluiu') det = 'Excluiu o registro.';
+        else det = '<ul class="mt-1 space-y-0.5">' + Object.entries(h.mudancas || {})
+          .filter(([k]) => CAMPOS[k])
+          .map(([k, v]) => `<li><span class="text-slate-500">${CAMPOS[k]}:</span> ${esc(valorCampo(k, v.de))} → <strong>${esc(valorCampo(k, v.para))}</strong></li>`).join('') + '</ul>';
+        return `<li class="border-l-2 border-teal-300 pl-3"><p class="text-xs text-slate-500">${instanteBR(h.quando)} • ${esc(h.quem_nome || 'usuário removido')}</p><div class="text-sm">${det}</div></li>`;
+      }).join('') + '</ol>';
+    }
+
+    // =========================================================================
+    // PLANILHA (CSV PARA EXCEL)
+    // =========================================================================
+    function exportarCSV() {
+      const lista = ordenar([...guiasDaVisao()]);
+      if (!lista.length) { toast('Não há guias para exportar.', 'aviso'); return; }
+      const cab = ['Unidade', 'Paciente', 'Telefone', 'Consulta/exame', 'Nº guia', 'Situação', 'Enviada em', 'Chegou no posto', 'Prazo de retirada', 'Atendimento', 'Local', '1º aviso', 'Reforço', 'Retirada em', 'Orientações', 'Observação'];
+      const cel = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const linhas = lista.map(g => [
+        nomeUnidade(g.unidade_id), g.paciente_nome, g.telefone, g.procedimento, g.numero_guia, STATUS_TXT[g.status],
+        g.enviada_em ? instanteBR(g.enviada_em) : '', g.recebida_em ? instanteBR(g.recebida_em) : '', g.prazo_retirada ? dataBR(g.prazo_retirada) : '',
+        g.data_atendimento ? dataHoraBR(g.data_atendimento) : '', g.local_atendimento, g.primeiro_aviso_em ? instanteBR(g.primeiro_aviso_em) : '',
+        g.reforco_em ? instanteBR(g.reforco_em) : '', g.retirada_em ? instanteBR(g.retirada_em) : '', g.orientacoes, g.observacao
+      ].map(cel).join(';'));
+      const blob = new Blob(['﻿' + [cab.map(cel).join(';'), ...linhas].join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `guias_${hojeISO()}.csv`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast('Planilha baixada. Ela tem dados de pacientes: guarde em local seguro.', 'sucesso');
+    }
+
+    // =========================================================================
+    // PROTOCOLO DO MALOTE
+    // =========================================================================
+    function abrirProtocolo() {
+      $('p-data').value = hojeISO();
+      if (S.unidadeFiltro !== 'todas') $('p-unidade').value = S.unidadeFiltro;
+      abrirModal('modal-protocolo');
+    }
+    function imprimirProtocolo() {
+      const uid = Number($('p-unidade').value), dia = $('p-data').value;
+      const lista = S.guias.filter(g => g.unidade_id === uid && diaLocalDe(g.enviada_em) === dia)
+        .sort((a, b) => a.paciente_nome.localeCompare(b.paciente_nome, 'pt-BR'));
+      if (!lista.length) { toast('Nenhuma guia enviada para essa unidade nesse dia.', 'aviso'); return; }
+      const linhas = lista.map((g, i) => `<tr><td>${i + 1}</td><td>${esc(g.paciente_nome)}</td><td>${esc(g.procedimento)}</td><td>${esc(dataHoraBR(g.data_atendimento))}</td><td>${esc(g.local_atendimento || '')}</td><td>${esc(g.numero_guia || '')}</td><td class="ok"></td></tr>`).join('');
+      const w = window.open('', '_blank');
+      if (!w) { toast('O navegador bloqueou a janela de impressão. Permita pop-ups para esta página.', 'erro'); return; }
+      w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Protocolo do malote - ${esc(nomeUnidade(uid))} - ${dataBR(dia)}</title>
+        <style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1{font-size:18px;margin:0}h2{font-size:14px;font-weight:normal;margin:4px 0 16px}
+        table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #444;padding:6px;text-align:left;vertical-align:top}th{background:#eee}
+        td.ok{width:60px}.ass{display:flex;gap:40px;margin-top:48px;font-size:12px}.ass div{flex:1;border-top:1px solid #000;padding-top:4px}
+        @page{size:A4 portrait;margin:14mm}</style></head><body>
+        <h1>Protocolo de envio de guias (malote)</h1>
+        <h2>Secretaria Municipal de Saúde de Assis Chateaubriand<br>Destino: <strong>${esc(nomeUnidade(uid))}</strong> • Enviadas em ${dataBR(dia)} • Total: <strong>${lista.length}</strong></h2>
+        <table><thead><tr><th>#</th><th>Paciente</th><th>Consulta/exame</th><th>Atendimento</th><th>Local</th><th>Nº guia</th><th>Conferido</th></tr></thead><tbody>${linhas}</tbody></table>
+        <div class="ass"><div>Enviado por (central)</div><div>Recebido por (unidade)</div><div>Data do recebimento: ____/____/______</div></div>
+        <script>window.onload=function(){window.print()}<\/script></body></html>`);
+      w.document.close();
+      fecharModal('modal-protocolo');
+    }
+
+    // =========================================================================
+    // IMPORTAR DO CONTROLE ANTIGO (backup .json)
+    // =========================================================================
+    let importacao = [];
+    function abrirImportar() {
+      importacao = [];
+      $('i-arquivo').value = '';
+      $('i-resumo').textContent = '';
+      $('i-unidade-bloco').classList.toggle('hidden', !podeTodas());
+      if (!podeTodas()) $('i-unidade').innerHTML = `<option value="${S.perfil.unidade_id}">${esc(nomeUnidade(S.perfil.unidade_id))}</option>`;
+      else if (S.unidadeFiltro !== 'todas') $('i-unidade').value = S.unidadeFiltro;
+      abrirModal('modal-importar');
+    }
+    $('i-arquivo').addEventListener('change', (ev) => {
+      const arq = ev.target.files[0]; if (!arq) return;
+      const leitor = new FileReader();
+      leitor.onload = () => {
+        try {
+          const dados = JSON.parse(leitor.result);
+          if (!Array.isArray(dados)) throw new Error('formato');
+          importacao = dados.filter(g => g && !g.isExample && g.patientName && g.procedureType);
+          $('i-resumo').textContent = `${importacao.length} guia(s) encontradas no arquivo (exemplos ignorados).`;
+        } catch (e) { importacao = []; $('i-resumo').textContent = 'Arquivo inválido: escolha o backup .json do controle antigo.'; }
+      };
+      leitor.readAsText(arq);
+    });
+    async function importarAntigo() {
+      const uid = podeTodas() ? Number($('i-unidade').value) : S.perfil.unidade_id;
+      if (!importacao.length) { toast('Escolha primeiro o arquivo de backup.', 'aviso'); return; }
+      if (!uid) { toast('Escolha a unidade.', 'erro'); return; }
+      const mapaStatus = { pending: 'aguardando', picked_up: 'retirada', missed: 'nao_retirada' };
+      const dataValida = (s) => /^\d{4}-\d{2}-\d{2}/.test(s || '') ? s : null;
+      const linhas = importacao.map(g => {
+        const recebida = dataValida(g.receivedDate) ? new Date(g.receivedDate.slice(0, 10) + 'T12:00:00').toISOString() : null;
+        return {
+          unidade_id: uid,
+          paciente_nome: String(g.patientName).trim().slice(0, 150),
+          telefone: String(g.phone || '').trim().slice(0, 20),
+          procedimento: String(g.procedureType).trim().slice(0, 150),
+          data_atendimento: dataValida(g.appointmentDateTime) ? g.appointmentDateTime.slice(0, 16) : null,
+          local_atendimento: g.location || null,
+          orientacoes: g.instructions || null,
+          prazo_retirada: dataValida(g.pickupDeadline) ? g.pickupDeadline.slice(0, 10) : null,
+          status: mapaStatus[g.status] || 'aguardando',
+          recebida_em: recebida,
+          retirada_em: g.pickedUpAt || null,
+          primeiro_aviso_em: g.firstNoticeSent ? (recebida || new Date().toISOString()) : null,
+          reforco_em: g.reinforcementSent ? (recebida || new Date().toISOString()) : null,
+          observacao: 'Importada do controle antigo'
+        };
+      });
+      const btn = $('btn-importar'); btn.disabled = true; btn.classList.add('opacity-60');
+      let ok = 0;
+      for (let i = 0; i < linhas.length; i += CONFIG.LOTE) {
+        $('i-resumo').textContent = `Importando... ${ok} de ${linhas.length}. Não feche a página.`;
+        const { data, error } = await S.sb.from('guias').insert(linhas.slice(i, i + CONFIG.LOTE)).select();
+        if (error) { toast(`Parou depois de ${ok}: ${traduzirErro(error)}`, 'erro'); break; }
+        data.forEach(guardarLocal); ok += data.length;
+        if (i + CONFIG.LOTE < linhas.length) await new Promise(r => setTimeout(r, CONFIG.PAUSA_LOTE_MS));
+      }
+      btn.disabled = false; btn.classList.remove('opacity-60');
+      fecharModal('modal-importar');
+      renderizar();
+      if (ok) toast(`${ok} guia(s) importadas para ${nomeUnidade(uid)}.`, 'sucesso');
+    }
+
+    // =========================================================================
+    // ADMINISTRAÇÃO
+    // =========================================================================
+    async function atualizarPendentes() {
+      const { count } = await S.sb.from('perfis').select('user_id', { count: 'exact', head: true }).eq('papel', 'pendente');
+      const el = $('badge-pendentes');
+      el.classList.toggle('hidden', !count);
+      el.textContent = count || '';
+    }
+    function trocarAbaAdmin(aba) {
+      const a = aba === 'acessos';
+      $('admin-acessos').classList.toggle('hidden', !a);
+      $('admin-unidades').classList.toggle('hidden', a);
+      $('aba-acessos').className = `px-4 py-2 rounded-lg cursor-pointer ${a ? 'bg-white shadow-sm text-slate-800' : 'text-slate-600'}`;
+      $('aba-unidades').className = `px-4 py-2 rounded-lg cursor-pointer ${!a ? 'bg-white shadow-sm text-slate-800' : 'text-slate-600'}`;
+    }
+    async function abrirAdmin() {
+      trocarAbaAdmin('acessos');
+      abrirModal('modal-admin');
+      await Promise.all([renderizarAcessos(), renderizarUnidadesAdmin()]);
+    }
+    async function renderizarAcessos() {
+      const caixa = $('admin-acessos');
+      caixa.innerHTML = '<p class="text-slate-500 text-sm">Carregando...</p>';
+      const { data, error } = await S.sb.from('perfis').select('*').order('criado_em', { ascending: false });
+      if (error) { caixa.innerHTML = `<p class="text-rose-700 text-sm">${esc(traduzirErro(error))}</p>`; return; }
+      const ordem = { pendente: 0, ubs: 1, central: 2, admin: 3, bloqueado: 4 };
+      data.sort((a, b) => (ordem[a.papel] - ordem[b.papel]) || a.nome.localeCompare(b.nome, 'pt-BR'));
+      const opcUni = (sel) => '<option value="">(sem unidade)</option>' + S.unidades.filter(u => u.ativa).map(u => `<option value="${u.id}" ${u.id === sel ? 'selected' : ''}>${esc(u.nome)}</option>`).join('');
+      const opcPapel = (sel) => Object.entries(PAPEL_TXT).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${v}</option>`).join('');
+      caixa.innerHTML = `
+        <p class="text-sm text-slate-600 mb-3">Quem pede acesso aparece como <strong>Aguardando liberação</strong>. Confira o nome e a unidade, escolha o papel e clique em Salvar. <strong>UBS</strong> vê só a própria unidade; <strong>Central</strong> vê todas; <strong>Administrador</strong> também libera acessos.</p>
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+            <th class="px-2 py-2">Nome / e-mail</th><th class="px-2 py-2">Unidade pedida</th><th class="px-2 py-2">Unidade</th><th class="px-2 py-2">Papel</th><th class="px-2 py-2"></th></tr></thead>
+          <tbody>${data.map(p => `
+            <tr class="border-b border-slate-100 ${p.papel === 'pendente' ? 'bg-amber-50' : ''}">
+              <td class="px-2 py-2"><p class="font-semibold">${esc(p.nome || '(sem nome)')}</p><p class="text-xs text-slate-500">${esc(p.email || '')} • desde ${instanteBR(p.criado_em)}</p></td>
+              <td class="px-2 py-2 text-xs">${p.unidade_pedida_id ? esc(nomeUnidade(p.unidade_pedida_id)) : '—'}</td>
+              <td class="px-2 py-2"><select id="pu-${p.user_id}" class="w-full max-w-[240px] px-2 py-1.5 border border-slate-300 rounded-lg text-xs bg-white">${opcUni(p.unidade_id || (p.papel === 'pendente' ? p.unidade_pedida_id : null))}</select></td>
+              <td class="px-2 py-2"><select id="pp-${p.user_id}" class="px-2 py-1.5 border border-slate-300 rounded-lg text-xs bg-white">${opcPapel(p.papel === 'pendente' ? 'ubs' : p.papel)}</select></td>
+              <td class="px-2 py-2 text-right"><button onclick="salvarAcesso('${p.user_id}')" class="bg-[#0f766e] hover:bg-[#115e59] text-white text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer">${p.papel === 'pendente' ? 'Liberar' : 'Salvar'}</button></td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    }
+    async function salvarAcesso(uid) {
+      const unidade = $('pu-' + uid).value ? Number($('pu-' + uid).value) : null;
+      const papel = $('pp-' + uid).value;
+      if (papel === 'ubs' && !unidade) { toast('Para o papel UBS, escolha a unidade.', 'erro'); return; }
+      const executar = async () => {
+        const { error } = await S.sb.from('perfis').update({ unidade_id: unidade, papel }).eq('user_id', uid);
+        if (error) { toast(traduzirErro(error), 'erro'); return; }
+        toast('Acesso salvo. A pessoa deve clicar em "Verificar de novo" ou entrar outra vez.', 'sucesso');
+        renderizarAcessos(); atualizarPendentes();
+      };
+      if (uid === S.user.id && papel !== 'admin') confirmar('Mudar o próprio acesso', 'Você vai deixar de ser administrador e não poderá mais liberar acessos. Continuar?', executar);
+      else executar();
+    }
+    function renderizarUnidadesAdmin() {
+      const caixa = $('admin-unidades');
+      caixa.innerHTML = `
+        <p class="text-sm text-slate-600 mb-3">Unidades que recebem guias. Desative a que não usa (o histórico continua guardado).</p>
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+            <th class="px-2 py-2">Nome</th><th class="px-2 py-2">CNES</th><th class="px-2 py-2">Tipo</th><th class="px-2 py-2">Ativa</th><th class="px-2 py-2"></th></tr></thead>
+          <tbody>${S.unidades.map(u => `
+            <tr class="border-b border-slate-100 ${u.ativa ? '' : 'opacity-60'}">
+              <td class="px-2 py-2"><input id="un-${u.id}" value="${esc(u.nome)}" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs" /></td>
+              <td class="px-2 py-2"><input id="uc-${u.id}" value="${esc(u.cnes || '')}" maxlength="7" class="w-24 px-2 py-1.5 border border-slate-300 rounded-lg text-xs" /></td>
+              <td class="px-2 py-2"><select id="ut-${u.id}" class="px-2 py-1.5 border border-slate-300 rounded-lg text-xs bg-white"><option value="ubs" ${u.tipo === 'ubs' ? 'selected' : ''}>UBS</option><option value="central" ${u.tipo === 'central' ? 'selected' : ''}>Central</option></select></td>
+              <td class="px-2 py-2"><input type="checkbox" id="ua-${u.id}" ${u.ativa ? 'checked' : ''} class="w-4 h-4" /></td>
+              <td class="px-2 py-2 text-right"><button onclick="salvarUnidade(${u.id})" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer">Salvar</button></td>
+            </tr>`).join('')}
+            <tr class="bg-teal-50/50">
+              <td class="px-2 py-2"><input id="un-nova" placeholder="Nova unidade" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs" /></td>
+              <td class="px-2 py-2"><input id="uc-nova" placeholder="CNES" maxlength="7" class="w-24 px-2 py-1.5 border border-slate-300 rounded-lg text-xs" /></td>
+              <td class="px-2 py-2"><select id="ut-nova" class="px-2 py-1.5 border border-slate-300 rounded-lg text-xs bg-white"><option value="ubs">UBS</option><option value="central">Central</option></select></td>
+              <td></td>
+              <td class="px-2 py-2 text-right"><button onclick="salvarUnidade(null)" class="bg-[#0f766e] hover:bg-[#115e59] text-white text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer">Incluir</button></td>
+            </tr></tbody>
+        </table>`;
+    }
+    async function salvarUnidade(id) {
+      const k = id === null ? 'nova' : id;
+      const dados = { nome: $('un-' + k).value.trim(), cnes: $('uc-' + k).value.trim() || null, tipo: $('ut-' + k).value };
+      if (!dados.nome) { toast('Informe o nome da unidade.', 'erro'); return; }
+      if (id !== null) dados.ativa = $('ua-' + k).checked;
+      const { error } = id === null ? await S.sb.from('unidades').insert(dados) : await S.sb.from('unidades').update(dados).eq('id', id);
+      if (error) { toast(traduzirErro(error), 'erro'); return; }
+      await carregarUnidades();
+      montarSelectUnidades();
+      renderizarUnidadesAdmin();
+      renderizar();
+      toast('Unidade salva.', 'sucesso');
+    }
+
+    // =========================================================================
+    // INÍCIO
+    // =========================================================================
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') ['modal-confirmar', 'modal-guia', 'modal-historico', 'modal-protocolo', 'modal-importar', 'modal-admin']
+        .some(id => { if (!$(id).classList.contains('hidden')) { fecharModal(id); return true; } return false; });
+    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && S.usuarioCarregado) recarregarGuias(false); });
+
+    function iniciar() {
+      icones();
+      if (!configOk() || typeof supabase === 'undefined') { mostrarView('view-config'); return; }
+      S.sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, storageKey: 'controle-guias-sms-assis' }
+      });
+      S.sb.auth.onAuthStateChange((evento, sessao) => {
+        if (['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'].includes(evento)) {
+          setTimeout(() => aoMudarSessao(sessao), 0);   // fora do callback (recomendação do supabase-js)
+        }
+      });
+    }
+    iniciar();
+  </script>
+</body>
+</html>
