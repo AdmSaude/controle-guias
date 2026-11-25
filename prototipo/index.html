@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="color-scheme" content="light dark">
-<meta name="prototipo-carimbo" content="b525a345e9bd">
+<meta name="color-scheme" content="light">
+<meta name="prototipo-carimbo" content="4a8d94ce577a">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a16207'/%3E%3Cpath d='M7 10.5h18v12H7z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M7 10.5l9 7 9-7' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<script>window.cgImprimir = function () { window.print(); };</script>
 </head>
 <body>
 <!-- Protótipo do Controle de Guias v2: dados fictícios, sem banco. Fonte: controle-guias/prototipo/prototipo-v2.html (projeto local). -->
@@ -38,31 +39,9 @@
   --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --mono:ui-monospace,'Cascadia Mono','SFMono-Regular',Consolas,monospace;
   --r:12px;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0e1514; --surface:#151e1d; --surface-2:#1c2826; --line:#273634; --line-strong:#3b4f4b;
-    --fg:#e3edeb; --muted:#9fb2ad; --faint:#74878a;
-    --ink:#3db3a4; --ink-hover:#58c5b7; --on-ink:#04201c; --focus:#7aa7ff;
-    --s1:#a9b6c7; --s1-soft:#222b35; --s2:#86b2ff; --s2-soft:#18253c; --s3:#bca3ff; --s3-soft:#261f3b;
-    --s5:#5ccbe0; --s5-soft:#112f37; --s6:#74d394; --s6-soft:#142f1f; --end:#a3aab4; --end-soft:#23272d;
-    --bad:#ff8b7e; --bad-soft:#3a1916; --bad-line:#6d2a23; --on-bad:#2a0b08;
-    --warn:#ffb362; --warn-soft:#37240e; --sim:#e8c95a; --sim-soft:#2d2811;
-    --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.3); --scrim:rgba(0,0,0,.62);
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0e1514; --surface:#151e1d; --surface-2:#1c2826; --line:#273634; --line-strong:#3b4f4b;
-  --fg:#e3edeb; --muted:#9fb2ad; --faint:#74878a;
-  --ink:#3db3a4; --ink-hover:#58c5b7; --on-ink:#04201c; --focus:#7aa7ff;
-  --s1:#a9b6c7; --s1-soft:#222b35; --s2:#86b2ff; --s2-soft:#18253c; --s3:#bca3ff; --s3-soft:#261f3b;
-  --s5:#5ccbe0; --s5-soft:#112f37; --s6:#74d394; --s6-soft:#142f1f; --end:#a3aab4; --end-soft:#23272d;
-  --bad:#ff8b7e; --bad-soft:#3a1916; --bad-line:#6d2a23; --on-bad:#2a0b08;
-  --warn:#ffb362; --warn-soft:#37240e; --sim:#e8c95a; --sim-soft:#2d2811;
-  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.3); --scrim:rgba(0,0,0,.62);
-  color-scheme:dark;
-}
+/* Sempre claro: o usuário não quis o tema escuro (25/11/2026), mesmo com o computador no modo escuro. */
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 body.travado{overflow:hidden}
@@ -265,7 +244,59 @@ details.mais > div{display:grid;gap:14px}
 .papel ol{margin:0;padding-left:24px;display:grid;gap:3px}
 .assin{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
 .assin span{border-top:1px solid var(--fg);padding-top:4px;font-size:12px;color:var(--muted)}
-.numgrande{font-family:var(--mono);font-size:46px;font-weight:800;text-align:center;letter-spacing:.05em;padding:18px;border:2px dashed var(--line-strong);border-radius:14px}
+/* etiqueta do envelope (tela e papel) */
+.etq{border:2px solid var(--fg);border-radius:12px;padding:14px 16px;display:grid;gap:10px;background:var(--surface)}
+.etq-top{display:flex;justify-content:space-between;gap:8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.etq-num{font-family:var(--mono);font-size:44px;font-weight:800;letter-spacing:.05em;line-height:1.05;text-align:center}
+.etq-grade{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;border-top:1px solid var(--line-strong);padding-top:10px}
+.etq-grade small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.etq-grade b{font-size:16px;line-height:1.25;display:block}
+.etq-q{text-align:center;border-left:1px solid var(--line-strong);padding-left:14px}
+.etq-q b{font-family:var(--mono);font-size:30px;line-height:1.05}
+.etq-rod{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.etq-urg{color:var(--bad);font-weight:700}
+@media (max-width:420px){ .etq-top span:last-child{display:none} .etq-num{font-size:38px} .etq-grade{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .etq-q{grid-column:1 / -1;border-left:0;padding-left:0;border-top:1px solid var(--line-strong);padding-top:8px;display:flex;gap:10px;align-items:baseline;justify-content:center} }
+
+/* folha impressa: etiqueta para recortar + protocolo. Sempre preto no branco. */
+.folha{--fg:#000;--muted:#333;--line:#999;--line-strong:#000;--surface:#fff;--bad:#000;color:#000;background:#fff;font-family:var(--font);font-size:11pt;line-height:1.35;width:186mm;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.folha .corte{border:1.5px dashed #000;padding:3mm 4mm 4mm;width:150mm;margin:0 auto}
+.folha .corte-t{font-size:9pt;color:#333;text-align:center;margin-bottom:2mm}
+.folha .etq{border-radius:3mm}
+.folha .etq-top span:last-child{display:inline}
+.folha .etq-num{font-size:40pt}
+.folha .etq-grade{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.folha .etq-grade b{font-size:14pt}
+.folha .etq-q{grid-column:auto;display:block;border-top:0;border-left:1px solid #000;padding:0 0 0 4mm}
+.folha .etq-q b{font-size:28pt}
+.folha .etq-rod{font-size:10pt;color:#000}
+.folha .etq-urg{text-decoration:underline}
+.prot{margin-top:9mm;display:grid;gap:3.5mm}
+.prot-h{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;border-bottom:2px solid #000;padding-bottom:2.5mm}
+.prot-h small{display:block;font-size:8.5pt;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.prot-num{font-family:var(--mono);font-size:20pt;font-weight:800}
+.prot-r{text-align:right;font-size:10pt}
+.prot table{width:100%;border-collapse:collapse;font-size:10pt}
+.prot th,.prot td{border:1px solid #000;padding:1.5mm 2mm;text-align:left;vertical-align:top}
+.prot th{font-size:8.5pt;text-transform:uppercase;letter-spacing:.04em;background:#ececec}
+.prot td small{display:block;font-size:8.5pt;color:#333}
+.prot td small.tags{font-weight:700;color:#000}
+.prot .n,.prot .ck{text-align:center;width:11mm}
+.prot .mono{font-family:var(--mono);font-size:9pt;white-space:nowrap}
+.prot .box{display:inline-block;width:4.5mm;height:4.5mm;border:1.3px solid #000;vertical-align:middle}
+.prot tr{break-inside:avoid}
+.prot tfoot td{font-weight:700;background:#f4f4f4}
+.prot-nota{font-size:9.5pt}
+.prot-ass{display:grid;grid-template-columns:2fr 1fr;gap:11mm 8mm;margin-top:9mm}
+.prot-ass div{border-top:1px solid #000;padding-top:1mm;font-size:9pt}
+.previa{overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff;padding:6mm 0}
+#impressao{display:none}
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  html,body{background:#fff!important;height:auto!important;overflow:visible!important}
+  body::before{display:none!important}
+  #app,#sheet,#toast-root{display:none!important}
+  #impressao{display:block!important}
+}
 
 /* onde parou */
 .resumo{display:flex;flex-wrap:wrap;gap:8px}
@@ -302,6 +333,7 @@ table.painel{border-collapse:separate;border-spacing:0;width:100%;min-width:960p
 <div id="app"></div>
 <div id="sheet"></div>
 <div id="toast-root" aria-live="polite"></div>
+<div id="impressao" aria-hidden="true"></div>
 
 <script>
 (function () {
@@ -356,7 +388,9 @@ const ICON = {
   phone: '<path d="M6.5 3.5h3l1.5 4.5-2 1.3a11 11 0 0 0 5.7 5.7l1.3-2 4.5 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"/>',
   back: '<path d="M15 6l-6 6 6 6"/>',
   alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/>',
-  guia: '<rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/>'
+  guia: '<rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/>',
+  print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>',
+  chat: '<path d="M4.5 19.5l1.2-3.6A8 8 0 1 1 8.4 18.5z"/><path d="M9 10.5h6M9 13.5h4"/>'
 };
 const COLS = [
   { k: 'mandar',   rot: 'Na UBS, para mandar',          cor: 's1', un: g => g.etapa === 'ubs_mandar' ? g.holder : null },
@@ -523,7 +557,7 @@ function tAvisar(g, como, q, por) {
   if (como === 'nao') g.problemas.push(prob('Telefone errado ou não atende', 'O Agendamento não conseguiu avisar. A UBS tenta de novo quando a guia chegar.', q, por, false));
 }
 function tEntregar(g, q, por) { const onde = g.holder ? 'na UBS ' + nomeUn(g.holder) : 'no Agendamento'; set(g, 'entregue', q); encerrarProblemas(g, q, 'Guia entregue'); ev(g, q, por, 'Entregue ao paciente ' + onde); }
-function tReforcar(g, q, por) { g.reforcoEm = q; ev(g, q, por, 'Aviso reforçado pela UBS'); }
+function tReforcar(g, q, por, como) { g.reforcoEm = q; ev(g, q, por, { whats: 'Aviso reforçado pela UBS por WhatsApp, com a mensagem pronta', ligacao: 'Aviso reforçado pela UBS por ligação' }[como] || 'Aviso reforçado pela UBS'); }
 function tNaoRetirou(g, q, por) { set(g, 'nao_retirou', q); ev(g, q, por, 'O paciente não retirou. O Agendamento decide se a guia volta ou fica arquivada na UBS'); }
 function tDecidir(g, v, q, por) {
   if (v === 'devolver') { g.devolucao = true; set(g, 'ubs_mandar', q); ev(g, q, por, 'O Agendamento pediu a guia de volta, para remanejar a vaga. Vai no próximo malote'); }
@@ -800,17 +834,17 @@ function fazerUBS() {
   if (L.chegando.length) h += sec('Chegou malote para você', L.chegando.length, L.chegando.map(m => maloteCard(m, btn('receber', m.id, ic('check') + 'Conferir e receber', 'pri'))).join(''));
   if (L.prob.length) h += sec('Com problema', L.prob.length, L.prob.map(g => card(g, acoesProb(g))).join(''), 'bad');
   if (L.reforcar.length) h += sec('Reforçar o aviso', L.reforcar.length, L.reforcar.map(g => card(g,
-    btn('reforcei', g.id, ic('phone') + 'Reforcei o aviso', 'pri') + btn('entreguei', g.id, 'Entreguei') + (atrasada(g) ? btn('naoretirou', g.id, 'Não retirou') : ''))).join(''),
-    '', 'O prazo para retirar está vencendo. Lembre o paciente e marque aqui.');
+    btn('mensagem', g.id, ic('chat') + 'Mandar mensagem', 'pri') + btn('reforcei', g.id, ic('phone') + 'Liguei') + btn('entreguei', g.id, 'Entreguei') + (atrasada(g) ? btn('naoretirou', g.id, 'Não retirou') : ''))).join(''),
+    '', 'O prazo para retirar está vencendo. Mande a mensagem pronta pelo WhatsApp ou ligue.');
   if (L.mandar.length) {
     const velho = L.mandar.reduce((a, g) => g.desde < a ? g.desde : a, L.mandar[0].desde); const n = du(velho, new Date());
     const aviso = n >= 2 ? '<p class="dica atr">Tem guia esperando malote há ' + plural(n, 'dia útil', 'dias úteis') + '. Feche o malote quando ele for sair.</p>'
-      : '<p class="dica">Quando o malote for sair, feche aqui e escreva o número no envelope.</p>';
+      : '<p class="dica">Quando o malote for sair, feche aqui e imprima a etiqueta do envelope.</p>';
     h += sec('Para mandar ao Agendamento', L.mandar.length, aviso + L.mandar.map(g => card(g, '')).join('') +
       '<button type="button" class="btn pri big" data-act="fechar" data-dest="' + AG + '">' + ic('box') + 'Fechar malote (' + plural(L.mandar.length, 'guia', 'guias') + ')</button>');
   }
   if (L.esperando.length) h += sec('Esperando o paciente', L.esperando.length, L.esperando.map(g => card(g,
-    btn('entreguei', g.id, ic('check') + 'Entreguei', 'pri') + (atrasada(g) ? btn('naoretirou', g.id, 'Não retirou') : ''))).join(''));
+    btn('entreguei', g.id, ic('check') + 'Entreguei', 'pri') + btn('mensagem', g.id, ic('chat') + 'Mensagem') + (atrasada(g) ? btn('naoretirou', g.id, 'Não retirou') : ''))).join(''));
   if (L.aguard.length) h += sec('Não retirou: esperando o Agendamento', L.aguard.length, L.aguard.map(g => card(g, '')).join(''), '', 'O Agendamento vai dizer se a guia volta ou fica arquivada aqui. Guarde o papel até lá.');
   if (!h) h = vazio('Nada para fazer agora.');
   if (L.enviados.length) h += '<p class="dica">' + (L.enviados.length === 1 ? '1 malote seu está' : L.enviados.length + ' malotes seus estão') + ' a caminho do Agendamento. ' + btn('tab', '', 'Ver malotes', 'fraco', ' data-tab="malotes"') + '</p>';
@@ -827,7 +861,7 @@ function fazerAG() {
     btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim') + btn('fila', g.id, 'Sem vaga: fila'))).join(''),
     '', 'Agende no SIGSS como sempre. Em até 10 minutos a guia passa sozinha para "Avisar o paciente". No protótipo, use o botão amarelo.');
   if (L.avisar.length) h += sec('Avisar o paciente', L.avisar.length, L.avisar.map(g => card(g,
-    btn('avisei', g.id, ic('phone') + 'Liguei', 'pri', ' data-v="ligacao"') + btn('avisei', g.id, 'WhatsApp', '', ' data-v="whats"') + btn('avisei', g.id, 'Não atende', '', ' data-v="nao"'))).join(''));
+    btn('avisei', g.id, ic('phone') + 'Liguei', 'pri', ' data-v="ligacao"') + btn('mensagem', g.id, ic('chat') + 'WhatsApp') + btn('avisei', g.id, 'Não atende', '', ' data-v="nao"'))).join(''));
   if (L.grupos.length) {
     const total = L.grupos.reduce((a, x) => a + x[1].length, 0);
     h += sec('Para mandar às UBS', total, L.grupos.map(([u, gs]) => {
@@ -1001,7 +1035,8 @@ function acoesDetalhe(g) {
   if (isUBS() && g.holder === S.papel) {
     if (g.etapa === 'ubs_paciente') {
       a.push(btn('entreguei', g.id, ic('check') + 'Entreguei ao paciente', 'pri'));
-      if (!g.reforcoEm) a.push(btn('reforcei', g.id, ic('phone') + 'Reforcei o aviso'));
+      a.push(btn('mensagem', g.id, ic('chat') + 'Mandar mensagem'));
+      if (!g.reforcoEm) a.push(btn('reforcei', g.id, ic('phone') + 'Liguei para lembrar'));
       a.push(btn('naoretirou', g.id, 'Não retirou'));
       mais.push(btn('transferir', g.id, 'Transferir para outra UBS'), btn('problema', g.id, 'Marcar problema'));
     } else if (g.etapa === 'ubs_mandar') {
@@ -1018,7 +1053,7 @@ function acoesDetalhe(g) {
       if (g.etapa === 'ag_agendar') a.push(btn('fila', g.id, 'Sem vaga: deixar na fila'));
       mais.push(btn('manual', g.id, 'O SIGSS não trouxe: lançar à mão'), btn('transferir', g.id, 'Transferir para outra UBS'), btn('problema', g.id, 'Marcar problema'), btn('cancelar', g.id, 'Cancelar guia', 'perigo'));
     } else if (g.etapa === 'ag_agendada') {
-      if (!g.avisado) a.push(btn('avisei', g.id, ic('phone') + 'Liguei', 'pri', ' data-v="ligacao"'), btn('avisei', g.id, 'Mandei WhatsApp', '', ' data-v="whats"'), btn('avisei', g.id, 'Não atende', '', ' data-v="nao"'));
+      if (!g.avisado) a.push(btn('avisei', g.id, ic('phone') + 'Liguei', 'pri', ' data-v="ligacao"'), btn('mensagem', g.id, ic('chat') + 'WhatsApp'), btn('avisei', g.id, 'Não atende', '', ' data-v="nao"'));
       else a.push('<p class="dica">Vai no próximo malote para a UBS ' + esc(nomeUn(g.ubs)) + '.</p>');
       mais.push(btn('retirouag', g.id, 'O paciente retirou aqui'), btn('transferir', g.id, 'Transferir para outra UBS'), btn('problema', g.id, 'Marcar problema'));
     } else if (g.etapa === 'nao_retirou') {
@@ -1066,6 +1101,46 @@ function papel(m) {
     fDia(m.fechadoEm) + ' ' + fHora(m.fechadoEm) + ' · ' + plural(itens.length, 'guia', 'guias') + (m.portador ? '<br>Levou: ' + esc(m.portador) : '') + '</div></div>' +
     '<ol>' + itens.map(g => '<li>' + esc(g.paciente) + ' <span class="muted">· ' + esc(g.proc) + '</span></li>').join('') + '</ol><div class="assin"><span>Entregue por</span><span>Recebido por</span></div></div>';
 }
+
+/* etiqueta do envelope e folha impressa */
+const nomeLongo = id => id === AG ? 'Agendamento (central)' : 'UBS ' + nomeUn(id);
+const fData = d => { d = new Date(d); return fDia(d) + '/' + d.getFullYear(); };
+function etiqueta(m) {
+  const itens = m.itens.map(G).filter(Boolean); const ida = m.destino === AG; const urg = itens.filter(g => g.urgente).length;
+  return '<div class="etq"><div class="etq-top"><span>Malote · ' + (ida ? 'ida ao Agendamento' : 'volta à UBS') + '</span><span>Controle de Guias</span></div>' +
+    '<div class="etq-num">' + m.num + '</div>' +
+    '<div class="etq-grade"><div><small>De</small><b>' + esc(nomeLongo(m.origem)) + '</b></div><div><small>Para</small><b>' + esc(nomeLongo(m.destino)) + '</b></div>' +
+    '<div class="etq-q"><small>Guias</small><b>' + itens.length + '</b></div></div>' +
+    '<div class="etq-rod"><span>Fechado ' + fData(m.fechadoEm) + ' às ' + fHora(m.fechadoEm) + '</span>' + (m.portador ? '<span>Levou: ' + esc(m.portador) + '</span>' : '') +
+    '<span>Receber até ' + fDia(addDU(m.fechadoEm, 2)) + '</span>' + (urg ? '<span class="etq-urg">' + plural(urg, 'guia urgente', 'guias urgentes') + '</span>' : '') + '</div></div>';
+}
+function folhaImpressao(m) {
+  const itens = m.itens.map(G).filter(Boolean); const volta = m.destino !== AG;
+  const semVoce = s => String(s || '').replace(' (você)', '');
+  const linhas = itens.map((g, i) => {
+    const tags = [g.urgente ? 'URGENTE' : '', g.transporte ? 'precisa de transporte' : ''].filter(Boolean).join(' · ');
+    return '<tr><td class="n">' + (i + 1) + '</td><td><b>' + esc(g.paciente) + '</b>' + (g.nasc ? '<small>nasc. ' + esc(fNasc(g.nasc)) + '</small>' : '') + (tags ? '<small class="tags">' + tags + '</small>' : '') + '</td>' +
+      '<td>' + esc(g.proc) + '</td><td class="mono">' + (g.protocolo ? esc(g.protocolo) : '—') + '</td>' +
+      (volta ? '<td>' + (g.ag ? esc(fDia(g.ag.quando) + ' às ' + fHora(g.ag.quando)) + '<small>' + esc(g.ag.local) + '</small>' : '—') + '</td>' : '') +
+      '<td class="ck"><span class="box"></span></td></tr>';
+  }).join('');
+  return '<div class="folha"><div class="corte"><div class="corte-t">✂ Recorte na linha tracejada e cole na frente do envelope</div>' + etiqueta(m) + '</div>' +
+    '<div class="prot"><div class="prot-h"><div><small>Protocolo do malote</small><span class="prot-num">' + m.num + '</span></div>' +
+    '<div class="prot-r"><b>' + esc(nomeLongo(m.origem)) + ' → ' + esc(nomeLongo(m.destino)) + '</b><br>Fechado por ' + esc(semVoce(m.fechadoPor)) + ', ' + fData(m.fechadoEm) + ' às ' + fHora(m.fechadoEm) + (m.portador ? '<br>Levou: ' + esc(m.portador) : '') + '</div></div>' +
+    '<table><thead><tr><th class="n">Nº</th><th>Paciente</th><th>Exame ou consulta</th><th>Protocolo SIGSS</th>' + (volta ? '<th>Agendado para</th>' : '') + '<th class="ck">Veio?</th></tr></thead>' +
+    '<tbody>' + linhas + '</tbody><tfoot><tr><td colspan="' + (volta ? 6 : 5) + '">Total: ' + plural(itens.length, 'guia', 'guias') + '</td></tr></tfoot></table>' +
+    '<p class="prot-nota">Quem recebe: confira cada papel e marque "Veio?". No app, na hora de receber, desmarque o que faltou.</p>' +
+    '<div class="prot-ass"><div>Entregue por (nome)</div><div>Data e hora</div><div>Recebido por (nome)</div><div>Data e hora</div></div></div></div>';
+}
+// O site do teste define window.cgImprimir (abre a impressão do navegador). Sem ele, como na página do Claude, mostra a folha na tela.
+function imprimir(id) {
+  const m = M(id); if (!m) return;
+  $('#impressao').innerHTML = folhaImpressao(m);
+  if (typeof window.cgImprimir === 'function') { window.cgImprimir(); return; }
+  sheetAtual = { tipo: 'previa', id: m.id }; R = F = N = null;
+  pintar(head('Folha para imprimir', '<div class="g-meta"><span>Malote ' + m.num + '</span></div>') +
+    '<div class="sh-b"><p class="dica">Nesta cópia a impressão não abre. No site do teste, o botão abre a impressão do navegador com esta folha.</p><div class="previa">' + folhaImpressao(m) + '</div></div><div class="sh-pad"></div>', true);
+}
 function desenharMalote(nova) {
   const m = M(sheetAtual.id); if (!m) { fecharSheet(); return; }
   const linha = (g, extra) => '<button type="button" class="res" data-act="guia" data-id="' + g.id + '" data-voltar="' + m.id + '"><b>' + esc(g.paciente) + '</b><small>' + esc(g.proc) + (extra ? ' · ' + extra : '') + '</small><span>' + chip(g) + '</span></button>';
@@ -1083,7 +1158,7 @@ function desenharMalote(nova) {
   const html = head('Malote ' + m.num, '<div class="g-meta"><span>' + esc(nomeUn(m.origem)) + ' → ' + esc(nomeUn(m.destino)) + '</span>' + statusMalote(m) + '</div>') +
     '<div class="sh-b">' + acao + '<p>Fechado por ' + esc(m.fechadoPor) + ', ' + fQuando(m.fechadoEm) + (m.portador ? '. Levou: ' + esc(m.portador) : '') + '.</p>' + conf +
     '<section><div class="sh-sub">Guias deste malote e onde estão agora</div><div class="conf">' + itens.map(g => linha(g)).join('') + m.semLanc.map(G).filter(Boolean).map(g => linha(g, 'chegou sem lançamento')).join('') + '</div></section>' +
-    '<section><div class="sh-sub">Protocolo (vai impresso junto)</div>' + papel(m) + '</section></div><div class="sh-pad"></div>';
+    '<section><div class="sh-sub">Etiqueta e protocolo</div><div class="acoes" style="margin-bottom:10px">' + btn('imprimir', m.id, ic('print') + 'Imprimir de novo') + '</div>' + papel(m) + '</section></div><div class="sh-pad"></div>';
   pintar(html, nova);
 }
 
@@ -1147,8 +1222,9 @@ function abrirFechar(dest) { const l = listaParaMandar(dest); sheetAtual = { tip
 function desenharFechar(nova) {
   if (F.feito) {
     const m = M(F.feito);
-    pintar(head('Malote fechado') + '<div class="sh-b"><p>Escreva este número no envelope:</p><div class="numgrande">' + m.num + '</div><p class="dica">Quem recebe confere pela lista. O protocolo abaixo vai impresso junto.</p>' + papel(m) + '</div>' +
-      '<div class="sh-f">' + btn('fechar-sheet', '', 'Pronto', 'pri big') + '</div>', nova);
+    pintar(head('Malote fechado') + '<div class="sh-b"><p><b>Imprima e cole no envelope.</b> Sai numa folha só: a etiqueta em cima, para recortar, e o protocolo embaixo, que vai dentro do envelope.</p>' + etiqueta(m) +
+      '<p class="dica">Sem impressora? Escreva no envelope o número, de onde vem, para onde vai e quantas guias.</p>' + papel(m) + '</div>' +
+      '<div class="sh-f">' + btn('imprimir', m.id, ic('print') + 'Imprimir etiqueta e protocolo', 'pri big') + btn('fechar-sheet', '', 'Pronto', 'big') + '</div>', nova);
     return;
   }
   const lista = listaParaMandar(F.dest); const n = lista.filter(g => F.sel.has(g.id)).length;
@@ -1254,6 +1330,54 @@ function abrirTelefone(id) {
 }
 function voltarParaGuia(id) { sheetAtual = { tipo: 'guia', id }; desenharGuia(true); }
 
+/* mensagem pronta para o paciente. Regra do usuário (25/11/2026): o app não guarda dado de paciente que vem de outro
+   sistema. O telefone é buscado no SIGSS quando esta tela abre; se não vier, a pessoa escreve. Nos dois casos vale só
+   para esta mensagem. No protótipo, o "SIGSS" é o telefone fictício da guia. */
+const DL = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+const fDiaPac = d => { d = new Date(d); return DL[d.getDay()] + ', ' + p2(d.getDate()) + '/' + p2(d.getMonth() + 1); };
+const minusc = s => s ? s.charAt(0).toLowerCase() + s.slice(1) : '';
+function textoPronto(g) {
+  const nome = g.paciente.split(' ')[0]; const proc = minusc(g.proc);
+  const quando = g.ag ? fDiaPac(g.ag.quando) + ', às ' + fHora(g.ag.quando) + ', em ' + g.ag.local : '';
+  const doc = 'Traga um documento com foto e o cartão do SUS.';
+  const fecho = 'Se não puder ir, avise por esta conversa, para a vaga ficar para outra pessoa.';
+  if (isAG()) {
+    const ate = g.ag ? addDU(new Date(g.ag.quando), -1) : null;
+    return 'Olá, ' + nome + '! Aqui é do Agendamento da Saúde.\n' +
+      'Seu atendimento foi agendado: ' + proc + (quando ? ', ' + quando : '') + '.\n' +
+      'A guia vai para a UBS ' + nomeUn(g.ubs) + '. Retire lá' + (ate ? ' até ' + fDiaPac(ate) : '') + '. ' + doc + '\n' + fecho;
+  }
+  const s = situacao(g); const venceu = g.etapa === 'nao_retirou' || (s && s.tipo === 'atr');
+  return 'Olá, ' + nome + '! Aqui é da UBS ' + nomeUn(g.ubs) + '.\n' +
+    'A guia de ' + proc + ' já chegou e está aqui na UBS.' + (quando ? '\nAtendimento: ' + quando + '.' : '') + '\n' +
+    (venceu ? 'O prazo para retirar já passou: venha o quanto antes. ' : s ? 'Venha retirar até ' + fDiaPac(s.p) + '. ' : '') + doc + '\n' + fecho;
+}
+let msgErro = '';
+function abrirMensagem(id) { sheetAtual = { tipo: 'mensagem', id }; R = F = N = null; msgErro = ''; desenharMensagem(true); }
+function desenharMensagem(nova) {
+  const g = G(sheetAtual.id);
+  const html = head('Mensagem para o paciente', '<div class="g-meta"><span>' + esc(g.paciente) + '</span><span>' + esc(g.proc) + '</span></div>') +
+    '<div class="sh-b"><div class="campo"><label for="msg-tel">Telefone (WhatsApp)</label><input id="msg-tel" type="tel" inputmode="tel" autocomplete="off" value="' + esc(g.tel) + '">' +
+    (msgErro ? '<span class="erro">' + msgErro + '</span>' : '') +
+    '<span class="dica">' + (g.tel ? 'Buscado no SIGSS agora. Se estiver errado, corrija aqui.' : 'O SIGSS não trouxe telefone. Escreva aqui.') + ' O app não guarda este número: vale só para esta mensagem.</span></div>' +
+    '<div class="campo"><label for="msg-txt">Texto pronto <span class="op">(dá para mudar antes de mandar)</span></label><textarea id="msg-txt" rows="11">' + esc(textoPronto(g)) + '</textarea></div>' +
+    '<div class="simbox"><span class="simlab">Simulação do protótipo</span><p class="dica">No app de verdade, "Mandar no WhatsApp" abre o WhatsApp do computador ou do celular já com o número e o texto, e a pessoa só aperta enviar. Aqui o botão só registra o aviso.</p></div>' +
+    '</div><div class="sh-f">' + btn('msg-whats', g.id, ic('chat') + 'Mandar no WhatsApp', 'pri big') + btn('msg-copiar', g.id, 'Copiar o texto', 'big') + '</div>';
+  pintar(html, nova);
+}
+function mandarMensagem(id) {
+  const g = G(id); const tel = digitos(valor('msg-tel'));
+  if (tel.length < 10) { msgErro = 'Escreva o telefone com DDD.'; desenharMensagem(); focar('msg-tel'); return; }
+  msgErro = '';
+  // No app de verdade: window.open('https://wa.me/55' + tel.replace(/^55/, '') + '?text=' + encodeURIComponent(texto)), sem guardar o número.
+  if (isAG()) agir('Paciente avisado por WhatsApp: ' + g.paciente + '.', () => tAvisar(g, 'whats', q0(), quem()), () => fecharSheet());
+  else agir('Aviso reforçado por WhatsApp: ' + g.paciente + '.', () => tReforcar(g, q0(), quem(), 'whats'), () => fecharSheet());
+}
+function copiarMensagem() {
+  const t = valor('msg-txt'); const manual = () => { const e = document.getElementById('msg-txt'); if (e) e.select(); toast('Selecione o texto e copie.'); };
+  try { navigator.clipboard.writeText(t).then(() => toast('Texto copiado. Cole no WhatsApp ou no SMS.'), manual); } catch (e) { manual(); }
+}
+
 /* tarefas do teste */
 function abrirTarefas() {
   sheetAtual = { tipo: 'tarefas' };
@@ -1262,9 +1386,10 @@ function abrirTarefas() {
     '<li>Chegou um malote do Agendamento. Receba. A guia de Pedro Henrique Alves não veio no envelope.</li>' +
     '<li>Maria das Graças Souza veio buscar a guia dela. Registre a entrega.</li>' +
     '<li>Uma paciente trouxe um pedido com o protocolo 2026-904512-1-03. Lance para mandar ao Agendamento.</li>' +
-    '<li>O malote vai sair agora. Feche e diga qual número vai no envelope.</li>' +
+    '<li>O malote vai sair agora. Feche, imprima a etiqueta e diga o que vai escrito nela.</li>' +
     '<li>Onde está a guia de Vanessa Cristina Lopes, e desde quando?</li>' +
-    '<li>Claudio Roberto Dias não atende o telefone. O que o app mostra sobre ele?</li></ol>' +
+    '<li>Claudio Roberto Dias não atende o telefone. O que o app mostra sobre ele?</li>' +
+    '<li>Uma guia está para vencer o prazo de retirada. Lembre o paciente pelo WhatsApp, com a mensagem pronta.</li></ol>' +
     '<div class="acoes" style="margin-top:10px">' + btn('papel-teste', '', 'Fazer como UBS Jussara e Panorama', 'pri', ' data-v="jussara"') + '</div></section>' +
     '<section><h4>No Agendamento</h4><ol>' +
     '<li>Chegou o malote da UBS Jardim Mônaco. Receba. Veio junto o pedido de Valter Gomes (consulta em cardiologia), que não estava na lista.</li>' +
@@ -1300,7 +1425,10 @@ const ACOES = {
   'nova': () => abrirNova(),
   'nova-modo': el => { N.modo = el.dataset.v; N.erros = {}; desenharNova(); },
   'entreguei': el => { const g = G(el.dataset.id); agir('Entregue: ' + g.paciente + '.', () => tEntregar(g, q0(), quem())); },
-  'reforcei': el => { const g = G(el.dataset.id); agir('Aviso reforçado: ' + g.paciente + '.', () => tReforcar(g, q0(), quem())); },
+  'reforcei': el => { const g = G(el.dataset.id); agir('Aviso reforçado por ligação: ' + g.paciente + '.', () => tReforcar(g, q0(), quem(), 'ligacao')); },
+  'mensagem': el => { esconderBusca(); abrirMensagem(el.dataset.id); },
+  'msg-whats': el => mandarMensagem(el.dataset.id),
+  'msg-copiar': () => copiarMensagem(),
   'naoretirou': el => { const g = G(el.dataset.id); agir('Não retirou: o Agendamento decide.', () => tNaoRetirou(g, q0(), quem())); },
   'decidir': el => { const g = G(el.dataset.id), v = el.dataset.v; agir(v === 'devolver' ? 'A UBS vai mandar a guia de volta.' : 'Guia arquivada na UBS.', () => tDecidir(g, v, q0(), quem())); },
   'avisei': el => { const g = G(el.dataset.id), v = el.dataset.v; agir(v === 'nao' ? 'Marcado: não atende. A UBS reforça.' : 'Paciente avisado: ' + g.paciente + '.', () => tAvisar(g, v, q0(), quem())); },
@@ -1328,6 +1456,7 @@ const ACOES = {
   'filtro-geral': el => { S.tab = 'guias'; S.filtro = { k: el.dataset.k }; salvar(); render(); window.scrollTo(0, 0); },
   'cel': el => { S.tab = 'guias'; S.filtro = { k: el.dataset.k }; if (el.dataset.u) S.filtro.u = el.dataset.u; salvar(); render(); window.scrollTo(0, 0); },
   'fechar-sheet': () => fecharSheet(),
+  'imprimir': el => imprimir(el.dataset.id),
   'desfazer': () => desfazer(),
   'tarefas': () => abrirTarefas(),
   'papel-teste': el => { S.papel = el.dataset.v; S.tab = 'fazer'; S.filtro = {}; salvar(); fecharSheet(); render(); window.scrollTo(0, 0); },
