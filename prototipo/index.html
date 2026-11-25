@@ -1,0 +1,1391 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<meta name="prototipo-carimbo" content="b525a345e9bd">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a16207'/%3E%3Cpath d='M7 10.5h18v12H7z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M7 10.5l9 7 9-7' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<!-- Protótipo do Controle de Guias v2: dados fictícios, sem banco. Fonte: controle-guias/prototipo/prototipo-v2.html (projeto local). -->
+<title>Protótipo do Controle de Guias</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: caixa de entrada de uma coluna (até 760px), cabeçalho fixo com a unidade e a busca, abas por papel.
+   Detalhes e ações abrem numa folha que sobe de baixo no celular e fica no centro no computador.
+   Cada etapa tem uma cor fixa; o vermelho é só para problema. Amarelo tracejado = simulação do protótipo. */
+:root{
+  --bg:#f2f6f5; --surface:#ffffff; --surface-2:#e9f0ee; --line:#d6e0dd; --line-strong:#b5c6c2;
+  --fg:#10201e; --muted:#53655f; --faint:#8a9a96;
+  --ink:#0d5b53; --ink-hover:#0a4842; --on-ink:#ffffff; --focus:#2563eb;
+  --s1:#55647a; --s1-soft:#e8ecf2;
+  --s2:#1f5fbf; --s2-soft:#e2ecfb;
+  --s3:#6b3fc4; --s3-soft:#eee8fa;
+  --s5:#0a7489; --s5-soft:#dcf1f5;
+  --s6:#1e7b3e; --s6-soft:#e0f3e5;
+  --end:#667085; --end-soft:#eceef1;
+  --bad:#b42318; --bad-soft:#fdecea; --bad-line:#f0b2ab; --on-bad:#ffffff;
+  --warn:#a14a06; --warn-soft:#fcefdf;
+  --sim:#7a5d00; --sim-soft:#fbf3d6;
+  --shadow:0 1px 2px rgba(16,32,30,.06),0 6px 18px rgba(16,32,30,.07);
+  --scrim:rgba(10,22,20,.45);
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,'Cascadia Mono','SFMono-Regular',Consolas,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1514; --surface:#151e1d; --surface-2:#1c2826; --line:#273634; --line-strong:#3b4f4b;
+    --fg:#e3edeb; --muted:#9fb2ad; --faint:#74878a;
+    --ink:#3db3a4; --ink-hover:#58c5b7; --on-ink:#04201c; --focus:#7aa7ff;
+    --s1:#a9b6c7; --s1-soft:#222b35; --s2:#86b2ff; --s2-soft:#18253c; --s3:#bca3ff; --s3-soft:#261f3b;
+    --s5:#5ccbe0; --s5-soft:#112f37; --s6:#74d394; --s6-soft:#142f1f; --end:#a3aab4; --end-soft:#23272d;
+    --bad:#ff8b7e; --bad-soft:#3a1916; --bad-line:#6d2a23; --on-bad:#2a0b08;
+    --warn:#ffb362; --warn-soft:#37240e; --sim:#e8c95a; --sim-soft:#2d2811;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.3); --scrim:rgba(0,0,0,.62);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1514; --surface:#151e1d; --surface-2:#1c2826; --line:#273634; --line-strong:#3b4f4b;
+  --fg:#e3edeb; --muted:#9fb2ad; --faint:#74878a;
+  --ink:#3db3a4; --ink-hover:#58c5b7; --on-ink:#04201c; --focus:#7aa7ff;
+  --s1:#a9b6c7; --s1-soft:#222b35; --s2:#86b2ff; --s2-soft:#18253c; --s3:#bca3ff; --s3-soft:#261f3b;
+  --s5:#5ccbe0; --s5-soft:#112f37; --s6:#74d394; --s6-soft:#142f1f; --end:#a3aab4; --end-soft:#23272d;
+  --bad:#ff8b7e; --bad-soft:#3a1916; --bad-line:#6d2a23; --on-bad:#2a0b08;
+  --warn:#ffb362; --warn-soft:#37240e; --sim:#e8c95a; --sim-soft:#2d2811;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.3); --scrim:rgba(0,0,0,.62);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body.travado{overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+p{margin:0}
+b{font-weight:650}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap.wide{max-width:1180px}
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* barra do protótipo */
+.proto{background:var(--sim-soft);border-bottom:1px dashed var(--sim);color:var(--sim)}
+.proto .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding-block:6px;font-size:13px}
+.proto-tag{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:11px}
+.proto label{display:flex;align-items:center;gap:6px;color:var(--fg);font-weight:600}
+.proto select{min-height:34px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);padding:0 8px;max-width:min(58vw,260px)}
+.pbtn{min-height:34px;border:1px dashed var(--sim);background:transparent;color:var(--sim);border-radius:8px;padding:0 10px;cursor:pointer;font-weight:650;font-size:13px}
+.proto .esp{flex:1 1 0}
+
+/* topo */
+.topo{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.topo .wrap{padding-block:12px 0;display:grid;gap:10px}
+.topo-l1{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;justify-content:space-between}
+.marca{display:flex;align-items:center;gap:10px;min-width:0}
+.marca-ic{width:36px;height:36px;border-radius:10px;background:var(--ink);color:var(--on-ink);display:grid;place-items:center;flex:none}
+.marca h1{font-size:17px;font-weight:750;line-height:1.2}
+.marca small{display:block;color:var(--muted);font-size:12.5px}
+.busca{position:relative;flex:1 1 260px;max-width:400px}
+.busca input{width:100%;min-height:44px;border:1px solid var(--line-strong);border-radius:11px;background:var(--surface-2);padding:0 12px 0 40px}
+.busca > .ic{position:absolute;left:12px;top:13px;color:var(--muted)}
+.busca-res{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);max-height:62vh;overflow:auto;z-index:25}
+.res{display:grid;gap:2px;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer}
+.res:last-child{border-bottom:0}
+.res:hover{background:var(--surface-2)}
+.res small{color:var(--muted)}
+.abas{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px}
+.aba{border:0;background:none;padding:10px 12px 11px;font-weight:650;color:var(--muted);border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;display:flex;gap:7px;align-items:center}
+.aba[aria-current="page"]{color:var(--fg);border-bottom-color:var(--ink)}
+@media (max-width:420px){ .aba{padding-inline:8px;font-size:14.5px;gap:5px} }
+.badge{min-width:20px;height:20px;border-radius:10px;background:var(--bad);color:var(--on-bad);font-size:12px;font-weight:700;display:inline-grid;place-items:center;padding:0 6px;font-variant-numeric:tabular-nums}
+
+/* seções da caixa de entrada */
+main.wrap{padding-block:18px 120px;display:grid;gap:26px}
+.sec{display:grid;gap:10px;min-width:0}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sec-h h2{font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:750;display:flex;gap:8px;align-items:center}
+.cont{font-variant-numeric:tabular-nums;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:0 8px;font-size:12px;letter-spacing:0}
+.sec.bad .sec-h h2{color:var(--bad)}
+.dica{font-size:13.5px;color:var(--muted)}
+.dica.atr{color:var(--bad);font-weight:600}
+.lista{display:grid;gap:8px;min-width:0}
+.vazio{padding:28px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line-strong);border-radius:var(--r)}
+
+/* cartão de guia */
+.g{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px 14px;padding:12px 14px}
+.g.prob{border-color:var(--bad-line)}
+.g-main{min-width:0;display:grid;gap:3px;cursor:pointer;border-radius:8px}
+.g-l1{display:flex;flex-wrap:wrap;align-items:center;gap:5px 7px}
+.g-nome{font-weight:650;font-size:15.5px}
+.g-proc{color:var(--fg)}
+.g-meta{color:var(--muted);font-size:13.5px;display:flex;flex-wrap:wrap;gap:2px 12px;align-items:center}
+.g-meta b{color:var(--fg)}
+.g-prob{color:var(--bad);font-size:13.5px;font-weight:550}
+.g-acoes{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:600px){ .g{grid-template-columns:minmax(0,1fr)} .g-acoes{justify-content:stretch} .g-acoes .btn{flex:1 1 auto} }
+
+/* linha de etapas (1 a 6) */
+.st{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:5px;max-width:220px}
+.st i{height:5px;border-radius:3px;background:var(--line)}
+.st i.f{background:var(--line-strong)}
+.st i.c{background:var(--c)}
+.st i.p{background:transparent;border:1px dashed var(--line-strong)}
+.st-lab{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;font-size:10.5px;line-height:1.2;color:var(--muted);text-align:center;margin-top:3px}
+.st-lab .c{color:var(--c);font-weight:700}
+
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 9px 2px 8px;font-size:12.5px;font-weight:650;background:var(--cs);color:var(--c);line-height:1.35}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.selo{display:inline-flex;align-items:center;font-size:12px;font-weight:650;border-radius:6px;padding:1px 7px;border:1px solid var(--line-strong);color:var(--muted);background:var(--surface);line-height:1.4}
+.selo.bad{border-color:var(--bad-line);background:var(--bad-soft);color:var(--bad)}
+.selo.warn{border-color:transparent;background:var(--warn-soft);color:var(--warn)}
+.prazo{font-size:13px;font-weight:650;color:var(--muted)}
+.prazo.hoje,.prazo.amanha{color:var(--warn)}
+.prazo.atr{color:var(--bad)}
+
+/* botões */
+.btn{min-height:42px;padding:0 14px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--fg);font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap;text-decoration:none;font-size:14.5px}
+.btn:hover{background:var(--surface-2)}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.btn.pri:hover{background:var(--ink-hover)}
+.btn.big{min-height:54px;font-size:16px;width:100%;white-space:normal}
+.btn.sim{border-style:dashed;border-color:var(--sim);background:var(--sim-soft);color:var(--sim)}
+.btn.fraco{border-color:transparent;background:none;color:var(--muted);padding:0 8px;min-height:36px}
+.btn.fraco:hover{color:var(--fg);background:var(--surface-2)}
+.btn.perigo{color:var(--bad);border-color:var(--bad-line)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.fab{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:15;box-shadow:0 8px 24px rgba(0,0,0,.22);min-height:54px;border-radius:27px;padding:0 20px;font-size:15.5px}
+
+/* malotes e grupos */
+.m{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 14px;align-items:center}
+.m.parado{border-color:var(--bad-line)}
+.m-main{display:flex;gap:12px;align-items:center;min-width:0;cursor:pointer;border-radius:8px}
+.m-num{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.02em;background:var(--s2-soft);color:var(--s2);border-radius:8px;padding:6px 9px;flex:none}
+.m-num.ubs{background:var(--s1-soft);color:var(--s1);font-family:var(--font);font-size:13px;padding:8px 9px}
+.m-txt{min-width:0;display:grid;gap:2px}
+.m-rota{font-weight:650}
+.m-nomes{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+@media (max-width:600px){ .m{grid-template-columns:minmax(0,1fr)} .m .btn{width:100%} }
+
+/* folha (detalhe e ações) */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40;animation:fade .15s ease}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--surface);border-radius:18px 18px 0 0;max-height:92vh;max-height:92dvh;overflow:auto;overscroll-behavior:contain;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-shadow:0 -10px 40px rgba(0,0,0,.2);animation:sobe .18s ease}
+@media (min-width:720px){ .sheet{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(660px,94vw);border-radius:16px;max-height:88vh;animation:none;padding-left:22px;padding-right:22px} }
+.sh-h{position:sticky;top:0;background:var(--surface);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 0 12px;z-index:2;border-bottom:1px solid var(--line)}
+.sh-tt{display:grid;gap:4px;min-width:0}
+.sh-h h3{font-size:19px;font-weight:750;line-height:1.25}
+.sh-h h3:focus{outline:none}
+.sh-b{display:grid;gap:18px;padding-block:16px}
+.sh-pad{height:calc(8px + env(safe-area-inset-bottom,0px))}
+.sh-f{position:sticky;bottom:0;background:var(--surface);padding:12px 0 calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:grid;gap:8px;z-index:2}
+.sh-sub{font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:750;margin-bottom:8px}
+@keyframes sobe{from{transform:translateY(26px);opacity:.5}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+
+.agora{border-radius:14px;padding:14px;background:var(--cs);display:grid;gap:5px}
+.agora .rot{color:var(--c);font-weight:750;font-size:16.5px;line-height:1.3}
+.agora .st{max-width:none;margin-top:8px}
+.agora .st i{height:7px}
+.acoes{display:flex;flex-wrap:wrap;gap:8px}
+.acoes .btn{flex:1 1 auto}
+.info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin:0}
+.info div{min-width:0}
+.info dt{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:650}
+.info dd{margin:2px 0 0;font-weight:550;overflow-wrap:anywhere;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pbox{border:1px solid var(--bad-line);background:var(--bad-soft);border-radius:12px;padding:12px;display:grid;gap:8px}
+.pbox strong{color:var(--bad)}
+.pbox small{color:var(--muted)}
+.simbox{border:1px dashed var(--sim);background:var(--sim-soft);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
+.simlab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--sim);font-weight:800}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.hist li:first-child time{color:var(--fg);font-weight:650}
+.hist time{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.hist .por{display:block;color:var(--muted);font-size:12.5px}
+
+/* formulários */
+.campo{display:grid;gap:6px;min-width:0}
+.campo label,.campo .lab{font-weight:650;font-size:14px}
+.op{font-weight:400;color:var(--muted)}
+.campo input,.campo select,.campo textarea{min-height:48px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);padding:0 12px;width:100%;min-width:0}
+.campo textarea{padding:10px 12px;min-height:84px;resize:vertical}
+.erro{color:var(--bad);font-size:13px;font-weight:600}
+.achou{font-size:13.5px;color:var(--muted)}
+.achou.ok{color:var(--s6)}
+.achou.ja{color:var(--warn)}
+.grade2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:480px){.grade2{grid-template-columns:1fr}}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-strong);border-radius:12px;padding:3px;gap:3px;background:var(--surface-2)}
+.seg button{min-height:44px;border:0;border-radius:9px;background:none;font-weight:650;color:var(--muted);cursor:pointer;padding:4px 8px;line-height:1.2}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.tog{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-weight:550}
+.tog input{width:22px;height:22px;accent-color:var(--ink)}
+.radios{display:grid;gap:2px}
+.radios label{display:flex;gap:10px;align-items:center;min-height:42px;cursor:pointer;font-weight:500}
+.radios input{width:20px;height:20px;accent-color:var(--ink)}
+details.mais{border:1px solid var(--line);border-radius:12px;padding:0 12px}
+details.mais summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:650}
+details.mais[open]{padding-bottom:12px}
+details.mais > div{display:grid;gap:14px}
+
+/* conferência de malote */
+.conf{display:grid;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.conf-i{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.conf-i:last-child{border-bottom:0}
+.conf-i input[type=checkbox]{width:24px;height:24px;accent-color:var(--ink);margin:0}
+.conf-t{display:grid;gap:1px;min-width:0;cursor:pointer}
+.conf-t .nome{font-weight:650}
+.conf-t small{color:var(--muted);font-size:13px}
+.conf-t .falta{color:var(--bad);font-weight:650}
+.conf-i.faltou{background:var(--bad-soft)}
+.conf-i.faltou .nome{text-decoration:line-through;color:var(--bad)}
+.conf-i.outra{background:var(--warn-soft)}
+.conf-i select{min-height:38px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);max-width:170px;padding:0 6px}
+.conf-x{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.conf-x .btn.fraco{font-size:13px;padding:0 6px}
+@media (max-width:480px){ .conf-i.outra .conf-x{grid-column:2 / -1;justify-content:flex-start} }
+.novo-form{border:1px dashed var(--line-strong);border-radius:12px;padding:12px;display:grid;gap:12px}
+
+/* protocolo em papel */
+.papel{border:1px solid var(--line-strong);border-radius:6px;padding:16px;background:var(--surface);font-size:13.5px;display:grid;gap:12px}
+.papel-h{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--fg);padding-bottom:10px}
+.pk{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.pn{font-family:var(--mono);font-size:28px;font-weight:800;letter-spacing:.04em;line-height:1.1}
+.pr{text-align:right;font-size:13px}
+.papel ol{margin:0;padding-left:24px;display:grid;gap:3px}
+.assin{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.assin span{border-top:1px solid var(--fg);padding-top:4px;font-size:12px;color:var(--muted)}
+.numgrande{font-family:var(--mono);font-size:46px;font-weight:800;text-align:center;letter-spacing:.05em;padding:18px;border:2px dashed var(--line-strong);border-radius:14px}
+
+/* onde parou */
+.resumo{display:flex;flex-wrap:wrap;gap:8px}
+.rchip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:600;color:var(--fg);min-height:44px}
+.rchip b{font-size:20px;font-variant-numeric:tabular-nums}
+.rchip.bad b{color:var(--bad)}
+.tab-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table.painel{border-collapse:separate;border-spacing:0;width:100%;min-width:960px;font-size:13.5px}
+.painel th,.painel td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle}
+.painel tr:last-child td{border-bottom:0}
+.painel thead th{font-size:11.5px;color:var(--muted);font-weight:700;line-height:1.25;vertical-align:bottom;padding-top:12px}
+.painel th:first-child,.painel td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;min-width:150px;font-weight:650}
+.painel tfoot td{background:var(--surface-2);font-weight:700}
+.painel tfoot td:first-child{background:var(--surface-2)}
+.cel{border:0;background:none;cursor:pointer;width:100%;border-radius:8px;padding:5px 4px;display:grid;gap:1px;justify-items:center;min-height:44px}
+.cel:hover{background:var(--surface-2)}
+.cel .n{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.cel .sub{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.cel .sub.atr{color:var(--bad);font-weight:700}
+.cel.zero .n{color:var(--line-strong);font-weight:500}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--c);margin-right:4px;vertical-align:1px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.fchip{border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:6px 12px;min-height:38px;font-weight:650;font-size:13.5px;cursor:pointer;color:var(--muted)}
+.fchip[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.filtros{display:grid;gap:10px}
+.filtros select{min-height:42px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);padding:0 10px;max-width:100%}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--fg);color:var(--bg);border-radius:12px;padding:8px 10px 8px 16px;display:flex;gap:14px;align-items:center;width:max-content;max-width:calc(100vw - 32px);box-shadow:var(--shadow);font-size:14px;font-weight:550}
+.toast button{background:none;border:0;color:var(--bg);font-weight:800;text-decoration:underline;cursor:pointer;min-height:38px;padding:0 6px}
+.tarefas ol{margin:0;padding-left:22px;display:grid;gap:10px}
+.tarefas h4{font-size:15px;margin-bottom:8px}
+</style>
+
+<div id="app"></div>
+<div id="sheet"></div>
+<div id="toast-root" aria-live="polite"></div>
+
+<script>
+(function () {
+'use strict';
+
+/* ------------------------------------------------------------------ dados fixos */
+const CHAVE = 'cg2-prototipo-3';
+const AG = 'AG', ADM = 'ADM', SIGSS_POR = 'SIGSS (leitura automática)';
+const UBS = [
+  ['ciasp1', 'CIASP 01'], ['ciasp2', 'CIASP 02'], ['osvaldo', 'CS Dr. Osvaldo'], ['silv', 'Silveirópolis'],
+  ['terra', 'Terra Nova'], ['nice', 'Nice'], ['azaury', 'Engenheiro Azaury'], ['mefig', 'Maria Efigênia'],
+  ['brag', 'Bragantina'], ['encan', 'Encantado'], ['cristo', 'Cristo Rei'], ['jussara', 'Jussara e Panorama'],
+  ['monaco', 'Jardim Mônaco'], ['araca', 'Araçá e Sheila']
+].map(([id, nome]) => ({ id, nome }));
+const PROCS = ['Consulta em cardiologia', 'Consulta em ortopedia', 'Consulta em oftalmologia', 'Consulta em dermatologia',
+  'Consulta em neurologia', 'Consulta em urologia', 'Consulta em ginecologia', 'Consulta em otorrinolaringologia',
+  'Consulta em psiquiatria', 'Consulta em endocrinologia', 'Consulta em reumatologia', 'Ultrassonografia de abdômen total',
+  'Ultrassonografia de tireoide', 'Ultrassonografia obstétrica', 'Ultrassonografia de próstata', 'Mamografia bilateral',
+  'Tomografia de crânio', 'Tomografia de abdômen', 'Ressonância de joelho', 'Ressonância de coluna lombar', 'Ressonância de crânio',
+  'Ecocardiograma', 'Endoscopia digestiva alta', 'Colonoscopia', 'Eletroencefalograma', 'Holter 24 horas',
+  'Densitometria óssea', 'Raio-X de tórax', 'Raio-X de coluna lombar'];
+const LOCAIS = ['CISCOPAR – Toledo', 'Hospital Regional', 'Clínica de Imagem – Centro', 'CS Dr. Osvaldo I. Ishida'];
+const FILA_SIGSS = { // pedidos fictícios que "entraram sozinhos" na Lista de Espera
+  '2026-904512-1-03': { paciente: 'Cleide Aparecida Prado', proc: 'Consulta em cardiologia' },
+  '2026-904630-1-01': { paciente: 'Nilton César Borges', proc: 'Ultrassonografia de abdômen total' },
+  '2026-905118-1-02': { paciente: 'Rosa Maria Quintino', proc: 'Consulta em ortopedia' }
+};
+const MOTIVOS = ['Telefone errado ou não atende', 'Paciente não localizado', 'Paciente desistiu',
+  'Paciente mudou de unidade ou de município', 'Data já passou', 'Pedido incompleto',
+  'Prestador desmarcou ou remarcou', 'Óbito', 'Duplicada', 'Outro'];
+const E = {
+  ubs_mandar:   { pos: 1, cor: 's1', rot: 'Na UBS, para mandar ao Agendamento' },
+  malote_ida:   { pos: 2, cor: 's2', rot: 'No malote, indo ao Agendamento' },
+  ag_agendar:   { pos: 3, cor: 's3', rot: 'No Agendamento, para agendar' },
+  ag_fila:      { pos: 3, cor: 's3', rot: 'No Agendamento, na fila do SIGSS (sem vaga)' },
+  ag_agendada:  { pos: 3, cor: 's3', rot: 'Agendada, no Agendamento' },
+  malote_volta: { pos: 4, cor: 's2', rot: 'No malote, indo à UBS' },
+  ubs_paciente: { pos: 5, cor: 's5', rot: 'Na UBS, esperando o paciente' },
+  nao_retirou:  { pos: 5, cor: 's5', rot: 'Não retirou: o Agendamento decide' },
+  entregue:     { pos: 6, cor: 's6', rot: 'Entregue ao paciente', fim: true },
+  arquivada:    { pos: 6, cor: 'end', rot: 'Arquivada na UBS', fim: true },
+  devolvida:    { pos: 6, cor: 'end', rot: 'Devolvida ao Agendamento', fim: true },
+  cancelada:    { pos: 6, cor: 'end', rot: 'Cancelada', fim: true }
+};
+const SELOS = { sigss: 'Veio do SIGSS', semlanc: 'Chegou sem lançamento', fora: 'Entrou fora do fluxo', manual: 'Agendamento lançado à mão' };
+const ICON = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  box: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="m3 8 9 6 9-6"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  phone: '<path d="M6.5 3.5h3l1.5 4.5-2 1.3a11 11 0 0 0 5.7 5.7l1.3-2 4.5 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"/>',
+  back: '<path d="M15 6l-6 6 6 6"/>',
+  alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/>',
+  guia: '<rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/>'
+};
+const COLS = [
+  { k: 'mandar',   rot: 'Na UBS, para mandar',          cor: 's1', un: g => g.etapa === 'ubs_mandar' ? g.holder : null },
+  { k: 'ida',      rot: 'Malote indo ao Agendamento',   cor: 's2', un: g => g.etapa === 'malote_ida' ? (M(g.maloteId) || {}).origem : null },
+  { k: 'agendar',  rot: 'No Agendamento, para agendar', cor: 's3', un: g => g.etapa === 'ag_agendar' ? g.ubs : null },
+  { k: 'fila',     rot: 'Na fila (sem vaga)',           cor: 's3', un: g => g.etapa === 'ag_fila' ? g.ubs : null, semPrazo: true },
+  { k: 'agendada', rot: 'Agendada, no Agendamento',     cor: 's3', un: g => g.etapa === 'ag_agendada' ? g.ubs : null },
+  { k: 'volta',    rot: 'Malote indo à UBS',            cor: 's2', un: g => g.etapa === 'malote_volta' ? (M(g.maloteId) || {}).destino : null },
+  { k: 'paciente', rot: 'Na UBS, esperando o paciente', cor: 's5', un: g => (g.etapa === 'ubs_paciente' || g.etapa === 'nao_retirou') ? g.holder : null }
+];
+
+/* ------------------------------------------------------------------ utilidades */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ic = n => '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + ICON[n] + '</svg>';
+const agoraISO = () => new Date().toISOString();
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const digitos = s => String(s || '').replace(/\D/g, '');
+const p2 = n => String(n).padStart(2, '0');
+const DS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const dia0 = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const util = d => { const w = d.getDay(); return w !== 0 && w !== 6; };
+function addDU(d, n) { const r = new Date(d); const s = n < 0 ? -1 : 1; let k = Math.abs(n); while (k > 0) { r.setDate(r.getDate() + s); if (util(r)) k--; } return r; }
+function du(a, b) { let x = dia0(a), y = dia0(b), sinal = 1; if (y < x) { const t = x; x = y; y = t; sinal = -1; } let n = 0; while (x < y) { x.setDate(x.getDate() + 1); if (util(x)) n++; } return n * sinal; }
+function emDU(n, hhmm) { const base = new Date(); const d = n === 0 ? new Date(base) : addDU(base, n); const [h, m] = hhmm.split(':').map(Number); d.setHours(h, m, 0, 0); if (n === 0 && d > base) d.setTime(base.getTime() - 20 * 60000); return d.toISOString(); }
+const fDia = d => { d = new Date(d); return DS[d.getDay()] + ' ' + p2(d.getDate()) + '/' + p2(d.getMonth() + 1); };
+const fHora = d => { d = new Date(d); return p2(d.getHours()) + ':' + p2(d.getMinutes()); };
+function fQuando(iso) { const d = new Date(iso); const dif = Math.round((dia0(new Date()) - dia0(d)) / 864e5); if (dif === 0) return 'hoje ' + fHora(d); if (dif === 1) return 'ontem ' + fHora(d); return fDia(d) + ' ' + fHora(d); }
+const fAg = ag => fDia(ag.quando) + ' às ' + fHora(ag.quando) + ', ' + ag.local;
+const fNasc = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : (s || ''); };
+const nomeUn = id => id === AG ? 'Agendamento' : ((UBS.find(u => u.id === id) || {}).nome || '?');
+const cv = cor => '--c:var(--' + cor + ');--cs:var(--' + cor + '-soft)';
+const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
+
+/* ------------------------------------------------------------------ estado */
+let S = null;
+let sheetAtual = null, R = null, F = null, N = null;
+let toastT = null, desfazerSnap = null;
+function salvar() { try { localStorage.setItem(CHAVE, JSON.stringify(S)); } catch (e) { /* sem armazenamento: segue só na memória */ } }
+function carregar() { try { const t = localStorage.getItem(CHAVE); if (t) { const o = JSON.parse(t); if (o && o.v === 3) return o; } } catch (e) { /* ignora */ } return null; }
+const G = id => S.guias.find(g => g.id === id);
+const M = id => S.malotes.find(m => m.id === id);
+const isUBS = () => S.papel !== AG && S.papel !== ADM;
+const isAG = () => S.papel === AG;
+const isADM = () => S.papel === ADM;
+const quem = () => isAG() ? 'Agendamento (você)' : isADM() ? 'Administrador (você)' : 'Recepção UBS ' + nomeUn(S.papel) + ' (você)';
+const abertos = g => g.problemas.filter(p => !p.resolvido);
+const temProblema = g => abertos(g).length > 0;
+const fim = g => !!E[g.etapa].fim;
+
+/* ------------------------------------------------------------------ prazos */
+function inicioEtapa(g) { if (g.etapa === 'malote_ida' || g.etapa === 'malote_volta') { const m = M(g.maloteId); return m ? m.fechadoEm : g.desde; } return g.desde; }
+function prazo(g) {
+  if (fim(g) || g.etapa === 'ag_fila') return null;
+  if (g.etapa === 'ubs_paciente') { const a = addDU(g.chegouEm || g.desde, 2); if (g.ag) { const b = addDU(new Date(g.ag.quando), -1); return b < a ? b : a; } return a; }
+  return addDU(inicioEtapa(g), 2);
+}
+function situacao(g) {
+  const p = prazo(g); if (!p) return null;
+  const hoje = dia0(new Date()), pd = dia0(p);
+  if (pd < hoje) return { tipo: 'atr', p, n: du(p, new Date()) };
+  if (pd.getTime() === hoje.getTime()) return { tipo: 'hoje', p, du: 0 };
+  const cal = Math.round((pd - hoje) / 864e5);
+  return { tipo: cal === 1 ? 'amanha' : 'ok', p, du: du(new Date(), p) };
+}
+const atrasada = g => { const s = situacao(g); return !!s && s.tipo === 'atr'; };
+function prazoTxt(g) {
+  const s = situacao(g); if (!s) return '';
+  const ret = g.etapa === 'ubs_paciente';
+  if (s.tipo === 'atr') return '<span class="prazo atr">' + (ret ? 'Prazo de retirada venceu ' + fDia(s.p) : 'Atrasada' + (s.n > 0 ? ' ' + plural(s.n, 'dia útil', 'dias úteis') : '')) + '</span>';
+  if (s.tipo === 'hoje') return '<span class="prazo hoje">' + (ret ? 'Retirar até hoje' : 'Vence hoje') + '</span>';
+  if (s.tipo === 'amanha') return '<span class="prazo amanha">' + (ret ? 'Retirar até amanhã' : 'Vence amanhã') + '</span>';
+  return '<span class="prazo">' + (ret ? 'Retirar até ' : 'Prazo ') + fDia(s.p) + '</span>';
+}
+function tempoTxt(g) { const ini = inicioEtapa(g); const n = du(ini, new Date()); return n <= 0 ? 'desde ' + fQuando(ini) : 'há ' + plural(n, 'dia útil', 'dias úteis') + ' (desde ' + fDia(ini) + ')'; }
+const precisaReforco = g => { if (g.reforcoEm) return false; const s = situacao(g); return !!s && (s.tipo === 'atr' || s.du <= 1); };
+const porPrazo = (a, b) => (prazo(a) || 0) - (prazo(b) || 0);
+const porInicio = (a, b) => (inicioEtapa(a) < inicioEtapa(b) ? -1 : 1);
+
+/* ------------------------------------------------------------------ transições (as mesmas para a tela e para os dados fictícios) */
+function ev(g, q, por, texto) { g.historico.push({ em: q, por, texto }); }
+function prob(motivo, texto, q, por, auto) { return { id: 'p' + (++S.seqProb), motivo, texto, em: q, por, auto: !!auto, resolvido: false }; }
+function resolverProb(p, txt, q, por) { p.resolvido = true; p.resolucao = txt; p.resolvidoEm = q; p.resolvidoPor = por; }
+function encerrarProblemas(g, q, txt) { abertos(g).forEach(p => resolverProb(p, txt, q, 'Sistema')); }
+function set(g, etapa, q) { g.etapa = etapa; g.desde = q; }
+function protoFake() { const n = S.seqGuia; return '2026-9' + String(10000 + ((n * 7919) % 89000)).padStart(5, '0') + '-1-0' + ((n % 3) + 1); }
+function novaGuia(d) {
+  const g = Object.assign({ id: 'g' + (++S.seqGuia), paciente: '', nasc: '', tel: '', proc: '', protocolo: '', obs: '', urgente: false, transporte: false,
+    ubs: null, holder: null, etapa: 'ubs_mandar', desde: null, maloteId: null, ag: null, avisado: false, avisoComo: null, reforcoEm: null,
+    chegouEm: null, devolucao: false, repasse: false, selos: [], problemas: [], pulou: [], historico: [] }, d);
+  S.guias.push(g); return g;
+}
+function tLancarUBS(d, ubs, q, por) { const g = novaGuia(d); g.ubs = ubs; g.holder = ubs; set(g, 'ubs_mandar', q); ev(g, q, por, 'Lançada na UBS ' + nomeUn(ubs) + ' para mandar ao Agendamento'); return g; }
+function tLancarUBSAgendada(d, ubs, ag, q, por) {
+  const g = novaGuia(d); g.ubs = ubs; g.holder = ubs; g.ag = ag; g.avisado = true; g.chegouEm = q; g.selos.push('fora'); g.pulou = [1, 2, 3, 4];
+  set(g, 'ubs_paciente', q); ev(g, q, por, 'Lançada na UBS ' + nomeUn(ubs) + ' já agendada (' + fAg(ag) + '). Entrou fora do fluxo: as etapas anteriores não foram registradas'); return g;
+}
+function tLancarAG(d, ubs, q, por, selo) {
+  const g = novaGuia(d); g.ubs = ubs; g.selos.push(selo); g.pulou = selo === 'semlanc' ? [1] : [1, 2]; set(g, 'ag_agendar', q);
+  ev(g, q, por, selo === 'semlanc' ? 'Chegou no malote sem ter sido lançada. Lançada no Agendamento na conferência' : 'Lançada no Agendamento. O papel chegou sem passar pelo app'); return g;
+}
+function tLancarAGAgendada(d, ubs, ag, q, por) {
+  const g = novaGuia(d); g.ubs = ubs; g.ag = ag; g.selos.push('manual'); g.pulou = [1, 2]; set(g, 'ag_agendada', q);
+  ev(g, q, por, 'Agendamento lançado à mão no app, porque o SIGSS não trouxe: ' + fAg(ag)); return g;
+}
+function tSIGSS(d, ubs, ag, q) {
+  const g = novaGuia(d); g.ubs = ubs; g.ag = ag; g.selos.push('sigss'); g.pulou = [1, 2]; if (!g.protocolo) g.protocolo = protoFake();
+  set(g, 'ag_agendada', q); ev(g, q, SIGSS_POR, 'Agendada no SIGSS: ' + fAg(ag) + '. O pedido entrou sozinho na fila e a guia foi impressa no Agendamento'); return g;
+}
+function tFechar(origem, destino, gs, q, por, portador) {
+  const m = { id: 'm' + (++S.seqMal), num: 'MAL-' + String(S.seqMal).padStart(4, '0'), origem, destino, itens: gs.map(g => g.id),
+    fechadoEm: q, fechadoPor: por, portador: portador || '', recebidoEm: null, recebidoPor: null, faltaram: [], semLanc: [], naoDaqui: [] };
+  S.malotes.push(m);
+  const et = destino === AG ? 'malote_ida' : 'malote_volta';
+  gs.forEach(g => { g.maloteId = m.id; g.holder = null; set(g, et, q); ev(g, q, por, 'Foi no malote ' + m.num + ' para ' + (destino === AG ? 'o Agendamento' : 'a UBS ' + nomeUn(destino)) + (portador ? '. Levou: ' + portador : '')); });
+  return m;
+}
+function chegar(g, m, q, por) {
+  g.maloteId = null; g.ultMalote = m.id;
+  if (m.destino === AG) {
+    if (g.devolucao) { set(g, 'devolvida', q); encerrarProblemas(g, q, 'Devolução recebida'); ev(g, q, por, 'Devolução recebida no Agendamento (malote ' + m.num + '). Libere a vaga no SIGSS'); }
+    else if (g.ag) { set(g, 'ag_agendada', q); ev(g, q, por, 'Chegou no Agendamento (malote ' + m.num + '). Já está agendada: segue para a UBS ' + nomeUn(g.ubs) + ' no próximo malote'); }
+    else { set(g, 'ag_agendar', q); ev(g, q, por, 'Chegou no Agendamento (malote ' + m.num + ')'); }
+  } else {
+    g.holder = m.destino; g.chegouEm = q; g.repasse = false; set(g, 'ubs_paciente', q);
+    ev(g, q, por, 'Chegou na UBS ' + nomeUn(m.destino) + ' (malote ' + m.num + '). Esperando o paciente retirar');
+    abertos(g).forEach(p => { if (p.motivo === 'UBS errada' && g.ubs === m.destino) resolverProb(p, 'Chegou na UBS certa', q, 'Sistema'); });
+  }
+}
+function tReceber(m, okGs, faltouGs, q, por, novos, naoDaqui) {
+  m.recebidoEm = q; m.recebidoPor = por;
+  okGs.forEach(g => chegar(g, m, q, por));
+  faltouGs.forEach(g => {
+    m.faltaram.push(g.id);
+    g.problemas.push(prob('Faltou no malote', 'Não veio no malote ' + m.num + '. Quem mandou procura o papel; se ele aparecer em quem recebeu, é só marcar "Chegou depois".', q, 'Sistema', true));
+    ev(g, q, por, 'Conferência do malote ' + m.num + ': o papel não veio');
+  });
+  (naoDaqui || []).forEach(({ g, certa }) => {
+    m.naoDaqui.push(g.id); const errada = m.destino; if (certa) g.ubs = certa;
+    g.holder = errada; g.maloteId = null; g.ultMalote = m.id; g.repasse = true; set(g, 'ubs_mandar', q);
+    g.problemas.push(prob('UBS errada', 'Chegou na UBS ' + nomeUn(errada) + (certa ? ', mas é da UBS ' + nomeUn(certa) : ', mas não é desta UBS') + '. Volta ao Agendamento no próximo malote e segue para a UBS certa.', q, 'Sistema', true));
+    ev(g, q, por, 'Chegou na UBS ' + nomeUn(errada) + ' por engano (malote ' + m.num + ')');
+  });
+  (novos || []).forEach(d => {
+    let g;
+    if (m.destino === AG) { g = tLancarAG(Object.assign({}, d), d.ubs || m.origem, q, por, 'semlanc'); }
+    else {
+      g = novaGuia(Object.assign({}, d)); g.ubs = m.destino; g.holder = m.destino; g.chegouEm = q; g.avisado = true; g.selos.push('semlanc'); g.pulou = [1, 2, 3];
+      set(g, 'ubs_paciente', q); ev(g, q, por, 'Chegou no malote ' + m.num + ' sem ter sido lançada. Lançada na UBS ' + nomeUn(m.destino) + ' na conferência');
+    }
+    g.ultMalote = m.id; m.semLanc.push(g.id);
+  });
+}
+function tAgendar(g, ag, q, por, viaSigss) {
+  g.ag = ag; g.avisado = false; g.agAnterior = null;
+  const s = viaSigss ? 'sigss' : 'manual'; if (!g.selos.includes(s)) g.selos.push(s);
+  set(g, 'ag_agendada', q);
+  ev(g, q, viaSigss ? SIGSS_POR : por, viaSigss ? 'Agendada no SIGSS: ' + fAg(ag) + '. A guia andou sozinha para "Avisar o paciente"' : 'Agendamento lançado à mão, porque o SIGSS não trouxe: ' + fAg(ag));
+}
+function tFila(g, q, por) { set(g, 'ag_fila', q); ev(g, q, por, 'Sem vaga: entrou na fila do SIGSS. O papel fica no Agendamento até agendar'); }
+function tAvisar(g, como, q, por) {
+  g.avisado = true; g.avisoComo = como;
+  ev(g, q, por, { ligacao: 'Paciente avisado por ligação', whats: 'Paciente avisado por WhatsApp', nao: 'Não conseguiu avisar o paciente. A UBS reforça quando a guia chegar' }[como]);
+  if (como === 'nao') g.problemas.push(prob('Telefone errado ou não atende', 'O Agendamento não conseguiu avisar. A UBS tenta de novo quando a guia chegar.', q, por, false));
+}
+function tEntregar(g, q, por) { const onde = g.holder ? 'na UBS ' + nomeUn(g.holder) : 'no Agendamento'; set(g, 'entregue', q); encerrarProblemas(g, q, 'Guia entregue'); ev(g, q, por, 'Entregue ao paciente ' + onde); }
+function tReforcar(g, q, por) { g.reforcoEm = q; ev(g, q, por, 'Aviso reforçado pela UBS'); }
+function tNaoRetirou(g, q, por) { set(g, 'nao_retirou', q); ev(g, q, por, 'O paciente não retirou. O Agendamento decide se a guia volta ou fica arquivada na UBS'); }
+function tDecidir(g, v, q, por) {
+  if (v === 'devolver') { g.devolucao = true; set(g, 'ubs_mandar', q); ev(g, q, por, 'O Agendamento pediu a guia de volta, para remanejar a vaga. Vai no próximo malote'); }
+  else { set(g, 'arquivada', q); encerrarProblemas(g, q, 'Guia arquivada'); ev(g, q, por, 'O Agendamento mandou arquivar a guia na UBS'); }
+}
+function tRetirouAG(g, q, por) { g.holder = null; set(g, 'entregue', q); encerrarProblemas(g, q, 'Guia entregue'); ev(g, q, por, 'O paciente retirou a guia no próprio Agendamento'); }
+function tCancelar(g, q, por) { set(g, 'cancelada', q); encerrarProblemas(g, q, 'Guia cancelada'); ev(g, q, por, 'Guia cancelada'); }
+function tSimCancelou(g, q) {
+  g.problemas.push(prob('Prestador desmarcou ou remarcou', 'O agendamento de ' + fAg(g.ag) + ' foi cancelado no SIGSS. Avise o paciente.', q, SIGSS_POR, true));
+  ev(g, q, SIGSS_POR, 'Agendamento cancelado no SIGSS (' + fAg(g.ag) + ')');
+  if (g.etapa === 'ag_agendada') { g.agAnterior = g.ag; g.ag = null; g.avisado = false; set(g, 'ag_agendar', q); ev(g, q, 'Sistema', 'Voltou para "Para agendar"'); }
+}
+function tAchei(g, q, por) {
+  const m = M(g.maloteId); abertos(g).filter(p => p.motivo === 'Faltou no malote').forEach(p => resolverProb(p, 'O papel estava com quem mandou. Vai no próximo malote', q, por));
+  g.maloteId = null;
+  if (m.destino === AG) { g.holder = m.origem; set(g, 'ubs_mandar', q); ev(g, q, por, 'O papel estava na UBS ' + nomeUn(m.origem) + '. Vai no próximo malote'); }
+  else { set(g, 'ag_agendada', q); ev(g, q, por, 'O papel estava no Agendamento. Vai no próximo malote para a UBS ' + nomeUn(g.ubs)); }
+}
+function tChegouDepois(g, q, por) { const m = M(g.maloteId); abertos(g).filter(p => p.motivo === 'Faltou no malote').forEach(p => resolverProb(p, 'O papel chegou depois', q, por)); chegar(g, m, q, por); }
+function tTransferir(g, nova, q, por) {
+  const antiga = g.ubs; g.ubs = nova;
+  if (g.etapa === 'ubs_paciente') { g.repasse = true; set(g, 'ubs_mandar', q); ev(g, q, por, 'Transferida da UBS ' + nomeUn(antiga) + ' para a UBS ' + nomeUn(nova) + '. Volta ao Agendamento no próximo malote e segue para a UBS nova'); }
+  else ev(g, q, por, 'Transferida da UBS ' + nomeUn(antiga) + ' para a UBS ' + nomeUn(nova));
+}
+let simN = 0;
+function agFake(g) {
+  simN++; const dias = 3 + (simN * 2) % 6; const horas = ['07:30', '08:00', '09:20', '10:40', '13:30', '14:10', '15:00'];
+  const local = /^Consulta/.test(g.proc) ? 'CISCOPAR – Toledo' : LOCAIS[simN % 3];
+  return { quando: emDU(dias, horas[simN % horas.length]), local };
+}
+
+/* ------------------------------------------------------------------ dados fictícios */
+function seed() {
+  S = { v: 3, papel: 'jussara', tab: 'fazer', filtro: {}, guias: [], malotes: [], seqMal: 34, seqGuia: 0, seqProb: 0 };
+  const T = emDU, A = 'Agendamento', V = 'Valdir (motorista)';
+  const Rc = u => 'Recepção UBS ' + nomeUn(u);
+  const P = (paciente, proc, x) => Object.assign({ paciente, proc }, x || {});
+  const L = (d, u, q) => tLancarUBS(d, u, q, Rc(u));
+  const AGD = (g, dias, hora, local, q) => tAgendar(g, { quando: T(dias, hora), local }, q, A, true);
+  const SG = (d, u, dias, hora, local, q) => tSIGSS(d, u, { quando: T(dias, hora), local }, q);
+
+  // MAL-0035: Encantado → Agendamento. Os dois pedidos ficaram na fila.
+  const ademir = L(P('Ademir Nogueira', 'Ressonância de crânio', { protocolo: '2026-899310-1-01' }), 'encan', T(-12, '08:30'));
+  const cicera = L(P('Cícera Lopes Vieira', 'Consulta em reumatologia', { protocolo: '2026-899402-1-02' }), 'encan', T(-12, '09:10'));
+  const m1 = tFechar('encan', AG, [ademir, cicera], T(-12, '10:00'), Rc('encan'), V);
+  tReceber(m1, [ademir, cicera], [], T(-11, '09:00'), A);
+  tFila(ademir, T(-11, '10:00'), A); tFila(cicera, T(-11, '10:05'), A);
+
+  // MAL-0036: Jussara → Agendamento.
+  const helena = L(P('Helena Batista Moura', 'Consulta em oftalmologia', { protocolo: '2026-901233-1-02' }), 'jussara', T(-8, '09:10'));
+  const josefa = L(P('Josefa Maria da Silva', 'Ressonância de coluna lombar', { protocolo: '2026-900874-1-01' }), 'jussara', T(-8, '10:05'));
+  const edson = L(P('Edson Luiz Martins', 'Colonoscopia', { protocolo: '2026-901402-1-01' }), 'jussara', T(-8, '10:40'));
+  const m2 = tFechar('jussara', AG, [helena, josefa, edson], T(-8, '11:00'), Rc('jussara'), V);
+  tReceber(m2, [helena, josefa, edson], [], T(-7, '09:00'), A);
+  tFila(josefa, T(-7, '10:00'), A);
+  AGD(helena, 6, '13:30', 'CISCOPAR – Toledo', T(-3, '10:10')); tAvisar(helena, 'ligacao', T(-3, '10:40'), A);
+
+  // MAL-0037: Jardim Mônaco → Agendamento.
+  const lucas = L(P('Lucas Gabriel Ferreira', 'Consulta em otorrinolaringologia'), 'monaco', T(-6, '08:30'));
+  const daniela = L(P('Daniela Cristina Rocha', 'Ultrassonografia de tireoide'), 'monaco', T(-6, '09:20'));
+  const m3 = tFechar('monaco', AG, [lucas, daniela], T(-6, '14:00'), Rc('monaco'), V);
+  tReceber(m3, [lucas, daniela], [], T(-5, '09:30'), A);
+  AGD(daniela, 4, '08:20', 'Clínica de Imagem – Centro', T(-3, '09:00')); tAvisar(daniela, 'ligacao', T(-3, '09:30'), A);
+  AGD(lucas, 6, '09:00', 'CISCOPAR – Toledo', T(0, '07:50'));
+
+  // MAL-0038: Maria Efigênia → Agendamento. Um papel faltou e outro chegou sem lançamento.
+  const benedito = L(P('Benedito Souza Lima', 'Consulta em psiquiatria'), 'mefig', T(-5, '08:40'));
+  const lourdes = L(P('Lourdes Pereira Campos', 'Consulta em endocrinologia'), 'mefig', T(-5, '09:10'));
+  const geraldo = L(P('Geraldo Antunes Neto', 'Raio-X de coluna lombar'), 'mefig', T(-5, '09:30'));
+  const m4 = tFechar('mefig', AG, [benedito, lourdes, geraldo], T(-5, '10:30'), Rc('mefig'), V);
+  tReceber(m4, [lourdes, geraldo], [benedito], T(-4, '08:50'), A, [P('Rita de Cássia Moreira', 'Eletroencefalograma', { ubs: 'mefig' })]);
+  const rita = S.guias.find(g => g.paciente.indexOf('Rita') === 0);
+  AGD(geraldo, 5, '09:40', 'Hospital Regional', T(-2, '14:00')); tAvisar(geraldo, 'ligacao', T(-2, '14:20'), A);
+  AGD(rita, 8, '07:30', 'Hospital Regional', T(-1, '16:00'));
+
+  // MAL-0039: Agendamento → Jussara.
+  const jorge = SG(P('Jorge Luiz Barbosa', 'Raio-X de tórax'), 'jussara', 1, '08:00', 'Hospital Regional', T(-6, '11:00')); tAvisar(jorge, 'whats', T(-6, '11:20'), A);
+  const m5 = tFechar(AG, 'jussara', [jorge], T(-5, '15:00'), A, V);
+  tReceber(m5, [jorge], [], T(-4, '08:30'), Rc('jussara'));
+
+  // MAL-0040: Agendamento → Jussara.
+  const graca = SG(P('Maria das Graças Souza', 'Endoscopia digestiva alta', { protocolo: '2026-902210-1-01' }), 'jussara', 2, '07:00', 'Hospital Regional', T(-4, '09:00')); tAvisar(graca, 'ligacao', T(-4, '09:30'), A);
+  const claudio = SG(P('Claudio Roberto Dias', 'Consulta em urologia'), 'jussara', 3, '14:30', 'CISCOPAR – Toledo', T(-4, '09:40')); tAvisar(claudio, 'nao', T(-4, '10:00'), A);
+  const ivone = SG(P('Ivone Cardoso', 'Ultrassonografia de tireoide'), 'jussara', 4, '08:20', 'Clínica de Imagem – Centro', T(-4, '10:10')); tAvisar(ivone, 'whats', T(-4, '10:30'), A);
+  const joana = SG(P('Joana Darc Silveira', 'Consulta em cardiologia'), 'jussara', 1, '10:00', 'CISCOPAR – Toledo', T(-4, '11:00')); tAvisar(joana, 'ligacao', T(-4, '11:10'), A);
+  const m6 = tFechar(AG, 'jussara', [graca, claudio, ivone, joana], T(-3, '15:00'), A, V);
+  tReceber(m6, [graca, claudio, ivone, joana], [], T(-2, '08:40'), Rc('jussara'));
+  tEntregar(joana, T(-1, '10:15'), Rc('jussara'));
+  tNaoRetirou(ivone, T(0, '08:30'), Rc('jussara'));
+
+  // MAL-0041: Agendamento → Jussara.
+  const francisco = SG(P('Francisco de Assis Melo', 'Consulta em neurologia'), 'jussara', 7, '15:00', 'CISCOPAR – Toledo', T(-3, '09:00')); tAvisar(francisco, 'ligacao', T(-3, '09:20'), A);
+  const terezinha = SG(P('Terezinha Gomes', 'Densitometria óssea'), 'jussara', 10, '08:00', 'Clínica de Imagem – Centro', T(-3, '09:40')); tAvisar(terezinha, 'whats', T(-3, '10:00'), A);
+  const benedita = SG(P('Benedita Alves Rosa', 'Consulta em dermatologia'), 'jussara', 4, '13:00', 'CISCOPAR – Toledo', T(-3, '10:20')); tAvisar(benedita, 'ligacao', T(-3, '10:30'), A);
+  const m7 = tFechar(AG, 'jussara', [francisco, terezinha, benedita], T(-2, '15:30'), A, V);
+  tReceber(m7, [francisco, terezinha, benedita], [], T(-1, '09:00'), Rc('jussara'));
+  tEntregar(benedita, T(-1, '14:00'), Rc('jussara'));
+  tReforcar(terezinha, T(0, '09:00'), Rc('jussara'));
+
+  // MAL-0042: Agendamento → Cristo Rei. Uma das guias era do Jardim Mônaco.
+  const neide = SG(P('Neide Fernandes', 'Ultrassonografia de abdômen total'), 'cristo', 3, '08:30', 'CISCOPAR – Toledo', T(-3, '13:00')); tAvisar(neide, 'ligacao', T(-3, '13:20'), A);
+  const wagner = SG(P('Wagner Luiz Prado', 'Consulta em cardiologia'), 'monaco', 5, '14:00', 'CISCOPAR – Toledo', T(-3, '13:40')); tAvisar(wagner, 'whats', T(-3, '13:50'), A);
+  const odete = SG(P('Odete Ribeiro', 'Mamografia bilateral'), 'cristo', 2, '10:00', 'Clínica de Imagem – Centro', T(-3, '14:00')); tAvisar(odete, 'ligacao', T(-3, '14:10'), A);
+  const m8 = tFechar(AG, 'cristo', [neide, wagner, odete], T(-2, '16:00'), A, V);
+  tReceber(m8, [neide, odete], [], T(-1, '08:30'), Rc('cristo'), [], [{ g: wagner, certa: 'monaco' }]);
+
+  // MAL-0043: Agendamento → CIASP 01.
+  const silvana = SG(P('Silvana Teixeira', 'Consulta em cardiologia'), 'ciasp1', 3, '09:30', 'CISCOPAR – Toledo', T(-3, '15:00')); tAvisar(silvana, 'ligacao', T(-3, '15:10'), A);
+  const mauro = SG(P('Mauro Pinheiro', 'Tomografia de abdômen'), 'ciasp1', 6, '11:00', 'Hospital Regional', T(-3, '15:20')); tAvisar(mauro, 'whats', T(-3, '15:30'), A);
+  const m9 = tFechar(AG, 'ciasp1', [silvana, mauro], T(-2, '16:20'), A, V);
+  tReceber(m9, [silvana, mauro], [], T(-1, '10:00'), Rc('ciasp1'));
+
+  // MAL-0044: Jussara → Agendamento, a caminho.
+  const vanessa = L(P('Vanessa Cristina Lopes', 'Consulta em dermatologia'), 'jussara', T(-2, '09:15'));
+  const roberto = L(P('Roberto Carlos Nunes', 'Holter 24 horas'), 'jussara', T(-1, '08:20'));
+  const aparecida = L(P('Aparecida de Fátima Ramos', 'Consulta em ginecologia'), 'jussara', T(-1, '10:05'));
+  tFechar('jussara', AG, [vanessa, roberto, aparecida], T(-1, '11:00'), Rc('jussara'), V);
+
+  // MAL-0045: Agendamento → Jussara, a caminho.
+  const marcos = SG(P('Marcos Vinícius Rocha', 'Ecocardiograma'), 'jussara', 4, '08:00', 'CISCOPAR – Toledo', T(-2, '10:00')); tAvisar(marcos, 'ligacao', T(-2, '10:20'), A);
+  const jose = SG(P('José Ribamar Costa', 'Tomografia de crânio', { urgente: true }), 'jussara', 3, '07:30', 'Hospital Regional', T(-2, '10:40')); tAvisar(jose, 'ligacao', T(-2, '10:50'), A);
+  const sebastiana = SG(P('Sebastiana Oliveira', 'Mamografia bilateral'), 'jussara', 8, '09:00', 'Clínica de Imagem – Centro', T(-1, '09:00')); tAvisar(sebastiana, 'whats', T(-1, '09:10'), A);
+  const pedro = SG(P('Pedro Henrique Alves', 'Consulta em ortopedia', { transporte: true }), 'jussara', 5, '10:00', 'CISCOPAR – Toledo', T(-1, '09:30')); tAvisar(pedro, 'ligacao', T(-1, '09:45'), A);
+  tFechar(AG, 'jussara', [helena, marcos, jose, sebastiana, pedro], T(-1, '15:10'), A, V);
+
+  // MAL-0046: Jardim Mônaco → Agendamento, saiu hoje.
+  const doMonaco = [
+    L(P('Juliana Martins Freitas', 'Ultrassonografia obstétrica', { urgente: true }), 'monaco', T(-1, '08:10')),
+    L(P('Carlos Eduardo Lima', 'Consulta em urologia'), 'monaco', T(-1, '09:00')),
+    L(P('Sônia Regina Batista', 'Endoscopia digestiva alta'), 'monaco', T(-1, '10:30')),
+    L(P('Paulo Sérgio Andrade', 'Consulta em otorrinolaringologia'), 'monaco', T(-1, '14:45'))];
+  tFechar('monaco', AG, doMonaco, T(0, '07:40'), Rc('monaco'), V);
+
+  // Guias soltas, esperando o próximo malote ou lançadas fora do fluxo.
+  L(P('Luzia Aparecida Santos', 'Ressonância de joelho'), 'jussara', T(-1, '16:20'));
+  L(P('Antônio Carlos Pereira', 'Ultrassonografia de abdômen total'), 'jussara', T(0, '08:05'));
+  L(P('Rosângela Ferreira Lima', 'Consulta em cardiologia', { protocolo: '2026-903377-1-01' }), 'jussara', T(0, '08:40'));
+  tLancarUBSAgendada(P('Raimundo Nonato Freire', 'Consulta em ortopedia', { tel: '(44) 90000-0101' }), 'jussara', { quando: T(9, '14:00'), local: 'CISCOPAR – Toledo' }, T(0, '09:30'), Rc('jussara'));
+  L(P('Osmar Teixeira', 'Consulta em ortopedia'), 'brag', T(-4, '09:00'));
+  L(P('Lauro Duarte', 'Ultrassonografia de próstata'), 'brag', T(-3, '14:00'));
+  L(P('Fátima Regina Costa', 'Consulta em oftalmologia'), 'araca', T(0, '08:30'));
+  tLancarAG(P('Marli Santos Prado', 'Ecocardiograma'), 'cristo', T(-1, '13:00'), A, 'fora');
+  const angela = SG(P('Ângela Moreira', 'Consulta em ginecologia'), 'ciasp1', 7, '08:40', 'CISCOPAR – Toledo', T(-1, '10:30')); tAvisar(angela, 'ligacao', T(-1, '11:00'), A);
+}
+
+/* ------------------------------------------------------------------ pedaços de tela */
+function rotulo(g) {
+  if (g.etapa === 'ubs_mandar' && g.devolucao) return 'Na UBS, para devolver ao Agendamento';
+  if (g.etapa === 'ubs_mandar' && g.repasse) return g.holder === g.ubs ? 'Na UBS ' + nomeUn(g.holder) + ' por engano: volta ao Agendamento' : 'Na UBS ' + nomeUn(g.holder) + ', para repassar à UBS ' + nomeUn(g.ubs) + ' pelo Agendamento';
+  if (g.etapa === 'malote_ida' && g.devolucao) return 'No malote, voltando ao Agendamento (devolução)';
+  if (g.etapa === 'ag_agendada') return g.avisado ? 'Agendada e avisada: esperando o malote para a UBS' : 'Agendada: falta avisar o paciente';
+  return E[g.etapa].rot;
+}
+function comQuem(g) {
+  switch (g.etapa) {
+    case 'ubs_mandar': case 'ubs_paciente': case 'nao_retirou': return 'UBS ' + nomeUn(g.holder);
+    case 'arquivada': return 'UBS ' + nomeUn(g.holder) + ' (arquivada)';
+    case 'malote_ida': case 'malote_volta': { const m = M(g.maloteId); return m ? 'malote ' + m.num + ' (' + nomeUn(m.origem) + ' → ' + nomeUn(m.destino) + ')' : 'malote'; }
+    case 'ag_agendar': case 'ag_fila': case 'ag_agendada': case 'devolvida': return 'Agendamento';
+    case 'entregue': return 'paciente';
+    default: return '—';
+  }
+}
+const chip = g => '<span class="chip" style="' + cv(E[g.etapa].cor) + '">' + esc(rotulo(g)) + '</span>';
+function selosHTML(g, comProb, noCartao) {
+  let h = '';
+  if (g.urgente && !fim(g)) h += '<span class="selo warn">Urgente</span>';
+  if (g.devolucao && !fim(g)) h += '<span class="selo">Devolução</span>';
+  if (g.transporte) h += '<span class="selo">Precisa de transporte</span>';
+  // "Veio do SIGSS" é o normal (toda guia sai do SIGSS): só aparece no detalhe. Nos cartões ficam as exceções.
+  g.selos.forEach(s => { if (!(noCartao && s === 'sigss')) h += '<span class="selo">' + SELOS[s] + '</span>'; });
+  if (comProb) abertos(g).forEach(p => { h += '<span class="selo bad">' + esc(p.motivo) + '</span>'; });
+  return h;
+}
+function stepper(g, labels) {
+  const pos = E[g.etapa].pos, cor = E[g.etapa].cor;
+  let h = '<div class="st" style="' + cv(cor) + '" aria-hidden="true">';
+  for (let i = 1; i <= 6; i++) { let c = ''; if (i < pos) c = g.pulou.indexOf(i) >= 0 ? 'p' : 'f'; else if (i === pos) c = 'c'; h += '<i class="' + c + '"></i>'; }
+  h += '</div>';
+  if (labels) {
+    const nomes = ['Na UBS', 'Malote', 'Agendamento', 'Malote', 'Na UBS', fim(g) && g.etapa !== 'entregue' ? 'Encerrada' : 'Entregue'];
+    h += '<div class="st-lab" style="' + cv(cor) + '">' + nomes.map((n, i) => '<span class="' + (i + 1 === pos ? 'c' : '') + '">' + n + '</span>').join('') + '</div>';
+  }
+  return h;
+}
+function metaHTML(g, comEtapa) {
+  const partes = [];
+  if (comEtapa) partes.push(chip(g));
+  if ((!isUBS() || g.ubs !== S.papel) && g.ubs) partes.push('UBS ' + esc(nomeUn(g.ubs)));
+  if (g.etapa === 'ubs_mandar') partes.push('lançada ' + fQuando(g.desde));
+  if (g.etapa === 'malote_ida' || g.etapa === 'malote_volta') { const m = M(g.maloteId); if (m) partes.push('malote ' + m.num + ', saiu ' + fQuando(m.fechadoEm)); }
+  if (g.etapa === 'ag_agendar') partes.push('aqui desde ' + fQuando(g.desde));
+  if (g.etapa === 'ag_fila') partes.push('na fila desde ' + fDia(g.desde));
+  if (g.ag && g.etapa !== 'ag_agendar' && g.etapa !== 'ag_fila') partes.push('<b>' + fDia(g.ag.quando) + ' às ' + fHora(g.ag.quando) + '</b> · ' + esc(g.ag.local));
+  const pz = prazoTxt(g); if (pz) partes.push(pz);
+  return partes.map(p => '<span>' + p + '</span>').join('');
+}
+function card(g, acoes, comEtapa) {
+  const probs = abertos(g);
+  return '<article class="g' + (probs.length ? ' prob' : '') + '">' +
+    '<div class="g-main" role="button" tabindex="0" data-act="guia" data-id="' + g.id + '" aria-label="Abrir a guia de ' + esc(g.paciente) + '">' +
+    '<div class="g-l1"><span class="g-nome">' + esc(g.paciente) + '</span>' + selosHTML(g, true, true) + '</div>' +
+    '<div class="g-proc">' + esc(g.proc) + '</div>' +
+    '<div class="g-meta">' + metaHTML(g, comEtapa) + '</div>' +
+    (probs.length ? '<div class="g-prob">' + esc(probs[0].texto) + '</div>' : '') +
+    stepper(g) + '</div>' +
+    (acoes ? '<div class="g-acoes">' + acoes + '</div>' : '') + '</article>';
+}
+function sec(t, n, corpo, cls, dica) {
+  return '<section class="sec ' + (cls || '') + '"><div class="sec-h"><h2>' + (cls === 'bad' ? ic('alert') : '') + esc(t) + ' <span class="cont">' + n + '</span></h2></div>' +
+    (dica ? '<p class="dica">' + dica + '</p>' : '') + '<div class="lista">' + corpo + '</div></section>';
+}
+const vazio = t => '<div class="vazio">' + t + '</div>';
+const btn = (act, id, txt, cls, extra) => '<button type="button" class="btn ' + (cls || '') + '" data-act="' + act + '"' + (id ? ' data-id="' + id + '"' : '') + (extra || '') + '>' + txt + '</button>';
+function statusMalote(m) {
+  if (!m.recebidoEm) { const d = du(m.fechadoEm, new Date()); return '<span>a caminho, saiu ' + fQuando(m.fechadoEm) + '</span>' + (d >= 2 ? '<span class="prazo atr">Parado há ' + plural(d, 'dia útil', 'dias úteis') + '</span>' : ''); }
+  let h = '<span>recebido ' + fQuando(m.recebidoEm) + '</span>';
+  if (m.faltaram.length) h += '<span class="selo bad">' + (m.faltaram.length === 1 ? '1 faltou' : m.faltaram.length + ' faltaram') + '</span>';
+  if (m.semLanc.length) h += '<span class="selo">' + m.semLanc.length + ' sem lançamento</span>';
+  if (m.naoDaqui.length) h += '<span class="selo">' + m.naoDaqui.length + ' de outra UBS</span>';
+  return h;
+}
+function maloteCard(m, acao) {
+  const parado = !m.recebidoEm && du(m.fechadoEm, new Date()) >= 2;
+  return '<article class="m' + (parado ? ' parado' : '') + '"><div class="m-main" role="button" tabindex="0" data-act="malote" data-id="' + m.id + '" aria-label="Abrir o malote ' + m.num + '">' +
+    '<span class="m-num">' + m.num + '</span><div class="m-txt"><div class="m-rota">' + esc(nomeUn(m.origem)) + ' → ' + esc(nomeUn(m.destino)) + '</div>' +
+    '<div class="g-meta"><span>' + plural(m.itens.length, 'guia', 'guias') + '</span>' + statusMalote(m) + '</div></div></div>' + (acao || '') + '</article>';
+}
+
+/* ------------------------------------------------------------------ caixas de entrada */
+function listasUBS(me) {
+  const chegando = S.malotes.filter(m => m.destino === me && !m.recebidoEm).sort((a, b) => a.fechadoEm < b.fechadoEm ? -1 : 1);
+  const prob = S.guias.filter(g => !fim(g) && temProblema(g) && (
+    (g.etapa === 'ubs_paciente' && g.holder === me) ||
+    ((g.etapa === 'malote_ida' || g.etapa === 'malote_volta') && abertos(g).some(p => p.motivo === 'Faltou no malote') && M(g.maloteId) && (M(g.maloteId).origem === me || M(g.maloteId).destino === me))));
+  const pid = new Set(prob.map(g => g.id));
+  const aqui = S.guias.filter(g => g.holder === me && !pid.has(g.id));
+  const reforcar = aqui.filter(g => g.etapa === 'ubs_paciente' && precisaReforco(g)).sort(porPrazo);
+  const mandar = aqui.filter(g => g.etapa === 'ubs_mandar').sort(porInicio);
+  const esperando = aqui.filter(g => g.etapa === 'ubs_paciente' && reforcar.indexOf(g) < 0).sort(porPrazo);
+  const aguard = aqui.filter(g => g.etapa === 'nao_retirou');
+  const enviados = S.malotes.filter(m => m.origem === me && !m.recebidoEm);
+  return { chegando, prob, reforcar, mandar, esperando, aguard, enviados, badge: chegando.length + prob.length + reforcar.length };
+}
+function listasAG() {
+  const chegando = S.malotes.filter(m => m.destino === AG && !m.recebidoEm).sort((a, b) => a.fechadoEm < b.fechadoEm ? -1 : 1);
+  const prob = S.guias.filter(g => !fim(g) && temProblema(g) && (
+    g.etapa === 'ag_agendar' || g.etapa === 'ag_fila' || (g.etapa === 'ag_agendada' && !g.avisado) ||
+    ((g.etapa === 'malote_ida' || g.etapa === 'malote_volta') && abertos(g).some(p => p.motivo === 'Faltou no malote'))));
+  const pid = new Set(prob.map(g => g.id));
+  const decidir = S.guias.filter(g => g.etapa === 'nao_retirou');
+  const agendar = S.guias.filter(g => g.etapa === 'ag_agendar' && !pid.has(g.id)).sort((a, b) => (b.urgente - a.urgente) || porInicio(a, b));
+  const avisar = S.guias.filter(g => g.etapa === 'ag_agendada' && !g.avisado && !pid.has(g.id)).sort((a, b) => (b.urgente - a.urgente) || porInicio(a, b));
+  const porUbs = {};
+  S.guias.filter(g => g.etapa === 'ag_agendada' && g.avisado).forEach(g => { (porUbs[g.ubs] = porUbs[g.ubs] || []).push(g); });
+  const grupos = UBS.filter(u => porUbs[u.id]).map(u => [u.id, porUbs[u.id].sort(porInicio)]);
+  const fila = S.guias.filter(g => g.etapa === 'ag_fila').sort(porInicio);
+  return { chegando, prob, decidir, agendar, avisar, grupos, fila, badge: chegando.length + prob.length + decidir.length + agendar.length + avisar.length + grupos.length };
+}
+function acoesProb(g) {
+  const p = abertos(g)[0]; const m = M(g.maloteId); let h = '';
+  if (p.motivo === 'Faltou no malote' && m) {
+    if (m.origem === S.papel) h += btn('achei', g.id, 'Achei aqui: vai no próximo malote', 'pri');
+    if (m.destino === S.papel) h += btn('chegoudepois', g.id, 'Chegou depois', 'pri');
+  } else if (g.etapa === 'ubs_paciente' && g.holder === S.papel) {
+    h += btn('entreguei', g.id, ic('check') + 'Entreguei', 'pri');
+  } else if (g.etapa === 'ag_agendada' && isAG()) {
+    h += btn('avisei', g.id, 'Avisei', 'pri', ' data-v="ligacao"');
+  }
+  return h + btn('resolver', g.id, 'Resolver', '', ' data-p="' + p.id + '"');
+}
+function fazerUBS() {
+  const me = S.papel, L = listasUBS(me); let h = '';
+  if (L.chegando.length) h += sec('Chegou malote para você', L.chegando.length, L.chegando.map(m => maloteCard(m, btn('receber', m.id, ic('check') + 'Conferir e receber', 'pri'))).join(''));
+  if (L.prob.length) h += sec('Com problema', L.prob.length, L.prob.map(g => card(g, acoesProb(g))).join(''), 'bad');
+  if (L.reforcar.length) h += sec('Reforçar o aviso', L.reforcar.length, L.reforcar.map(g => card(g,
+    btn('reforcei', g.id, ic('phone') + 'Reforcei o aviso', 'pri') + btn('entreguei', g.id, 'Entreguei') + (atrasada(g) ? btn('naoretirou', g.id, 'Não retirou') : ''))).join(''),
+    '', 'O prazo para retirar está vencendo. Lembre o paciente e marque aqui.');
+  if (L.mandar.length) {
+    const velho = L.mandar.reduce((a, g) => g.desde < a ? g.desde : a, L.mandar[0].desde); const n = du(velho, new Date());
+    const aviso = n >= 2 ? '<p class="dica atr">Tem guia esperando malote há ' + plural(n, 'dia útil', 'dias úteis') + '. Feche o malote quando ele for sair.</p>'
+      : '<p class="dica">Quando o malote for sair, feche aqui e escreva o número no envelope.</p>';
+    h += sec('Para mandar ao Agendamento', L.mandar.length, aviso + L.mandar.map(g => card(g, '')).join('') +
+      '<button type="button" class="btn pri big" data-act="fechar" data-dest="' + AG + '">' + ic('box') + 'Fechar malote (' + plural(L.mandar.length, 'guia', 'guias') + ')</button>');
+  }
+  if (L.esperando.length) h += sec('Esperando o paciente', L.esperando.length, L.esperando.map(g => card(g,
+    btn('entreguei', g.id, ic('check') + 'Entreguei', 'pri') + (atrasada(g) ? btn('naoretirou', g.id, 'Não retirou') : ''))).join(''));
+  if (L.aguard.length) h += sec('Não retirou: esperando o Agendamento', L.aguard.length, L.aguard.map(g => card(g, '')).join(''), '', 'O Agendamento vai dizer se a guia volta ou fica arquivada aqui. Guarde o papel até lá.');
+  if (!h) h = vazio('Nada para fazer agora.');
+  if (L.enviados.length) h += '<p class="dica">' + (L.enviados.length === 1 ? '1 malote seu está' : L.enviados.length + ' malotes seus estão') + ' a caminho do Agendamento. ' + btn('tab', '', 'Ver malotes', 'fraco', ' data-tab="malotes"') + '</p>';
+  return h;
+}
+function fazerAG() {
+  const L = listasAG(); let h = '';
+  if (L.chegando.length) h += sec('Chegou malote para você', L.chegando.length, L.chegando.map(m => maloteCard(m, btn('receber', m.id, ic('check') + 'Conferir e receber', 'pri'))).join(''));
+  if (L.prob.length) h += sec('Com problema', L.prob.length, L.prob.map(g => card(g, acoesProb(g))).join(''), 'bad');
+  if (L.decidir.length) h += sec('Decidir: o paciente não retirou', L.decidir.length, L.decidir.map(g => card(g,
+    btn('decidir', g.id, 'Pedir a guia de volta', 'pri', ' data-v="devolver"') + btn('decidir', g.id, 'Arquivar na UBS', '', ' data-v="arquivar"'))).join(''),
+    '', 'Se a vaga ainda pode ser usada por outro paciente, peça a guia de volta e remaneje no SIGSS.');
+  if (L.agendar.length) h += sec('Para agendar', L.agendar.length, L.agendar.map(g => card(g,
+    btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim') + btn('fila', g.id, 'Sem vaga: fila'))).join(''),
+    '', 'Agende no SIGSS como sempre. Em até 10 minutos a guia passa sozinha para "Avisar o paciente". No protótipo, use o botão amarelo.');
+  if (L.avisar.length) h += sec('Avisar o paciente', L.avisar.length, L.avisar.map(g => card(g,
+    btn('avisei', g.id, ic('phone') + 'Liguei', 'pri', ' data-v="ligacao"') + btn('avisei', g.id, 'WhatsApp', '', ' data-v="whats"') + btn('avisei', g.id, 'Não atende', '', ' data-v="nao"'))).join(''));
+  if (L.grupos.length) {
+    const total = L.grupos.reduce((a, x) => a + x[1].length, 0);
+    h += sec('Para mandar às UBS', total, L.grupos.map(([u, gs]) => {
+      const n = du(gs.reduce((a, g) => g.desde < a ? g.desde : a, gs[0].desde), new Date());
+      return '<article class="m' + (n >= 2 ? ' parado' : '') + '"><div class="m-main" role="button" tabindex="0" data-act="cel" data-k="agendada" data-u="' + u + '"><span class="m-num ubs">UBS</span><div class="m-txt"><div class="m-rota">' + esc(nomeUn(u)) + '</div>' +
+        '<div class="g-meta"><span>' + plural(gs.length, 'guia', 'guias') + '</span>' + (n >= 2 ? '<span class="prazo atr">a mais antiga espera há ' + plural(n, 'dia útil', 'dias úteis') + '</span>' : '') + '</div>' +
+        '<div class="m-nomes">' + gs.map(g => esc(g.paciente)).join(', ') + '</div></div></div>' +
+        '<button type="button" class="btn pri" data-act="fechar" data-dest="' + u + '">' + ic('box') + 'Fechar malote</button></article>';
+    }).join(''));
+  }
+  if (L.fila.length) h += '<details class="sec mais"><summary>Na fila do SIGSS, sem vaga <span class="cont" style="margin-left:8px">' + L.fila.length + '</span></summary><div class="lista">' +
+    '<p class="dica">O papel fica aqui. Quando o SIGSS agendar, a guia volta sozinha para "Avisar o paciente". Sem prazo de alerta.</p>' +
+    L.fila.map(g => card(g, btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim'))).join('') + '</div></details>';
+  if (!h) h = vazio('Nada para fazer agora.');
+  return h;
+}
+
+/* ------------------------------------------------------------------ onde parou, guias, malotes */
+function painel() {
+  const abertas = S.guias.filter(g => !fim(g));
+  const atr = abertas.filter(atrasada).length, pr = abertas.filter(temProblema).length;
+  const caminho = S.malotes.filter(m => !m.recebidoEm); const parados = caminho.filter(m => du(m.fechadoEm, new Date()) >= 2).length;
+  let h = '<section class="sec"><div class="sec-h"><h2>Onde parou</h2></div><div class="resumo">' +
+    '<button type="button" class="rchip' + (atr ? ' bad' : '') + '" data-act="filtro-geral" data-k="atrasadas"><b>' + atr + '</b> atrasadas</button>' +
+    '<button type="button" class="rchip' + (pr ? ' bad' : '') + '" data-act="filtro-geral" data-k="problema"><b>' + pr + '</b> com problema</button>' +
+    '<button type="button" class="rchip' + (parados ? ' bad' : '') + '" data-act="tab" data-tab="malotes"><b>' + caminho.length + '</b> malotes a caminho' + (parados ? ', ' + parados + ' parado' + (parados > 1 ? 's' : '') : '') + '</button>' +
+    '</div><p class="dica">Cada linha é uma UBS; cada coluna, uma etapa. O número mostra quantas guias da UBS estão ali. Em vermelho, as que passaram de 2 dias úteis. Toque no número para ver a lista.</p>';
+  h += '<div class="tab-scroll"><table class="painel"><thead><tr><th>UBS</th>' + COLS.map(c => '<th><span class="dot" style="' + cv(c.cor) + '"></span>' + c.rot + '</th>').join('') + '<th>Com problema</th></tr></thead><tbody>';
+  const tot = COLS.map(() => ({ n: 0, a: 0 })); const totP = { n: 0 };
+  UBS.forEach(u => {
+    h += '<tr><td>' + esc(u.nome) + '</td>';
+    COLS.forEach((c, i) => {
+      const gs = abertas.filter(g => c.un(g) === u.id); const a = gs.filter(atrasada).length;
+      tot[i].n += gs.length; tot[i].a += a;
+      h += '<td>' + celula(gs, a, c, u.id) + '</td>';
+    });
+    const gp = abertas.filter(g => temProblema(g) && (g.ubs === u.id || g.holder === u.id)); totP.n += gp.length;
+    h += '<td>' + (gp.length ? '<button type="button" class="cel" data-act="cel" data-k="problema" data-u="' + u.id + '"><span class="n" style="color:var(--bad)">' + gp.length + '</span></button>' : '<span class="cel zero"><span class="n">·</span></span>') + '</td></tr>';
+  });
+  h += '</tbody><tfoot><tr><td>Total</td>' + tot.map((t, i) => '<td><button type="button" class="cel" data-act="cel" data-k="' + COLS[i].k + '"><span class="n">' + t.n + '</span>' + (t.a ? '<span class="sub atr">' + t.a + ' atrasada' + (t.a > 1 ? 's' : '') + '</span>' : '') + '</button></td>').join('') +
+    '<td><span class="cel"><span class="n">' + totP.n + '</span></span></td></tr></tfoot></table></div></section>';
+  return h;
+}
+function celula(gs, a, c, u) {
+  if (!gs.length) return '<span class="cel zero"><span class="n">·</span></span>';
+  let sub;
+  if (a) sub = '<span class="sub atr">' + a + ' atrasada' + (a > 1 ? 's' : '') + '</span>';
+  else if (c.semPrazo) sub = '<span class="sub">sem prazo</span>';
+  else { const d = du(gs.reduce((x, g) => inicioEtapa(g) < x ? inicioEtapa(g) : x, inicioEtapa(gs[0])), new Date()); sub = '<span class="sub">' + (d <= 0 ? 'desde hoje' : 'mais antiga ' + d + 'd') + '</span>'; }
+  return '<button type="button" class="cel" data-act="cel" data-k="' + c.k + '" data-u="' + u + '"><span class="n">' + gs.length + '</span>' + sub + '</button>';
+}
+function guiasVisiveis() {
+  if (!isUBS()) return S.guias;
+  const me = S.papel;
+  return S.guias.filter(g => g.ubs === me || g.holder === me || (g.maloteId && M(g.maloteId) && (M(g.maloteId).origem === me || M(g.maloteId).destino === me)));
+}
+function telaGuias() {
+  const f = S.filtro || {}; const k = f.k || 'abertas';
+  const chips = [['abertas', 'Abertas'], ['atrasadas', 'Atrasadas'], ['problema', 'Com problema']].concat(COLS.map(c => [c.k, c.rot])).concat([['encerradas', 'Encerradas']]);
+  let lista = guiasVisiveis();
+  const col = COLS.find(c => c.k === k);
+  if (col) lista = lista.filter(g => { const un = col.un(g); return un != null && (!f.u || un === f.u); });
+  else {
+    if (k === 'abertas') lista = lista.filter(g => !fim(g));
+    if (k === 'atrasadas') lista = lista.filter(g => !fim(g) && atrasada(g));
+    if (k === 'problema') lista = lista.filter(g => !fim(g) && temProblema(g));
+    if (k === 'encerradas') lista = lista.filter(fim);
+    if (f.u) lista = lista.filter(g => g.ubs === f.u || g.holder === f.u);
+  }
+  lista = k === 'encerradas' ? lista.sort((a, b) => a.desde < b.desde ? 1 : -1) : lista.sort((a, b) => (atrasada(b) - atrasada(a)) || porInicio(a, b));
+  let h = '<section class="sec"><div class="sec-h"><h2>Guias <span class="cont">' + lista.length + '</span></h2></div><div class="filtros"><div class="chips">' +
+    chips.map(([kk, t]) => '<button type="button" class="fchip" data-act="filtro" data-k="' + kk + '" aria-pressed="' + (kk === k) + '">' + esc(t) + '</button>').join('') + '</div>';
+  if (!isUBS()) h += '<label class="campo" style="max-width:320px"><span class="lab">UBS</span><select id="filtro-ubs" data-act="filtro-ubs"><option value="">Todas as UBS</option>' + UBS.map(u => '<option value="' + u.id + '"' + (f.u === u.id ? ' selected' : '') + '>' + esc(u.nome) + '</option>').join('') + '</select></label>';
+  h += '</div><div class="lista">' + (lista.length ? lista.map(g => card(g, '', true)).join('') : vazio('Nenhuma guia com esse filtro.')) + '</div></section>';
+  return h;
+}
+function telaMalotes() {
+  let base = isUBS() ? S.malotes.filter(m => m.origem === S.papel || m.destino === S.papel) : S.malotes.slice();
+  const caminho = base.filter(m => !m.recebidoEm).sort((a, b) => a.fechadoEm < b.fechadoEm ? -1 : 1);
+  const recebidos = base.filter(m => m.recebidoEm).sort((a, b) => a.recebidoEm < b.recebidoEm ? 1 : -1);
+  let h = '';
+  if (isUBS()) {
+    const mandar = S.guias.filter(g => g.etapa === 'ubs_mandar' && g.holder === S.papel);
+    if (mandar.length) h += sec('Malote aberto', mandar.length, '<p class="dica">' + plural(mandar.length, 'guia está esperando', 'guias estão esperando') + ' o próximo malote para o Agendamento.</p><button type="button" class="btn pri big" data-act="fechar" data-dest="' + AG + '">' + ic('box') + 'Fechar malote (' + plural(mandar.length, 'guia', 'guias') + ')</button>');
+  }
+  h += sec('A caminho', caminho.length, caminho.length ? caminho.map(m => maloteCard(m, m.destino === S.papel ? btn('receber', m.id, ic('check') + 'Conferir e receber', 'pri') : '')).join('') : vazio('Nenhum malote a caminho.'));
+  h += sec('Recebidos', recebidos.length, recebidos.length ? recebidos.map(m => maloteCard(m, '')).join('') : vazio('Nenhum malote recebido ainda.'));
+  return h;
+}
+
+/* ------------------------------------------------------------------ tela principal */
+function abasDoPapel() {
+  if (isUBS()) return [['fazer', 'Para fazer'], ['guias', 'Guias'], ['malotes', 'Malotes']];
+  if (isAG()) return [['fazer', 'Para fazer'], ['painel', 'Onde parou'], ['guias', 'Guias'], ['malotes', 'Malotes']];
+  return [['painel', 'Onde parou'], ['guias', 'Guias'], ['malotes', 'Malotes']];
+}
+function render() {
+  const abas = abasDoPapel(); if (!abas.some(a => a[0] === S.tab)) S.tab = abas[0][0];
+  const badge = isUBS() ? listasUBS(S.papel).badge : isAG() ? listasAG().badge : 0;
+  const titulo = isUBS() ? 'UBS ' + nomeUn(S.papel) : isAG() ? 'Agendamento' : 'Administrador';
+  const sub = isUBS() ? 'Controle de Guias · recepção' : isAG() ? 'Controle de Guias · central' : 'Controle de Guias · só consulta';
+  const opts = '<optgroup label="UBS">' + UBS.map(u => '<option value="' + u.id + '"' + (S.papel === u.id ? ' selected' : '') + '>UBS ' + esc(u.nome) + '</option>').join('') + '</optgroup>' +
+    '<option value="' + AG + '"' + (isAG() ? ' selected' : '') + '>Agendamento</option><option value="' + ADM + '"' + (isADM() ? ' selected' : '') + '>Administrador</option>';
+  let corpo = '';
+  if (S.tab === 'fazer') corpo = isUBS() ? fazerUBS() : fazerAG();
+  else if (S.tab === 'painel') corpo = painel();
+  else if (S.tab === 'guias') corpo = telaGuias();
+  else corpo = telaMalotes();
+  const w = S.tab === 'painel' ? ' wide' : '';
+  $('#app').innerHTML =
+    '<div class="proto"><div class="wrap' + w + '"><span class="proto-tag">Protótipo · dados fictícios</span><label for="ver-como">Ver como</label><select id="ver-como" data-act="ver-como">' + opts + '</select><span class="esp"></span>' +
+    '<button type="button" class="pbtn" data-act="tarefas">Tarefas do teste</button><button type="button" class="pbtn" data-act="reset">Recomeçar</button></div></div>' +
+    '<header class="topo"><div class="wrap' + w + '"><div class="topo-l1"><div class="marca"><span class="marca-ic">' + ic('guia') + '</span><div><h1>' + esc(titulo) + '</h1><small>' + sub + '</small></div></div>' +
+    '<div class="busca">' + ic('search') + '<input id="busca" type="search" autocomplete="off" placeholder="Buscar paciente, protocolo ou malote" aria-label="Buscar paciente, protocolo ou malote"><div id="busca-res" class="busca-res" hidden></div></div></div>' +
+    '<nav class="abas" aria-label="Seções">' + abas.map(([k, t]) => '<button type="button" class="aba" data-act="tab" data-tab="' + k + '"' + (S.tab === k ? ' aria-current="page"' : '') + '>' + t + (k === 'fazer' && badge ? '<span class="badge">' + badge + '</span>' : '') + '</button>').join('') + '</nav></div></header>' +
+    '<main class="wrap' + w + '">' + corpo + '</main>' +
+    (!isADM() ? '<button type="button" class="btn pri fab" data-act="nova">' + ic('plus') + 'Nova guia</button>' : '');
+}
+
+/* ------------------------------------------------------------------ busca */
+function buscar(q) {
+  const box = $('#busca-res'); if (!box) return;
+  const t = norm(q.trim()); if (t.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
+  const dg = digitos(t);
+  const ms = (isUBS() ? S.malotes.filter(m => m.origem === S.papel || m.destino === S.papel) : S.malotes).filter(m => norm(m.num).indexOf(t) >= 0 || (dg.length >= 2 && dg === t && m.num.slice(4).indexOf(dg) >= 0)).slice(0, 3);
+  const gs = guiasVisiveis().filter(g => norm(g.paciente).indexOf(t) >= 0 || (dg.length >= 4 && digitos(g.protocolo).indexOf(dg) >= 0)).slice(0, 8);
+  let h = ms.map(m => '<button type="button" class="res" data-act="malote" data-id="' + m.id + '"><b>Malote ' + m.num + '</b><small>' + esc(nomeUn(m.origem)) + ' → ' + esc(nomeUn(m.destino)) + ' · ' + (m.recebidoEm ? 'recebido' : 'a caminho') + '</small></button>').join('');
+  h += gs.map(g => '<button type="button" class="res" data-act="guia" data-id="' + g.id + '"><b>' + esc(g.paciente) + '</b><small>' + esc(g.proc) + '</small><span>' + chip(g) + '</span></button>').join('');
+  box.innerHTML = h || '<div class="res" style="cursor:default"><small>Nada encontrado. Confira o nome ou o número.</small></div>';
+  box.hidden = false;
+}
+function esconderBusca() { const b = $('#busca-res'); if (b) { b.hidden = true; } }
+
+/* ------------------------------------------------------------------ folhas */
+function head(titulo, sub, voltar) {
+  return '<div class="sh-h"><div class="sh-tt">' + (voltar ? '<button type="button" class="btn fraco" style="justify-self:start;margin-left:-8px" data-act="malote" data-id="' + voltar + '">' + ic('back') + 'Voltar ao malote</button>' : '') +
+    '<h3 id="sh-tit" tabindex="-1">' + titulo + '</h3>' + (sub || '') + '</div><button type="button" class="btn fraco" data-act="fechar-sheet" aria-label="Fechar">' + ic('x') + '</button></div>';
+}
+function pintar(html, nova) {
+  const root = $('#sheet'); const old = root.querySelector('.sheet');
+  const top = old && !nova ? old.scrollTop : 0;
+  const foco = document.activeElement && document.activeElement.id && old && old.contains(document.activeElement) ? document.activeElement.id : null;
+  const memo = {};
+  if (old && !nova) old.querySelectorAll('input[id],select[id],textarea[id]').forEach(e => {
+    if (e.dataset.act) return; // caixas ligadas ao estado já saem certas do desenho
+    memo[e.id] = (e.type === 'checkbox' || e.type === 'radio') ? { marcado: e.checked } : { valor: e.value };
+  });
+  root.innerHTML = '<div class="scrim" data-act="fechar-sheet"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-tit">' + html + '</div>';
+  const s = root.querySelector('.sheet');
+  Object.keys(memo).forEach(id => { const e = document.getElementById(id); if (!e || !s.contains(e)) return; if ('marcado' in memo[id]) e.checked = memo[id].marcado; else e.value = memo[id].valor; });
+  s.scrollTop = top;
+  document.body.classList.add('travado');
+  if (foco && document.getElementById(foco)) document.getElementById(foco).focus({ preventScroll: true });
+  else if (!old || nova) { const h = document.getElementById('sh-tit'); if (h) h.focus({ preventScroll: true }); }
+}
+function fecharSheet() { $('#sheet').innerHTML = ''; sheetAtual = null; R = F = N = null; document.body.classList.remove('travado'); }
+function focar(id) { const e = document.getElementById(id); if (e) e.focus(); }
+
+/* detalhe da guia */
+function abrirGuia(id, voltar) { const nova = !sheetAtual || sheetAtual.tipo !== 'guia' || sheetAtual.id !== id; sheetAtual = { tipo: 'guia', id, voltar: voltar || null }; R = F = N = null; desenharGuia(nova); }
+function podeMexer(g) {
+  if (isADM() || fim(g)) return false;
+  if (isAG()) return g.etapa.indexOf('ag_') === 0 || g.etapa === 'nao_retirou' || g.etapa === 'malote_ida' || g.etapa === 'malote_volta';
+  return g.holder === S.papel || ((g.etapa === 'malote_ida' || g.etapa === 'malote_volta') && M(g.maloteId) && (M(g.maloteId).origem === S.papel || M(g.maloteId).destino === S.papel));
+}
+function acoesDetalhe(g) {
+  if (isADM()) return '<p class="dica">Visão do administrador: só consulta. Quem trabalha nas guias usa a visão da UBS ou do Agendamento.</p>';
+  if (fim(g)) return '';
+  const a = [], mais = []; const m = M(g.maloteId); const faltou = abertos(g).some(p => p.motivo === 'Faltou no malote');
+  if (faltou && m) { if (m.origem === S.papel) a.push(btn('achei', g.id, 'Achei aqui: vai no próximo malote', 'pri')); if (m.destino === S.papel) a.push(btn('chegoudepois', g.id, 'Chegou depois', 'pri')); }
+  if (isUBS() && g.holder === S.papel) {
+    if (g.etapa === 'ubs_paciente') {
+      a.push(btn('entreguei', g.id, ic('check') + 'Entreguei ao paciente', 'pri'));
+      if (!g.reforcoEm) a.push(btn('reforcei', g.id, ic('phone') + 'Reforcei o aviso'));
+      a.push(btn('naoretirou', g.id, 'Não retirou'));
+      mais.push(btn('transferir', g.id, 'Transferir para outra UBS'), btn('problema', g.id, 'Marcar problema'));
+    } else if (g.etapa === 'ubs_mandar') {
+      a.push('<p class="dica">Vai no próximo malote para o Agendamento.</p>');
+      mais.push(btn('problema', g.id, 'Marcar problema'));
+      if (!g.devolucao && !g.repasse) mais.push(btn('cancelar', g.id, 'Cancelar guia', 'perigo'));
+    } else if (g.etapa === 'nao_retirou') {
+      a.push('<p class="dica">O Agendamento vai dizer se a guia volta ou fica arquivada aqui.</p>');
+    }
+  }
+  if (isAG()) {
+    if (g.etapa === 'ag_agendar' || g.etapa === 'ag_fila') {
+      a.push('<p class="dica">Agende no SIGSS. A guia anda sozinha quando o SIGSS mostrar o agendamento.</p>');
+      if (g.etapa === 'ag_agendar') a.push(btn('fila', g.id, 'Sem vaga: deixar na fila'));
+      mais.push(btn('manual', g.id, 'O SIGSS não trouxe: lançar à mão'), btn('transferir', g.id, 'Transferir para outra UBS'), btn('problema', g.id, 'Marcar problema'), btn('cancelar', g.id, 'Cancelar guia', 'perigo'));
+    } else if (g.etapa === 'ag_agendada') {
+      if (!g.avisado) a.push(btn('avisei', g.id, ic('phone') + 'Liguei', 'pri', ' data-v="ligacao"'), btn('avisei', g.id, 'Mandei WhatsApp', '', ' data-v="whats"'), btn('avisei', g.id, 'Não atende', '', ' data-v="nao"'));
+      else a.push('<p class="dica">Vai no próximo malote para a UBS ' + esc(nomeUn(g.ubs)) + '.</p>');
+      mais.push(btn('retirouag', g.id, 'O paciente retirou aqui'), btn('transferir', g.id, 'Transferir para outra UBS'), btn('problema', g.id, 'Marcar problema'));
+    } else if (g.etapa === 'nao_retirou') {
+      a.push(btn('decidir', g.id, 'Pedir a guia de volta', 'pri', ' data-v="devolver"'), btn('decidir', g.id, 'Arquivar na UBS', '', ' data-v="arquivar"'));
+    }
+  }
+  let h = a.length ? '<div class="acoes">' + a.join('') + '</div>' : '';
+  if (mais.length) h += '<details class="mais"><summary>Mais ações</summary><div class="acoes">' + mais.join('') + '</div></details>';
+  return h;
+}
+function desenharGuia(nova) {
+  const g = G(sheetAtual.id); if (!g) { fecharSheet(); return; }
+  const sub = '<div class="g-meta"><span>' + esc(g.proc) + '</span><span>UBS ' + esc(nomeUn(g.ubs)) + '</span></div>' + (selosHTML(g, false) ? '<div class="g-l1">' + selosHTML(g, false) + '</div>' : '');
+  const pr = abertos(g).map(p => '<div class="pbox"><strong>' + ic('alert') + ' ' + esc(p.motivo) + '</strong><div>' + esc(p.texto) + '</div><small>Marcado por ' + esc(p.por) + ', ' + fQuando(p.em) + '</small>' +
+    (podeMexer(g) ? '<div>' + btn('resolver', g.id, 'Resolver', '', ' data-p="' + p.id + '"') + '</div>' : '') + '</div>').join('');
+  const rel = g.problemas.filter(p => p.resolvido);
+  const linhas = [];
+  if (g.ag) linhas.push(['Atendimento', fDia(g.ag.quando) + ' às ' + fHora(g.ag.quando)], ['Local', esc(g.ag.local)]);
+  else if (g.agAnterior) linhas.push(['Agendamento cancelado', fAg(g.agAnterior)]);
+  linhas.push(['Protocolo', g.protocolo ? '<span class="num">' + esc(g.protocolo) + '</span>' : '—']);
+  linhas.push(['Telefone', (g.tel ? esc(g.tel) : '<span class="muted">sem telefone</span>') + (podeMexer(g) ? btn('telefone', g.id, g.tel ? 'Mudar' : 'Pôr telefone', 'fraco') : '')]);
+  if (g.nasc) linhas.push(['Nascimento', fNasc(g.nasc)]);
+  if (g.obs) linhas.push(['Observação', esc(g.obs)]);
+  const hist = g.historico.slice().reverse().map(e => '<li><time>' + fQuando(e.em) + '</time><div>' + esc(e.texto) + '<span class="por">' + esc(e.por) + '</span></div></li>').join('');
+  let sim = '';
+  if (isAG() && (g.etapa === 'ag_agendar' || g.etapa === 'ag_fila')) sim = btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim');
+  if ((isAG() || isUBS()) && g.ag && !fim(g) && !abertos(g).some(p => p.motivo === 'Prestador desmarcou ou remarcou')) sim += btn('simcancelou', g.id, 'Simular: SIGSS cancelou o agendamento', 'sim');
+  const html = head(esc(g.paciente), sub, sheetAtual.voltar) + '<div class="sh-b">' +
+    '<div class="agora" style="' + cv(E[g.etapa].cor) + '"><div class="rot">' + esc(rotulo(g)) + '</div><div>Com: <b>' + esc(comQuem(g)) + '</b> · ' + tempoTxt(g) + '</div>' + prazoTxt(g) + stepper(g, true) +
+    (g.pulou.length && E[g.etapa].pos > 1 ? '<small class="muted">Traço pontilhado: etapa sem registro no app.</small>' : '') + '</div>' +
+    pr + acoesDetalhe(g) +
+    '<dl class="info">' + linhas.map(l => '<div><dt>' + l[0] + '</dt><dd>' + l[1] + '</dd></div>').join('') + '</dl>' +
+    (rel.length ? '<section><div class="sh-sub">Problemas resolvidos</div>' + rel.map(p => '<p class="dica"><b>' + esc(p.motivo) + ':</b> ' + esc(p.resolucao) + ' (' + esc(p.resolvidoPor) + ', ' + fQuando(p.resolvidoEm) + ')</p>').join('') + '</section>' : '') +
+    '<section><div class="sh-sub">Linha do tempo</div><ol class="hist">' + hist + '</ol></section>' +
+    (sim ? '<div class="simbox"><span class="simlab">Simulação do protótipo</span><div class="acoes">' + sim + '</div></div>' : '') +
+    '</div><div class="sh-pad"></div>';
+  pintar(html, nova);
+}
+
+/* detalhe do malote */
+function abrirMalote(id) { sheetAtual = { tipo: 'malote', id }; R = F = N = null; desenharMalote(true); }
+function papel(m) {
+  const itens = m.itens.map(G).filter(Boolean);
+  return '<div class="papel"><div class="papel-h"><div><div class="pk">Protocolo do malote</div><div class="pn">' + m.num + '</div></div><div class="pr"><b>' + esc(nomeUn(m.origem)) + '</b> → <b>' + esc(nomeUn(m.destino)) + '</b><br>' +
+    fDia(m.fechadoEm) + ' ' + fHora(m.fechadoEm) + ' · ' + plural(itens.length, 'guia', 'guias') + (m.portador ? '<br>Levou: ' + esc(m.portador) : '') + '</div></div>' +
+    '<ol>' + itens.map(g => '<li>' + esc(g.paciente) + ' <span class="muted">· ' + esc(g.proc) + '</span></li>').join('') + '</ol><div class="assin"><span>Entregue por</span><span>Recebido por</span></div></div>';
+}
+function desenharMalote(nova) {
+  const m = M(sheetAtual.id); if (!m) { fecharSheet(); return; }
+  const linha = (g, extra) => '<button type="button" class="res" data-act="guia" data-id="' + g.id + '" data-voltar="' + m.id + '"><b>' + esc(g.paciente) + '</b><small>' + esc(g.proc) + (extra ? ' · ' + extra : '') + '</small><span>' + chip(g) + '</span></button>';
+  const itens = m.itens.map(G).filter(Boolean);
+  let conf = '';
+  if (m.recebidoEm) {
+    conf = '<section><div class="sh-sub">Conferência</div><p>Recebido por ' + esc(m.recebidoPor) + ', ' + fQuando(m.recebidoEm) + '.</p>';
+    if (!m.faltaram.length && !m.semLanc.length && !m.naoDaqui.length) conf += '<p class="dica">Veio tudo certo.</p>';
+    if (m.faltaram.length) conf += '<p class="dica atr">Faltou: ' + m.faltaram.map(G).filter(Boolean).map(g => esc(g.paciente)).join(', ') + '</p>';
+    if (m.naoDaqui.length) conf += '<p class="dica">De outra UBS: ' + m.naoDaqui.map(G).filter(Boolean).map(g => esc(g.paciente)).join(', ') + '</p>';
+    if (m.semLanc.length) conf += '<p class="dica">Chegou sem lançamento: ' + m.semLanc.map(G).filter(Boolean).map(g => esc(g.paciente)).join(', ') + '</p>';
+    conf += '</section>';
+  }
+  const acao = !m.recebidoEm && m.destino === S.papel ? '<div class="acoes">' + btn('receber', m.id, ic('check') + 'Conferir e receber', 'pri big') + '</div>' : '';
+  const html = head('Malote ' + m.num, '<div class="g-meta"><span>' + esc(nomeUn(m.origem)) + ' → ' + esc(nomeUn(m.destino)) + '</span>' + statusMalote(m) + '</div>') +
+    '<div class="sh-b">' + acao + '<p>Fechado por ' + esc(m.fechadoPor) + ', ' + fQuando(m.fechadoEm) + (m.portador ? '. Levou: ' + esc(m.portador) : '') + '.</p>' + conf +
+    '<section><div class="sh-sub">Guias deste malote e onde estão agora</div><div class="conf">' + itens.map(g => linha(g)).join('') + m.semLanc.map(G).filter(Boolean).map(g => linha(g, 'chegou sem lançamento')).join('') + '</div></section>' +
+    '<section><div class="sh-sub">Protocolo (vai impresso junto)</div>' + papel(m) + '</section></div><div class="sh-pad"></div>';
+  pintar(html, nova);
+}
+
+/* conferência ao receber */
+function abrirReceber(mid) {
+  const m = M(mid); const ids = m.itens.filter(id => { const g = G(id); return g && g.maloteId === m.id; });
+  sheetAtual = { tipo: 'receber', id: mid }; R = { mid, ok: new Set(ids), nao: new Map(), novos: [], form: false, erros: {} }; F = N = null; desenharReceber(true);
+}
+function desenharReceber(nova) {
+  const m = M(R.mid); const itens = m.itens.map(G).filter(g => g && g.maloteId === m.id); const aUBS = m.destino !== AG;
+  const nFalt = itens.filter(g => !R.ok.has(g.id) && !R.nao.has(g.id)).length;
+  const rows = itens.map(g => {
+    const ok = R.ok.has(g.id), nao = R.nao.has(g.id);
+    let x = '';
+    if (aUBS) x = nao ? '<label class="muted" for="u-' + g.id + '" style="font-size:13px">É da UBS</label><select id="u-' + g.id + '" data-act="nao-ubs" data-id="' + g.id + '"><option value="">não sei</option>' + UBS.filter(u => u.id !== m.destino).map(u => '<option value="' + u.id + '"' + (R.nao.get(g.id) === u.id ? ' selected' : '') + '>' + esc(u.nome) + '</option>').join('') + '</select>' + btn('naodaqui-x', g.id, ic('x'), 'fraco', ' aria-label="É daqui, sim"')
+      : (ok ? btn('naodaqui', g.id, 'Não é daqui', 'fraco') : '');
+    return '<div class="conf-i' + (!ok && !nao ? ' faltou' : nao ? ' outra' : '') + '"><input type="checkbox" id="c-' + g.id + '" data-act="conf" data-id="' + g.id + '"' + (ok || nao ? ' checked' : '') + '>' +
+      '<label class="conf-t" for="c-' + g.id + '"><span class="nome">' + esc(g.paciente) + '</span><small>' + esc(g.proc) + (g.ag ? ' · ' + fDia(g.ag.quando) : '') + '</small>' + (!ok && !nao ? '<small class="falta">Não veio</small>' : '') + '</label><div class="conf-x">' + x + '</div></div>';
+  }).join('') + R.novos.map((d, i) => '<div class="conf-i"><input type="checkbox" checked disabled aria-label="Veio"><div class="conf-t"><span class="nome">' + esc(d.paciente) + '</span><small>' + esc(d.proc) + '</small><span class="selo" style="justify-self:start">Chegou sem lançamento</span></div><div class="conf-x">' + btn('novo-rm', '', ic('x'), 'fraco', ' data-i="' + i + '" aria-label="Tirar"') + '</div></div>').join('');
+  const er = k => R.erros[k] ? '<span class="erro">' + R.erros[k] + '</span>' : '';
+  const form = R.form ? '<div class="novo-form"><div class="campo"><label for="r-pac">Paciente</label><input id="r-pac" autocomplete="off">' + er('pac') + '</div>' +
+    '<div class="campo"><label for="r-proc">Exame ou consulta</label><input id="r-proc" list="l-procs" autocomplete="off">' + er('proc') + '</div>' +
+    (aUBS ? '<div class="grade2"><div class="campo"><label for="r-data">Data do atendimento</label><input id="r-data" type="date">' + er('data') + '</div><div class="campo"><label for="r-hora">Hora</label><input id="r-hora" type="time">' + er('hora') + '</div></div>' +
+      '<div class="campo"><label for="r-local">Local</label><input id="r-local" list="l-locais">' + er('local') + '</div><div class="campo"><label for="r-tel">Telefone</label><input id="r-tel" type="tel">' + er('tel') + '</div>'
+      : '<div class="campo"><label for="r-ubs">UBS do paciente</label><select id="r-ubs">' + UBS.map(u => '<option value="' + u.id + '"' + (u.id === m.origem ? ' selected' : '') + '>' + esc(u.nome) + '</option>').join('') + '</select></div>') +
+    '<div class="acoes">' + btn('novo-add', '', 'Pôr na lista', 'pri') + btn('novo-cancelar', '', 'Cancelar') + '</div></div>'
+    : btn('novo-abrir', '', ic('plus') + 'Veio um papel que não está na lista');
+  const veio = R.ok.size + R.nao.size;
+  let txt;
+  if (!nFalt && !R.nao.size && !R.novos.length) txt = 'Recebi tudo (' + plural(itens.length, 'guia', 'guias') + ')';
+  else { const p = ['Receber ' + plural(veio + R.novos.length, 'guia', 'guias')]; if (nFalt) p.push(nFalt === 1 ? '1 faltou' : nFalt + ' faltaram'); txt = p.join(' · '); }
+  const html = head('Malote ' + m.num, '<div class="g-meta"><span>' + esc(nomeUn(m.origem)) + ' → ' + esc(nomeUn(m.destino)) + '</span><span>saiu ' + fQuando(m.fechadoEm) + '</span>' + (m.portador ? '<span>levou: ' + esc(m.portador) + '</span>' : '') + '</div>') +
+    '<div class="sh-b"><p><b>Confira os papéis.</b> Está tudo marcado: desmarque só o que não veio.</p><div class="conf">' + rows + '</div>' + form + listas() + '</div>' +
+    '<div class="sh-f"><button type="button" class="btn pri big" data-act="receber-ok">' + ic('check') + txt + '</button></div>';
+  pintar(html, nova);
+}
+function listas() { return '<datalist id="l-procs">' + PROCS.map(p => '<option value="' + esc(p) + '">').join('') + '</datalist><datalist id="l-locais">' + LOCAIS.map(p => '<option value="' + esc(p) + '">').join('') + '</datalist>'; }
+function valor(id) { const e = document.getElementById(id); return e ? (e.type === 'checkbox' ? e.checked : String(e.value || '').trim()) : ''; }
+function addNovoReceber() {
+  const m = M(R.mid), aUBS = m.destino !== AG; const d = { paciente: valor('r-pac'), proc: valor('r-proc') }; const er = {};
+  if (!d.paciente) er.pac = 'Escreva o nome do paciente.'; if (!d.proc) er.proc = 'Escreva o exame ou a consulta.';
+  if (aUBS) {
+    const dt = valor('r-data'), hr = valor('r-hora'), lc = valor('r-local'); d.tel = valor('r-tel');
+    if (!dt) er.data = 'Escolha a data.'; if (!hr) er.hora = 'Escolha a hora.'; if (!lc) er.local = 'Escreva o local.'; if (!d.tel) er.tel = 'Escreva o telefone.';
+    if (dt && hr) d.ag = { quando: new Date(dt + 'T' + hr).toISOString(), local: lc };
+  } else d.ubs = valor('r-ubs');
+  R.erros = er; if (Object.keys(er).length) { desenharReceber(); return; }
+  R.novos.push(d); R.form = false; desenharReceber();
+}
+function receberOk() {
+  const m = M(R.mid); const itens = m.itens.map(G).filter(g => g && g.maloteId === m.id);
+  const ok = itens.filter(g => R.ok.has(g.id)); const nao = itens.filter(g => R.nao.has(g.id)).map(g => ({ g, certa: R.nao.get(g.id) || null }));
+  const falt = itens.filter(g => !R.ok.has(g.id) && !R.nao.has(g.id)); const novos = R.novos.slice();
+  const p = [plural(ok.length + nao.length + novos.length, 'guia recebida', 'guias recebidas')]; if (falt.length) p.push(falt.length === 1 ? '1 faltou' : falt.length + ' faltaram');
+  agir('Malote ' + m.num + ': ' + p.join(', ') + '.', () => tReceber(m, ok, falt, agoraISO(), quem(), novos, nao), () => fecharSheet());
+}
+
+/* fechar malote */
+function listaParaMandar(dest) { if (isUBS()) return S.guias.filter(g => g.etapa === 'ubs_mandar' && g.holder === S.papel).sort(porInicio); return S.guias.filter(g => g.etapa === 'ag_agendada' && g.avisado && g.ubs === dest).sort(porInicio); }
+function abrirFechar(dest) { const l = listaParaMandar(dest); sheetAtual = { tipo: 'fechar', id: dest }; F = { dest, sel: new Set(l.map(g => g.id)), feito: null }; R = N = null; desenharFechar(true); }
+function desenharFechar(nova) {
+  if (F.feito) {
+    const m = M(F.feito);
+    pintar(head('Malote fechado') + '<div class="sh-b"><p>Escreva este número no envelope:</p><div class="numgrande">' + m.num + '</div><p class="dica">Quem recebe confere pela lista. O protocolo abaixo vai impresso junto.</p>' + papel(m) + '</div>' +
+      '<div class="sh-f">' + btn('fechar-sheet', '', 'Pronto', 'pri big') + '</div>', nova);
+    return;
+  }
+  const lista = listaParaMandar(F.dest); const n = lista.filter(g => F.sel.has(g.id)).length;
+  const para = F.dest === AG ? 'o Agendamento' : 'a UBS ' + nomeUn(F.dest);
+  const rows = lista.map(g => { const sl = selosHTML(g, true, true); return '<div class="conf-i' + (F.sel.has(g.id) ? '' : ' outra') + '"><input type="checkbox" id="f-' + g.id + '" data-act="fsel" data-id="' + g.id + '"' + (F.sel.has(g.id) ? ' checked' : '') + '><label class="conf-t" for="f-' + g.id + '"><span class="nome">' + esc(g.paciente) + '</span><small>' + esc(g.proc) + (g.ag ? ' · ' + fDia(g.ag.quando) : '') + '</small>' + (sl ? '<span class="g-l1">' + sl + '</span>' : '') + (F.sel.has(g.id) ? '' : '<small>Fica para o próximo malote</small>') + '</label><span></span></div>'; }).join('');
+  const html = head('Fechar malote para ' + esc(para), '<div class="g-meta"><span>O número sai sozinho: ' + 'MAL-' + String(S.seqMal + 1).padStart(4, '0') + '</span></div>') +
+    '<div class="sh-b"><p><b>Vão estas guias.</b> Desmarque o que fica para o próximo malote.</p><div class="conf">' + (rows || '<div class="conf-i"><span></span><span class="muted">Nada para mandar.</span></div>') + '</div>' +
+    '<div class="campo"><label for="portador">Quem leva o malote <span class="op">(opcional)</span></label><input id="portador" autocomplete="off" placeholder="Ex.: Valdir (motorista)"></div></div>' +
+    '<div class="sh-f"><button type="button" class="btn pri big" data-act="fechar-ok"' + (n ? '' : ' disabled') + '>' + ic('box') + 'Fechar malote (' + plural(n, 'guia', 'guias') + ')</button></div>';
+  pintar(html, nova);
+}
+function fecharOk() {
+  const lista = listaParaMandar(F.dest).filter(g => F.sel.has(g.id)); if (!lista.length) return;
+  const port = valor('portador'); const origem = isUBS() ? S.papel : AG; const num = 'MAL-' + String(S.seqMal + 1).padStart(4, '0'); let m;
+  agir('Malote ' + num + ' fechado com ' + plural(lista.length, 'guia', 'guias') + '.', () => { m = tFechar(origem, F.dest, lista, agoraISO(), quem(), port); }, () => { F.feito = m.id; desenharFechar(); });
+}
+
+/* nova guia */
+function abrirNova() { sheetAtual = { tipo: 'nova' }; N = { modo: isUBS() ? 'ida' : 'aqui', erros: {} }; R = F = null; desenharNova(true); }
+function desenharNova(nova) {
+  const ubsMode = isUBS(); const ag = N.modo === 'agendada';
+  const modos = ubsMode ? [['ida', 'Vai para o Agendamento'], ['agendada', 'Já veio agendada']] : [['aqui', 'Chegou aqui para agendar'], ['agendada', 'Já está agendada']];
+  const er = k => N.erros[k] ? '<span class="erro">' + N.erros[k] + '</span>' : '';
+  const tel = '<div class="campo"><label for="n-tel">Telefone' + (ag ? '' : ' <span class="op">(opcional)</span>') + '</label><input id="n-tel" type="tel" inputmode="tel" autocomplete="off">' + er('tel') + '</div>';
+  const html = head('Nova guia') + '<form data-submit="nova-ok" novalidate><div class="sh-b">' +
+    '<div class="campo"><span class="lab" id="lab-modo">Onde a guia está agora?</span><div class="seg" role="group" aria-labelledby="lab-modo">' + modos.map(([k, t]) => '<button type="button" data-act="nova-modo" data-v="' + k + '" aria-pressed="' + (N.modo === k) + '">' + t + '</button>').join('') + '</div></div>' +
+    '<div class="campo"><label for="n-prot">Protocolo de acompanhamento <span class="op">(se tiver)</span></label><input id="n-prot" inputmode="numeric" autocomplete="off" placeholder="2026-000000-0-00"><span class="achou" id="n-achou">Digite o número do comprovante da Lista de Espera e o app completa o nome e o exame. Para testar: 2026-904512-1-03</span></div>' +
+    '<div class="campo"><label for="n-pac">Paciente</label><input id="n-pac" autocomplete="off">' + er('pac') + '</div>' +
+    '<div class="campo"><label for="n-proc">Exame ou consulta</label><input id="n-proc" list="l-procs" autocomplete="off">' + er('proc') + '</div>' +
+    (!ubsMode ? '<div class="campo"><label for="n-ubs">UBS do paciente</label><select id="n-ubs"><option value="">Escolha a UBS</option>' + UBS.map(u => '<option value="' + u.id + '">' + esc(u.nome) + '</option>').join('') + '</select>' + er('ubs') + '</div>' : '') +
+    (ag ? '<div class="grade2"><div class="campo"><label for="n-data">Data do atendimento</label><input id="n-data" type="date">' + er('data') + '</div><div class="campo"><label for="n-hora">Hora</label><input id="n-hora" type="time">' + er('hora') + '</div></div>' +
+      '<div class="campo"><label for="n-local">Local</label><input id="n-local" list="l-locais" autocomplete="off">' + er('local') + '</div>' + tel : '') +
+    '<details class="mais"><summary>Mais dados <span class="op" style="margin-left:6px">(opcional)</span></summary><div>' +
+    '<div class="campo"><label for="n-nasc">Data de nascimento</label><input id="n-nasc" type="date"></div>' + (ag ? '' : tel) +
+    '<label class="tog"><input type="checkbox" id="n-urg"> Urgente</label><label class="tog"><input type="checkbox" id="n-transp"> Precisa de transporte</label>' +
+    '<div class="campo"><label for="n-obs">Observação</label><textarea id="n-obs"></textarea></div></div></details>' + listas() +
+    '</div><div class="sh-f"><button type="submit" class="btn pri big">' + ic('plus') + 'Lançar guia</button></div></form>';
+  pintar(html, nova);
+  procurarProtocolo(valor('n-prot'));
+}
+function procurarProtocolo(v) {
+  const box = $('#n-achou'); if (!box) return; const dg = digitos(v);
+  box.className = 'achou';
+  if (dg.length < 12) { if (!dg) box.textContent = 'Digite o número do comprovante da Lista de Espera e o app completa o nome e o exame. Para testar: 2026-904512-1-03'; return; }
+  const ja = S.guias.find(g => !fim(g) && g.protocolo && digitos(g.protocolo) === dg);
+  if (ja) { box.className = 'achou ja'; box.innerHTML = '<b>Essa guia já está no app:</b> ' + esc(ja.paciente) + ', ' + esc(rotulo(ja).toLowerCase()) + '. ' + btn('guia', ja.id, 'Abrir', 'fraco'); return; }
+  const k = Object.keys(FILA_SIGSS).find(x => digitos(x) === dg);
+  if (k) {
+    const f = FILA_SIGSS[k]; const p = $('#n-pac'), pr = $('#n-proc'); if (p && !p.value) p.value = f.paciente; if (pr && !pr.value) pr.value = f.proc;
+    box.className = 'achou ok'; box.innerHTML = '<b>Achei na Lista de Espera do SIGSS:</b> ' + esc(f.paciente) + ' · ' + esc(f.proc);
+  } else box.textContent = 'Não achei esse protocolo na Lista de Espera. Confira o número ou preencha à mão.';
+}
+function novaOk() {
+  const d = { paciente: valor('n-pac'), proc: valor('n-proc'), protocolo: valor('n-prot'), nasc: valor('n-nasc'), tel: valor('n-tel'), urgente: valor('n-urg') === true, transporte: valor('n-transp') === true, obs: valor('n-obs') };
+  const er = {}; if (!d.paciente) er.pac = 'Escreva o nome do paciente.'; if (!d.proc) er.proc = 'Escreva o exame ou a consulta.';
+  const ubs = isUBS() ? S.papel : valor('n-ubs'); if (!ubs) er.ubs = 'Escolha a UBS do paciente.';
+  let ag = null;
+  if (N.modo === 'agendada') {
+    const dt = valor('n-data'), hr = valor('n-hora'), lc = valor('n-local');
+    if (!dt) er.data = 'Escolha a data.'; if (!hr) er.hora = 'Escolha a hora.'; if (!lc) er.local = 'Escreva o local.'; if (!d.tel) er.tel = 'Escreva o telefone.';
+    if (dt && hr) ag = { quando: new Date(dt + 'T' + hr).toISOString(), local: lc };
+  }
+  if (Object.keys(er).length) { N.erros = er; desenharNova(); const e = document.querySelector('.sheet .erro'); if (e && e.previousElementSibling) e.previousElementSibling.focus(); return; }
+  const q = agoraISO(), p = quem(), modo = N.modo;
+  agir('Guia lançada: ' + d.paciente, () => {
+    if (isUBS()) { if (modo === 'agendada') tLancarUBSAgendada(d, ubs, ag, q, p); else tLancarUBS(d, ubs, q, p); }
+    else { if (modo === 'agendada') tLancarAGAgendada(d, ubs, ag, q, p); else tLancarAG(d, ubs, q, p, 'fora'); }
+  }, () => fecharSheet());
+}
+
+/* folhas pequenas: lançar à mão, problema, resolver, transferir, telefone */
+function folhaForm(titulo, sub, corpo, acao, botao) { return head(titulo, sub) + '<form data-submit="' + acao + '" novalidate><div class="sh-b">' + corpo + '</div><div class="sh-f"><button type="submit" class="btn pri big">' + botao + '</button></div></form>'; }
+function abrirManual(id, erros) {
+  const g = G(id); sheetAtual = { tipo: 'manual', id }; erros = erros || {}; const er = k => erros[k] ? '<span class="erro">' + erros[k] + '</span>' : '';
+  pintar(folhaForm('Lançar o agendamento à mão', '<div class="g-meta"><span>' + esc(g.paciente) + ' · ' + esc(g.proc) + '</span></div>',
+    '<p class="dica">Use só quando o SIGSS não trouxer o agendamento sozinho. Os 6 dados são obrigatórios.</p>' +
+    '<div class="grade2"><div class="campo"><label for="a-data">Data do atendimento</label><input id="a-data" type="date">' + er('data') + '</div><div class="campo"><label for="a-hora">Hora</label><input id="a-hora" type="time">' + er('hora') + '</div></div>' +
+    '<div class="campo"><label for="a-local">Local</label><input id="a-local" list="l-locais">' + er('local') + '</div>' +
+    '<div class="campo"><label for="a-tel">Telefone</label><input id="a-tel" type="tel" value="' + esc(g.tel) + '">' + er('tel') + '</div>' + listas(), 'manual-ok', 'Salvar agendamento'), !erros || !Object.keys(erros).length);
+}
+function abrirProblema(id, erro) {
+  const g = G(id); sheetAtual = { tipo: 'problema', id };
+  pintar(folhaForm('Marcar problema', '<div class="g-meta"><span>' + esc(g.paciente) + ' · ' + esc(g.proc) + '</span></div>',
+    '<p class="dica">A guia continua andando. O selo vermelho fica até alguém resolver.</p><fieldset class="radios" style="border:0;padding:0;margin:0"><legend class="lab" style="font-weight:650;margin-bottom:4px">Motivo</legend>' +
+    MOTIVOS.map((t, i) => '<label><input type="radio" id="mot-' + i + '" name="motivo" value="' + esc(t) + '"' + (i === 0 ? ' checked' : '') + '> ' + esc(t) + '</label>').join('') + '</fieldset>' +
+    '<div class="campo"><label for="pb-txt">Detalhe <span class="op">(obrigatório em "Outro")</span></label><textarea id="pb-txt"></textarea>' + (erro ? '<span class="erro">' + erro + '</span>' : '') + '</div>', 'prob-ok', 'Marcar problema'), !erro);
+}
+function abrirResolver(id, pid, erro) {
+  const g = G(id); const p = g.problemas.find(x => x.id === pid); sheetAtual = { tipo: 'resolver', id, pid };
+  pintar(folhaForm('Resolver: ' + esc(p.motivo), '<div class="g-meta"><span>' + esc(g.paciente) + ' · ' + esc(g.proc) + '</span></div>',
+    '<p>' + esc(p.texto) + '</p><div class="campo"><label for="rs-txt">O que foi feito?</label><textarea id="rs-txt" placeholder="Ex.: falei com a filha, ela busca amanhã"></textarea>' + (erro ? '<span class="erro">' + erro + '</span>' : '') + '</div>', 'resolver-ok', 'Marcar como resolvido'), !erro);
+}
+function abrirTransferir(id, erro) {
+  const g = G(id); sheetAtual = { tipo: 'transferir', id };
+  pintar(folhaForm('Transferir para outra UBS', '<div class="g-meta"><span>' + esc(g.paciente) + ' · hoje é da UBS ' + esc(nomeUn(g.ubs)) + '</span></div>',
+    '<p class="dica">Use quando o paciente mudou de unidade. ' + (g.etapa === 'ubs_paciente' ? 'O papel volta ao Agendamento no próximo malote e segue para a UBS nova.' : 'A guia passa a ser da UBS nova.') + '</p>' +
+    '<div class="campo"><label for="tr-ubs">UBS nova</label><select id="tr-ubs"><option value="">Escolha a UBS</option>' + UBS.filter(u => u.id !== g.ubs).map(u => '<option value="' + u.id + '">' + esc(u.nome) + '</option>').join('') + '</select>' + (erro ? '<span class="erro">' + erro + '</span>' : '') + '</div>', 'transf-ok', 'Transferir'), !erro);
+}
+function abrirTelefone(id) {
+  const g = G(id); sheetAtual = { tipo: 'telefone', id };
+  pintar(folhaForm('Telefone do paciente', '<div class="g-meta"><span>' + esc(g.paciente) + '</span></div>',
+    '<div class="campo"><label for="tl-num">Telefone</label><input id="tl-num" type="tel" inputmode="tel" value="' + esc(g.tel) + '" autocomplete="off"></div><p class="dica">No app de verdade, o telefone abre o WhatsApp com a mensagem pronta.</p>', 'tel-ok', 'Salvar telefone'), true);
+}
+function voltarParaGuia(id) { sheetAtual = { tipo: 'guia', id }; desenharGuia(true); }
+
+/* tarefas do teste */
+function abrirTarefas() {
+  sheetAtual = { tipo: 'tarefas' };
+  const html = head('Tarefas do teste') + '<div class="sh-b tarefas"><p class="dica"><b>Para quem conduz:</b> leia uma tarefa por vez, não ajude e anote onde a pessoa parou, voltou ou errou. "Recomeçar" volta os dados fictícios ao início.</p>' +
+    '<section><h4>Na UBS (ver como UBS Jussara e Panorama)</h4><ol>' +
+    '<li>Chegou um malote do Agendamento. Receba. A guia de Pedro Henrique Alves não veio no envelope.</li>' +
+    '<li>Maria das Graças Souza veio buscar a guia dela. Registre a entrega.</li>' +
+    '<li>Uma paciente trouxe um pedido com o protocolo 2026-904512-1-03. Lance para mandar ao Agendamento.</li>' +
+    '<li>O malote vai sair agora. Feche e diga qual número vai no envelope.</li>' +
+    '<li>Onde está a guia de Vanessa Cristina Lopes, e desde quando?</li>' +
+    '<li>Claudio Roberto Dias não atende o telefone. O que o app mostra sobre ele?</li></ol>' +
+    '<div class="acoes" style="margin-top:10px">' + btn('papel-teste', '', 'Fazer como UBS Jussara e Panorama', 'pri', ' data-v="jussara"') + '</div></section>' +
+    '<section><h4>No Agendamento</h4><ol>' +
+    '<li>Chegou o malote da UBS Jardim Mônaco. Receba. Veio junto o pedido de Valter Gomes (consulta em cardiologia), que não estava na lista.</li>' +
+    '<li>Agende a guia de Edson Luiz Martins. No protótipo, use o botão amarelo "Simular: SIGSS agendou".</li>' +
+    '<li>Avise Edson e mande a guia dele para a UBS Jussara e Panorama.</li>' +
+    '<li>Ivone Cardoso não retirou a guia. Decida o que fazer.</li>' +
+    '<li>Em "Onde parou", diga qual UBS tem guias paradas há mais tempo.</li></ol>' +
+    '<div class="acoes" style="margin-top:10px">' + btn('papel-teste', '', 'Fazer como Agendamento', 'pri', ' data-v="' + AG + '"') + '</div></section></div><div class="sh-pad"></div>';
+  pintar(html, true);
+}
+
+/* ------------------------------------------------------------------ ações */
+function agir(msg, fn, depois) {
+  const snap = JSON.stringify(S); fn(); salvar(); render();
+  if (depois) depois();
+  else if (sheetAtual && sheetAtual.tipo === 'guia') desenharGuia();
+  else if (sheetAtual && sheetAtual.tipo === 'malote') desenharMalote();
+  toast(msg, snap);
+}
+function toast(msg, snap) {
+  const root = $('#toast-root'); clearTimeout(toastT); desfazerSnap = snap || null;
+  root.innerHTML = '<div class="toast"><span>' + esc(msg) + '</span>' + (snap ? '<button type="button" data-act="desfazer">Desfazer</button>' : '') + '</div>';
+  toastT = setTimeout(() => { root.innerHTML = ''; desfazerSnap = null; }, snap ? 8000 : 3000);
+}
+function desfazer() { if (!desfazerSnap) return; S = JSON.parse(desfazerSnap); desfazerSnap = null; salvar(); fecharSheet(); render(); toast('Desfeito.'); }
+const q0 = () => agoraISO();
+const ACOES = {
+  'tab': el => { S.tab = el.dataset.tab; S.filtro = {}; salvar(); render(); window.scrollTo(0, 0); },
+  'guia': el => { esconderBusca(); abrirGuia(el.dataset.id, el.dataset.voltar); },
+  'malote': el => { esconderBusca(); abrirMalote(el.dataset.id); },
+  'receber': el => abrirReceber(el.dataset.id),
+  'fechar': el => abrirFechar(el.dataset.dest),
+  'nova': () => abrirNova(),
+  'nova-modo': el => { N.modo = el.dataset.v; N.erros = {}; desenharNova(); },
+  'entreguei': el => { const g = G(el.dataset.id); agir('Entregue: ' + g.paciente + '.', () => tEntregar(g, q0(), quem())); },
+  'reforcei': el => { const g = G(el.dataset.id); agir('Aviso reforçado: ' + g.paciente + '.', () => tReforcar(g, q0(), quem())); },
+  'naoretirou': el => { const g = G(el.dataset.id); agir('Não retirou: o Agendamento decide.', () => tNaoRetirou(g, q0(), quem())); },
+  'decidir': el => { const g = G(el.dataset.id), v = el.dataset.v; agir(v === 'devolver' ? 'A UBS vai mandar a guia de volta.' : 'Guia arquivada na UBS.', () => tDecidir(g, v, q0(), quem())); },
+  'avisei': el => { const g = G(el.dataset.id), v = el.dataset.v; agir(v === 'nao' ? 'Marcado: não atende. A UBS reforça.' : 'Paciente avisado: ' + g.paciente + '.', () => tAvisar(g, v, q0(), quem())); },
+  'fila': el => { const g = G(el.dataset.id); agir('Na fila do SIGSS: ' + g.paciente + '.', () => tFila(g, q0(), quem())); },
+  'simagendou': el => { const g = G(el.dataset.id); agir('O SIGSS agendou ' + g.paciente + '.', () => tAgendar(g, agFake(g), q0(), quem(), true)); },
+  'simcancelou': el => { const g = G(el.dataset.id); agir('O SIGSS cancelou o agendamento de ' + g.paciente + '.', () => tSimCancelou(g, q0())); },
+  'achei': el => { const g = G(el.dataset.id); agir('Vai no próximo malote: ' + g.paciente + '.', () => tAchei(g, q0(), quem())); },
+  'chegoudepois': el => { const g = G(el.dataset.id); agir('Recebida: ' + g.paciente + '.', () => tChegouDepois(g, q0(), quem())); },
+  'retirouag': el => { const g = G(el.dataset.id); agir('Entregue no Agendamento: ' + g.paciente + '.', () => tRetirouAG(g, q0(), quem())); },
+  'cancelar': el => { const g = G(el.dataset.id); agir('Guia cancelada: ' + g.paciente + '.', () => tCancelar(g, q0(), quem())); },
+  'manual': el => abrirManual(el.dataset.id),
+  'problema': el => abrirProblema(el.dataset.id),
+  'resolver': el => abrirResolver(el.dataset.id, el.dataset.p),
+  'transferir': el => abrirTransferir(el.dataset.id),
+  'telefone': el => abrirTelefone(el.dataset.id),
+  'naodaqui': el => { R.nao.set(el.dataset.id, ''); R.ok.delete(el.dataset.id); desenharReceber(); const s = document.getElementById('u-' + el.dataset.id); if (s) s.focus(); },
+  'naodaqui-x': el => { R.nao.delete(el.dataset.id); R.ok.add(el.dataset.id); desenharReceber(); },
+  'novo-abrir': () => { R.form = true; R.erros = {}; desenharReceber(); focar('r-pac'); },
+  'novo-cancelar': () => { R.form = false; R.erros = {}; desenharReceber(); },
+  'novo-add': () => addNovoReceber(),
+  'novo-rm': el => { R.novos.splice(+el.dataset.i, 1); desenharReceber(); },
+  'receber-ok': () => receberOk(),
+  'fechar-ok': () => fecharOk(),
+  'filtro': el => { S.filtro = Object.assign({}, S.filtro, { k: el.dataset.k }); salvar(); render(); },
+  'filtro-geral': el => { S.tab = 'guias'; S.filtro = { k: el.dataset.k }; salvar(); render(); window.scrollTo(0, 0); },
+  'cel': el => { S.tab = 'guias'; S.filtro = { k: el.dataset.k }; if (el.dataset.u) S.filtro.u = el.dataset.u; salvar(); render(); window.scrollTo(0, 0); },
+  'fechar-sheet': () => fecharSheet(),
+  'desfazer': () => desfazer(),
+  'tarefas': () => abrirTarefas(),
+  'papel-teste': el => { S.papel = el.dataset.v; S.tab = 'fazer'; S.filtro = {}; salvar(); fecharSheet(); render(); window.scrollTo(0, 0); },
+  'reset': () => { seed(); salvar(); fecharSheet(); render(); toast('Os dados fictícios voltaram ao início.'); }
+};
+const MUDAR = {
+  'ver-como': el => { S.papel = el.value; S.tab = el.value === ADM ? 'painel' : 'fazer'; S.filtro = {}; salvar(); fecharSheet(); render(); window.scrollTo(0, 0); },
+  'conf': el => { const id = el.dataset.id; if (el.checked) R.ok.add(id); else { R.ok.delete(id); R.nao.delete(id); } desenharReceber(); },
+  'nao-ubs': el => { R.nao.set(el.dataset.id, el.value); },
+  'fsel': el => { const id = el.dataset.id; if (el.checked) F.sel.add(id); else F.sel.delete(id); desenharFechar(); },
+  'filtro-ubs': el => { S.filtro = Object.assign({}, S.filtro); if (el.value) S.filtro.u = el.value; else delete S.filtro.u; salvar(); render(); }
+};
+const ENVIAR = {
+  'nova-ok': () => novaOk(),
+  'manual-ok': () => {
+    const g = G(sheetAtual.id); const dt = valor('a-data'), hr = valor('a-hora'), lc = valor('a-local'), tel = valor('a-tel'); const er = {};
+    if (!dt) er.data = 'Escolha a data.'; if (!hr) er.hora = 'Escolha a hora.'; if (!lc) er.local = 'Escreva o local.'; if (!tel) er.tel = 'Escreva o telefone.';
+    if (Object.keys(er).length) { abrirManual(g.id, er); return; }
+    agir('Agendamento lançado à mão: ' + g.paciente + '.', () => { g.tel = tel; tAgendar(g, { quando: new Date(dt + 'T' + hr).toISOString(), local: lc }, q0(), quem(), false); }, () => voltarParaGuia(g.id));
+  },
+  'prob-ok': () => {
+    const g = G(sheetAtual.id); const r = document.querySelector('.sheet input[name="motivo"]:checked'); const motivo = r ? r.value : 'Outro'; const txt = valor('pb-txt');
+    if (motivo === 'Outro' && !txt) { abrirProblema(g.id, 'Escreva qual é o problema.'); return; }
+    agir('Problema marcado: ' + motivo + '.', () => { g.problemas.push(prob(motivo, txt || motivo, q0(), quem(), false)); ev(g, q0(), quem(), 'Problema marcado: ' + motivo + (txt ? '. ' + txt : '')); }, () => voltarParaGuia(g.id));
+  },
+  'resolver-ok': () => {
+    const g = G(sheetAtual.id); const p = g.problemas.find(x => x.id === sheetAtual.pid); const txt = valor('rs-txt');
+    if (!txt) { abrirResolver(g.id, p.id, 'Escreva o que foi feito. Isso fica na linha do tempo.'); return; }
+    agir('Problema resolvido.', () => { resolverProb(p, txt, q0(), quem()); ev(g, q0(), quem(), 'Problema resolvido (' + p.motivo + '): ' + txt); }, () => voltarParaGuia(g.id));
+  },
+  'transf-ok': () => {
+    const g = G(sheetAtual.id); const u = valor('tr-ubs'); if (!u) { abrirTransferir(g.id, 'Escolha a UBS nova.'); return; }
+    agir('Transferida para a UBS ' + nomeUn(u) + '.', () => tTransferir(g, u, q0(), quem()), () => voltarParaGuia(g.id));
+  },
+  'tel-ok': () => { const g = G(sheetAtual.id); const t = valor('tl-num'); agir('Telefone salvo.', () => { g.tel = t; ev(g, q0(), quem(), t ? 'Telefone atualizado' : 'Telefone apagado'); }, () => voltarParaGuia(g.id)); }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!e.target.closest('.busca')) esconderBusca();
+  if (!el || el.matches('input,select')) return;
+  const fn = ACOES[el.dataset.act]; if (fn) { e.preventDefault(); fn(el, e); }
+});
+document.addEventListener('change', e => { const el = e.target; const fn = el.dataset && MUDAR[el.dataset.act]; if (fn) fn(el); });
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.id === 'busca') buscar(el.value);
+  if (el.id === 'n-prot') procurarProtocolo(el.value);
+});
+document.addEventListener('submit', e => { e.preventDefault(); const fn = ENVIAR[e.target.dataset.submit]; if (fn) fn(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if ($('#sheet .sheet')) fecharSheet(); else esconderBusca(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role="button"][data-act]')) { e.preventDefault(); e.target.click(); }
+});
+
+S = carregar(); if (!S) { seed(); salvar(); }
+render();
+})();
+</script>
+</body>
+</html>
