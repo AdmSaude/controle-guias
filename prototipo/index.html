@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light">
-<meta name="prototipo-carimbo" content="4a8d94ce577a">
+<meta name="prototipo-carimbo" content="3f795100fb92">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a16207'/%3E%3Cpath d='M7 10.5h18v12H7z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M7 10.5l9 7 9-7' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script>window.cgImprimir = function () { window.print(); };</script>
@@ -1330,9 +1330,9 @@ function abrirTelefone(id) {
 }
 function voltarParaGuia(id) { sheetAtual = { tipo: 'guia', id }; desenharGuia(true); }
 
-/* mensagem pronta para o paciente. Regra do usuário (25/11/2026): o app não guarda dado de paciente que vem de outro
-   sistema. O telefone é buscado no SIGSS quando esta tela abre; se não vier, a pessoa escreve. Nos dois casos vale só
-   para esta mensagem. No protótipo, o "SIGSS" é o telefone fictício da guia. */
+/* mensagem pronta para o paciente. O telefone vem do SIGSS quando esta tela abre (ou do que já está na guia); se não vier,
+   a pessoa escreve e ele fica guardado na guia. O usuário liberou guardar (25/11/2026): o receio era só o tamanho do plano
+   free, e telefone e dados da guia ocupam pouco. No protótipo, o "SIGSS" é o telefone fictício da guia. */
 const DL = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 const fDiaPac = d => { d = new Date(d); return DL[d.getDay()] + ', ' + p2(d.getDate()) + '/' + p2(d.getMonth() + 1); };
 const minusc = s => s ? s.charAt(0).toLowerCase() + s.slice(1) : '';
@@ -1359,7 +1359,7 @@ function desenharMensagem(nova) {
   const html = head('Mensagem para o paciente', '<div class="g-meta"><span>' + esc(g.paciente) + '</span><span>' + esc(g.proc) + '</span></div>') +
     '<div class="sh-b"><div class="campo"><label for="msg-tel">Telefone (WhatsApp)</label><input id="msg-tel" type="tel" inputmode="tel" autocomplete="off" value="' + esc(g.tel) + '">' +
     (msgErro ? '<span class="erro">' + msgErro + '</span>' : '') +
-    '<span class="dica">' + (g.tel ? 'Buscado no SIGSS agora. Se estiver errado, corrija aqui.' : 'O SIGSS não trouxe telefone. Escreva aqui.') + ' O app não guarda este número: vale só para esta mensagem.</span></div>' +
+    '<span class="dica">' + (g.tel ? 'Veio do SIGSS. Se estiver errado, corrija aqui.' : 'O SIGSS não trouxe telefone. Escreva aqui.') + ' O número fica guardado na guia para a próxima vez.</span></div>' +
     '<div class="campo"><label for="msg-txt">Texto pronto <span class="op">(dá para mudar antes de mandar)</span></label><textarea id="msg-txt" rows="11">' + esc(textoPronto(g)) + '</textarea></div>' +
     '<div class="simbox"><span class="simlab">Simulação do protótipo</span><p class="dica">No app de verdade, "Mandar no WhatsApp" abre o WhatsApp do computador ou do celular já com o número e o texto, e a pessoa só aperta enviar. Aqui o botão só registra o aviso.</p></div>' +
     '</div><div class="sh-f">' + btn('msg-whats', g.id, ic('chat') + 'Mandar no WhatsApp', 'pri big') + btn('msg-copiar', g.id, 'Copiar o texto', 'big') + '</div>';
@@ -1369,9 +1369,11 @@ function mandarMensagem(id) {
   const g = G(id); const tel = digitos(valor('msg-tel'));
   if (tel.length < 10) { msgErro = 'Escreva o telefone com DDD.'; desenharMensagem(); focar('msg-tel'); return; }
   msgErro = '';
-  // No app de verdade: window.open('https://wa.me/55' + tel.replace(/^55/, '') + '?text=' + encodeURIComponent(texto)), sem guardar o número.
-  if (isAG()) agir('Paciente avisado por WhatsApp: ' + g.paciente + '.', () => tAvisar(g, 'whats', q0(), quem()), () => fecharSheet());
-  else agir('Aviso reforçado por WhatsApp: ' + g.paciente + '.', () => tReforcar(g, q0(), quem(), 'whats'), () => fecharSheet());
+  // No app de verdade: window.open('https://wa.me/55' + tel.replace(/^55/, '') + '?text=' + encodeURIComponent(texto)).
+  const novoTel = valor('msg-tel'); const q = q0(), por = quem();
+  const guardarTel = () => { if (digitos(g.tel) !== tel) { ev(g, q, por, g.tel ? 'Telefone corrigido na mensagem' : 'Telefone escrito na mensagem'); g.tel = novoTel; } };
+  if (isAG()) agir('Paciente avisado por WhatsApp: ' + g.paciente + '.', () => { guardarTel(); tAvisar(g, 'whats', q, por); }, () => fecharSheet());
+  else agir('Aviso reforçado por WhatsApp: ' + g.paciente + '.', () => { guardarTel(); tReforcar(g, q, por, 'whats'); }, () => fecharSheet());
 }
 function copiarMensagem() {
   const t = valor('msg-txt'); const manual = () => { const e = document.getElementById('msg-txt'); if (e) e.select(); toast('Selecione o texto e copie.'); };
