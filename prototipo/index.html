@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light">
-<meta name="prototipo-carimbo" content="0b406e8c1238">
+<meta name="prototipo-carimbo" content="be109d698798">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a16207'/%3E%3Cpath d='M7 10.5h18v12H7z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M7 10.5l9 7 9-7' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script>window.cgImprimir = function () { window.print(); };</script>
@@ -260,6 +260,9 @@ main.wrap{padding-block:18px 120px;display:grid;gap:26px;align-content:start}
 .achou{font-size:13.5px;color:var(--muted)}
 .achou.ok{color:var(--s6)}
 .achou.ja{color:var(--warn)}
+.ex-prot{display:block;margin-top:8px;padding:8px 10px;border:1px dashed var(--sim);background:var(--sim-soft);color:var(--sim);border-radius:10px;font-size:13px;font-weight:600}
+.ex-b{display:inline-flex;align-items:center;min-height:32px;margin:6px 6px 0 0;padding:0 10px;border:1px solid var(--sim);border-radius:8px;background:var(--surface);color:var(--sim);font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer}
+.ex-b:hover{background:var(--sim-soft)}
 .grade2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:480px){.grade2{grid-template-columns:1fr}}
 .seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-strong);border-radius:12px;padding:3px;gap:3px;background:var(--surface-2)}
@@ -1472,17 +1475,21 @@ function desenharNova(nova) {
   pintar(html, nova);
   procurarProtocolo(valor('n-prot'));
 }
+// O protótipo não fala com o SIGSS: só conhece os 3 protocolos de FILA_SIGSS. Os exemplos viram botões
+// que preenchem o campo, para o teste não travar num número de verdade (pedido do usuário, 25/11/2026).
+const exemplosProt = () => '<span class="ex-prot">No protótipo não há ligação com o SIGSS: só estes 3 protocolos de exemplo existem. Toque num para testar: ' +
+  Object.keys(FILA_SIGSS).map(k => '<button type="button" class="ex-b" data-act="ex-prot" data-v="' + k + '">' + k + '</button>').join('') + '</span>';
 function procurarProtocolo(v) {
   const box = $('#n-achou'); if (!box) return; const dg = digitos(v);
   box.className = 'achou';
-  if (dg.length < 12) { if (!dg) box.textContent = 'Digite o número do comprovante da Lista de Espera e o app completa o nome e o exame. Para testar: 2026-904512-1-03'; return; }
+  if (dg.length < 12) { box.innerHTML = (dg ? 'O protocolo de acompanhamento do SIGSS tem 12 números, como 2026-904512-1-03. ' : 'Digite o número do comprovante da Lista de Espera e o app completa o nome e o exame. ') + exemplosProt(); return; }
   const ja = S.guias.find(g => !fim(g) && g.protocolo && digitos(g.protocolo) === dg);
   if (ja) { box.className = 'achou ja'; box.innerHTML = '<b>Essa guia já está no app:</b> ' + esc(ja.paciente) + ', ' + esc(rotulo(ja).toLowerCase()) + '. ' + btn('guia', ja.id, 'Abrir', 'fraco'); return; }
   const k = Object.keys(FILA_SIGSS).find(x => digitos(x) === dg);
   if (k) {
     const f = FILA_SIGSS[k]; const p = $('#n-pac'), pr = $('#n-proc'); if (p && !p.value) p.value = f.paciente; if (pr && !pr.value) pr.value = f.proc;
     box.className = 'achou ok'; box.innerHTML = '<b>Achei na Lista de Espera do SIGSS:</b> ' + esc(f.paciente) + ' · ' + esc(f.proc);
-  } else box.textContent = 'Não achei esse protocolo na Lista de Espera. Confira o número ou preencha à mão.';
+  } else box.innerHTML = 'Não achei esse protocolo na Lista de Espera. Confira o número ou preencha à mão. ' + exemplosProt();
 }
 function novaOk() {
   const d = { paciente: valor('n-pac'), proc: valor('n-proc'), protocolo: valor('n-prot'), nasc: valor('n-nasc'), tel: valor('n-tel'), urgente: valor('n-urg') === true, transporte: valor('n-transp') === true, obs: valor('n-obs') };
@@ -1633,6 +1640,7 @@ const ACOES = {
   'fechar': el => abrirFechar(el.dataset.dest),
   'nova': () => abrirNova(),
   'nova-modo': el => { N.modo = el.dataset.v; N.erros = {}; desenharNova(); },
+  'ex-prot': el => { const i = $('#n-prot'); if (!i) return; i.value = el.dataset.v; procurarProtocolo(i.value); i.focus(); },
   'entreguei': el => { const g = G(el.dataset.id); agir('Entregue: ' + g.paciente + '.', () => tEntregar(g, q0(), quem())); },
   'reforcei': el => { const g = G(el.dataset.id); agir('Aviso reforçado por ligação: ' + g.paciente + '.', () => tReforcar(g, q0(), quem(), 'ligacao')); },
   'mensagem': el => { esconderBusca(); abrirMensagem(el.dataset.id); },
