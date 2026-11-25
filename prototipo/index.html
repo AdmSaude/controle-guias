@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light">
-<meta name="prototipo-carimbo" content="be109d698798">
+<meta name="prototipo-carimbo" content="4927cbfa8a9e">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a16207'/%3E%3Cpath d='M7 10.5h18v12H7z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M7 10.5l9 7 9-7' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script>window.cgImprimir = function () { window.print(); };</script>
@@ -504,9 +504,9 @@ const PROCS = ['Consulta em cardiologia', 'Consulta em ortopedia', 'Consulta em 
   'Densitometria óssea', 'Raio-X de tórax', 'Raio-X de coluna lombar'];
 const LOCAIS = ['CISCOPAR – Toledo', 'Hospital Regional', 'Clínica de Imagem – Centro', 'CS Dr. Osvaldo I. Ishida'];
 const FILA_SIGSS = { // pedidos fictícios que "entraram sozinhos" na Lista de Espera
-  '2026-904512-1-03': { paciente: 'Cleide Aparecida Prado', proc: 'Consulta em cardiologia' },
-  '2026-904630-1-01': { paciente: 'Nilton César Borges', proc: 'Ultrassonografia de abdômen total' },
-  '2026-905118-1-02': { paciente: 'Rosa Maria Quintino', proc: 'Consulta em ortopedia' }
+  'LIES-904512-1-03': { paciente: 'Cleide Aparecida Prado', proc: 'Consulta em cardiologia' },
+  'LIES-904630-1-01': { paciente: 'Nilton César Borges', proc: 'Ultrassonografia de abdômen total' },
+  'LIES-905118-1-02': { paciente: 'Rosa Maria Quintino', proc: 'Consulta em ortopedia' }
 };
 const MOTIVOS = ['Telefone errado ou não atende', 'Paciente não localizado', 'Paciente desistiu',
   'Paciente mudou de unidade ou de município', 'Data já passou', 'Pedido incompleto',
@@ -631,7 +631,7 @@ function prob(motivo, texto, q, por, auto) { return { id: 'p' + (++S.seqProb), m
 function resolverProb(p, txt, q, por) { p.resolvido = true; p.resolucao = txt; p.resolvidoEm = q; p.resolvidoPor = por; }
 function encerrarProblemas(g, q, txt) { abertos(g).forEach(p => resolverProb(p, txt, q, 'Sistema')); }
 function set(g, etapa, q) { g.etapa = etapa; g.desde = q; }
-function protoFake() { const n = S.seqGuia; return '2026-9' + String(10000 + ((n * 7919) % 89000)).padStart(5, '0') + '-1-0' + ((n % 3) + 1); }
+function protoFake() { const n = S.seqGuia; return 'LIES-9' + String(10000 + ((n * 7919) % 89000)).padStart(5, '0') + '-1-0' + ((n % 3) + 1); }
 function novaGuia(d) {
   const g = Object.assign({ id: 'g' + (++S.seqGuia), paciente: '', nasc: '', tel: '', proc: '', protocolo: '', obs: '', urgente: false, transporte: false,
     ubs: null, holder: null, etapa: 'ubs_mandar', desde: null, maloteId: null, ag: null, avisado: false, avisoComo: null, reforcoEm: null,
@@ -755,16 +755,16 @@ function seed() {
   const SG = (d, u, dias, hora, local, q) => tSIGSS(d, u, { quando: T(dias, hora), local }, q);
 
   // MAL-0035: Encantado → Agendamento. Os dois pedidos ficaram na fila.
-  const ademir = L(P('Ademir Nogueira', 'Ressonância de crânio', { protocolo: '2026-899310-1-01' }), 'encan', T(-12, '08:30'));
-  const cicera = L(P('Cícera Lopes Vieira', 'Consulta em reumatologia', { protocolo: '2026-899402-1-02' }), 'encan', T(-12, '09:10'));
+  const ademir = L(P('Ademir Nogueira', 'Ressonância de crânio', { protocolo: 'LIES-899310-1-01' }), 'encan', T(-12, '08:30'));
+  const cicera = L(P('Cícera Lopes Vieira', 'Consulta em reumatologia', { protocolo: 'LIES-899402-1-02' }), 'encan', T(-12, '09:10'));
   const m1 = tFechar('encan', AG, [ademir, cicera], T(-12, '10:00'), Rc('encan'), V);
   tReceber(m1, [ademir, cicera], [], T(-11, '09:00'), A);
   tFila(ademir, T(-11, '10:00'), A); tFila(cicera, T(-11, '10:05'), A);
 
   // MAL-0036: Jussara → Agendamento.
-  const helena = L(P('Helena Batista Moura', 'Consulta em oftalmologia', { protocolo: '2026-901233-1-02' }), 'jussara', T(-8, '09:10'));
-  const josefa = L(P('Josefa Maria da Silva', 'Ressonância de coluna lombar', { protocolo: '2026-900874-1-01' }), 'jussara', T(-8, '10:05'));
-  const edson = L(P('Edson Luiz Martins', 'Colonoscopia', { protocolo: '2026-901402-1-01' }), 'jussara', T(-8, '10:40'));
+  const helena = L(P('Helena Batista Moura', 'Consulta em oftalmologia', { protocolo: 'LIES-901233-1-02' }), 'jussara', T(-8, '09:10'));
+  const josefa = L(P('Josefa Maria da Silva', 'Ressonância de coluna lombar', { protocolo: 'LIES-900874-1-01' }), 'jussara', T(-8, '10:05'));
+  const edson = L(P('Edson Luiz Martins', 'Colonoscopia', { protocolo: 'LIES-901402-1-01' }), 'jussara', T(-8, '10:40'));
   const m2 = tFechar('jussara', AG, [helena, josefa, edson], T(-8, '11:00'), Rc('jussara'), V);
   tReceber(m2, [helena, josefa, edson], [], T(-7, '09:00'), A);
   tFila(josefa, T(-7, '10:00'), A);
@@ -794,7 +794,7 @@ function seed() {
   tReceber(m5, [jorge], [], T(-4, '08:30'), Rc('jussara'));
 
   // MAL-0040: Agendamento → Jussara.
-  const graca = SG(P('Maria das Graças Souza', 'Endoscopia digestiva alta', { protocolo: '2026-902210-1-01' }), 'jussara', 2, '07:00', 'Hospital Regional', T(-4, '09:00')); tAvisar(graca, 'ligacao', T(-4, '09:30'), A);
+  const graca = SG(P('Maria das Graças Souza', 'Endoscopia digestiva alta', { protocolo: 'LIES-902210-1-01' }), 'jussara', 2, '07:00', 'Hospital Regional', T(-4, '09:00')); tAvisar(graca, 'ligacao', T(-4, '09:30'), A);
   const claudio = SG(P('Claudio Roberto Dias', 'Consulta em urologia'), 'jussara', 3, '14:30', 'CISCOPAR – Toledo', T(-4, '09:40')); tAvisar(claudio, 'nao', T(-4, '10:00'), A);
   const ivone = SG(P('Ivone Cardoso', 'Ultrassonografia de tireoide'), 'jussara', 4, '08:20', 'Clínica de Imagem – Centro', T(-4, '10:10')); tAvisar(ivone, 'whats', T(-4, '10:30'), A);
   const joana = SG(P('Joana Darc Silveira', 'Consulta em cardiologia'), 'jussara', 1, '10:00', 'CISCOPAR – Toledo', T(-4, '11:00')); tAvisar(joana, 'ligacao', T(-4, '11:10'), A);
@@ -849,7 +849,7 @@ function seed() {
   // Guias soltas, esperando o próximo malote ou lançadas fora do fluxo.
   L(P('Luzia Aparecida Santos', 'Ressonância de joelho'), 'jussara', T(-1, '16:20'));
   L(P('Antônio Carlos Pereira', 'Ultrassonografia de abdômen total'), 'jussara', T(0, '08:05'));
-  L(P('Rosângela Ferreira Lima', 'Consulta em cardiologia', { protocolo: '2026-903377-1-01' }), 'jussara', T(0, '08:40'));
+  L(P('Rosângela Ferreira Lima', 'Consulta em cardiologia', { protocolo: 'LIES-903377-1-01' }), 'jussara', T(0, '08:40'));
   tLancarUBSAgendada(P('Raimundo Nonato Freire', 'Consulta em ortopedia', { tel: '(44) 90000-0101' }), 'jussara', { quando: T(9, '14:00'), local: 'CISCOPAR – Toledo' }, T(0, '09:30'), Rc('jussara'));
   L(P('Osmar Teixeira', 'Consulta em ortopedia'), 'brag', T(-4, '09:00'));
   L(P('Lauro Duarte', 'Ultrassonografia de próstata'), 'brag', T(-3, '14:00'));
@@ -1461,7 +1461,7 @@ function desenharNova(nova) {
   const tel = '<div class="campo"><label for="n-tel">Telefone' + (ag ? '' : ' <span class="op">(opcional)</span>') + '</label><input id="n-tel" type="tel" inputmode="tel" autocomplete="off">' + er('tel') + '</div>';
   const html = head('Nova guia') + '<form data-submit="nova-ok" novalidate><div class="sh-b">' +
     '<div class="campo"><span class="lab" id="lab-modo">Onde a guia está agora?</span><div class="seg" role="group" aria-labelledby="lab-modo">' + modos.map(([k, t]) => '<button type="button" data-act="nova-modo" data-v="' + k + '" aria-pressed="' + (N.modo === k) + '">' + t + '</button>').join('') + '</div></div>' +
-    '<div class="campo"><label for="n-prot">Protocolo de acompanhamento <span class="op">(se tiver)</span></label><input id="n-prot" inputmode="numeric" autocomplete="off" placeholder="2026-000000-0-00"><span class="achou" id="n-achou">Digite o número do comprovante da Lista de Espera e o app completa o nome e o exame. Para testar: 2026-904512-1-03</span></div>' +
+    '<div class="campo"><label for="n-prot">Protocolo de acompanhamento <span class="op">(se tiver)</span></label><input id="n-prot" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="LIES-000000-0-00"><span class="achou" id="n-achou"></span></div>' +
     '<div class="campo"><label for="n-pac">Paciente</label><input id="n-pac" autocomplete="off">' + er('pac') + '</div>' +
     '<div class="campo"><label for="n-proc">Exame ou consulta</label><input id="n-proc" list="l-procs" autocomplete="off">' + er('proc') + '</div>' +
     (!ubsMode ? '<div class="campo"><label for="n-ubs">UBS do paciente</label><select id="n-ubs"><option value="">Escolha a UBS</option>' + UBS.map(u => '<option value="' + u.id + '">' + esc(u.nome) + '</option>').join('') + '</select>' + er('ubs') + '</div>' : '') +
@@ -1479,13 +1479,16 @@ function desenharNova(nova) {
 // que preenchem o campo, para o teste não travar num número de verdade (pedido do usuário, 25/11/2026).
 const exemplosProt = () => '<span class="ex-prot">No protótipo não há ligação com o SIGSS: só estes 3 protocolos de exemplo existem. Toque num para testar: ' +
   Object.keys(FILA_SIGSS).map(k => '<button type="button" class="ex-b" data-act="ex-prot" data-v="' + k + '">' + k + '</button>').join('') + '</span>';
+// Protocolo de acompanhamento do SIGSS: "LIES-" + número (tamanho variável) + "-" 1 dígito + "-" 2 dígitos,
+// como LIES-132596-1-05 ou LIES-665-1-69 (conferido em 25/11/2026). Aceita sem o "LIES-" e em minúsculas.
+const normProt = v => { const m = /^(?:LIES-?)?(\d+)-(\d)-(\d{2})$/.exec(String(v || '').toUpperCase().replace(/\s+/g, '')); return m ? 'LIES-' + m[1] + '-' + m[2] + '-' + m[3] : null; };
 function procurarProtocolo(v) {
-  const box = $('#n-achou'); if (!box) return; const dg = digitos(v);
+  const box = $('#n-achou'); if (!box) return; const cod = normProt(v);
   box.className = 'achou';
-  if (dg.length < 12) { box.innerHTML = (dg ? 'O protocolo de acompanhamento do SIGSS tem 12 números, como 2026-904512-1-03. ' : 'Digite o número do comprovante da Lista de Espera e o app completa o nome e o exame. ') + exemplosProt(); return; }
-  const ja = S.guias.find(g => !fim(g) && g.protocolo && digitos(g.protocolo) === dg);
+  if (!cod) { box.innerHTML = (String(v || '').trim() ? 'O protocolo de acompanhamento do SIGSS é assim: LIES-132596-1-05. ' : 'Digite o protocolo de acompanhamento (LIES-...) e o app completa o nome e o exame. ') + exemplosProt(); return; }
+  const ja = S.guias.find(g => !fim(g) && g.protocolo && normProt(g.protocolo) === cod);
   if (ja) { box.className = 'achou ja'; box.innerHTML = '<b>Essa guia já está no app:</b> ' + esc(ja.paciente) + ', ' + esc(rotulo(ja).toLowerCase()) + '. ' + btn('guia', ja.id, 'Abrir', 'fraco'); return; }
-  const k = Object.keys(FILA_SIGSS).find(x => digitos(x) === dg);
+  const k = Object.keys(FILA_SIGSS).find(x => normProt(x) === cod);
   if (k) {
     const f = FILA_SIGSS[k]; const p = $('#n-pac'), pr = $('#n-proc'); if (p && !p.value) p.value = f.paciente; if (pr && !pr.value) pr.value = f.proc;
     box.className = 'achou ok'; box.innerHTML = '<b>Achei na Lista de Espera do SIGSS:</b> ' + esc(f.paciente) + ' · ' + esc(f.proc);
@@ -1601,7 +1604,7 @@ function abrirTarefas() {
     '<section><h4>Na UBS (ver como UBS Jussara e Panorama)</h4><ol>' +
     '<li>Chegou um malote do Agendamento. Receba. A guia de Pedro Henrique Alves não veio no envelope.</li>' +
     '<li>Maria das Graças Souza veio buscar a guia dela. Registre a entrega.</li>' +
-    '<li>Uma paciente trouxe um pedido com o protocolo 2026-904512-1-03. Lance para mandar ao Agendamento.</li>' +
+    '<li>Uma paciente trouxe um pedido com o protocolo LIES-904512-1-03. Lance para mandar ao Agendamento.</li>' +
     '<li>O malote vai sair agora. Feche, imprima a etiqueta e diga o que vai escrito nela.</li>' +
     '<li>Onde está a guia de Vanessa Cristina Lopes, e desde quando?</li>' +
     '<li>Claudio Roberto Dias não atende o telefone. O que o app mostra sobre ele?</li>' +
