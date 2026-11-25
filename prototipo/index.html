@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light">
-<meta name="prototipo-carimbo" content="4927cbfa8a9e">
+<meta name="prototipo-carimbo" content="16c772b5f36f">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a16207'/%3E%3Cpath d='M7 10.5h18v12H7z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M7 10.5l9 7 9-7' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script>window.cgImprimir = function () { window.print(); };</script>
@@ -472,10 +472,73 @@ table.painel{border-collapse:separate;border-spacing:0;width:100%;min-width:960p
   .lista.grade > .vazio,.lista.grade > .dica,.lista.grade > .btn.big{grid-column:1 / -1}
   .lista.grade > .vazio{border:1px dashed var(--line-strong);border-radius:var(--r)}
 }
+
+/* leitura da guia pela câmera (ideia do usuário, 25/11/2026): tela cheia por cima da folha, que fica como estava */
+.btn.cam{border:1.5px dashed var(--ink);background:var(--ink-soft);color:var(--ink)}
+.btn.cam:hover{background:#d3e9e3}
+.cam-dica{font-size:13px;color:var(--muted);margin-top:-10px}
+.lt{position:fixed;inset:0;z-index:60;background:var(--surface);display:flex;flex-direction:column;animation:fade .15s ease}
+.lt-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.lt-h h3{font-size:18px;font-weight:750}
+.lt-v{position:relative;flex:1 1 auto;min-height:180px;background:#0b1514;overflow:hidden}
+.lt-v video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lt-mira{position:absolute;inset:10% 6%;border:3px solid rgba(255,255,255,.9);border-radius:16px;box-shadow:0 0 0 100vmax rgba(0,0,0,.25);pointer-events:none;transition:border-color .2s}
+.lt-mira.achou{border-color:#4ade80}
+.lt-msg{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(10,22,20,.8);color:#fff;border-radius:12px;padding:10px 12px;font-size:14.5px;line-height:1.35;font-weight:550}
+.lt-sem{position:absolute;inset:0;display:grid;place-content:center;gap:8px;padding:24px;color:#e8efed;text-align:center;font-size:15px;line-height:1.45}
+.lt-sem b{color:#fff;font-size:16px}
+.lt-p{flex:0 0 auto;max-height:58vh;max-height:58dvh;overflow:auto;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));border-top:1px solid var(--line)}
+.lt.cheio .lt-v{display:none}
+.lt.cheio .lt-p{flex:1 1 auto;max-height:none;border-top:0}
+.lt-in{width:min(640px,100%);margin:0 auto;display:grid;gap:12px}
+.lt-bts{display:grid;gap:8px}
+.lt-bts2{display:flex;flex-wrap:wrap;gap:8px}
+.lt-bts2 .btn{flex:1 1 180px}
+.lt-file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.lt-cod{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px}
+.lt-cod code{font-family:var(--mono);font-weight:700;background:var(--s6-soft);color:var(--s6);border-radius:8px;padding:3px 8px;overflow-wrap:anywhere}
+.lt-tipo{font-weight:750;font-size:16px}
+.lt-av{border:1px solid #f0c9a0;background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;display:grid;gap:4px}
+.lt-av b{color:var(--warn)}
+.lt-priv{font-size:12.5px;color:var(--muted)}
+.lt-prog{display:grid;gap:10px;padding-block:24px;text-align:center}
+.lt-barra{height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.lt-barra i{display:block;height:100%;width:0;background:var(--ink);transition:width .25s}
+.lt-campos{display:grid;gap:12px}
+.lt-campos .campo input,.lt-campos .campo select{min-height:46px}
+.campo.lido input,.campo.lido select{border-color:var(--s6);background:#f4fbf6}
+.campo.falta input,.campo.falta select{border-color:#e0a46b;background:#fffaf3}
+.lt-nota{font-size:12.5px;color:var(--muted)}
+.lt-nota.falta{color:var(--warn);font-weight:600}
+.lt [hidden]{display:none!important}
+.lote-cta{display:grid;gap:14px;max-width:640px;margin-top:18px}
+.lote-cta .cam-dica{margin-top:-8px}
+.lt-achou{border:1.5px solid var(--line-strong);border-radius:14px;padding:12px;display:grid;gap:8px;background:var(--surface)}
+.lt-achou.ok{border-color:var(--s6);background:#f4fbf6}
+.lt-achou.talvez{border-color:#e0a46b;background:#fffaf3}
+.lt-achou .t{font-weight:750;font-size:15.5px}
+.lt-achou .t.ok{color:var(--s6)}
+.lt-achou .t.talvez{color:var(--warn)}
+.lt-achou .quem{font-weight:650}
+.lt-achou small{color:var(--muted);font-size:13px}
+.lt-achou .vai{font-weight:600}
+.lt-cands{display:grid;gap:6px;max-height:44vh;overflow:auto}
+.lt-cand{display:grid;gap:2px;text-align:left;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);padding:9px 12px;cursor:pointer;font:inherit;color:inherit}
+.lt-cand:hover{background:var(--surface-2)}
+.lt-cand b{font-weight:650}
+.lt-cand small{color:var(--muted)}
+.lt-feito{display:flex;gap:8px;align-items:flex-start;color:var(--s6);font-weight:600;font-size:14px}
+.lt-feito .ic{margin-top:2px}
+.lt-conta{font-size:13.5px;color:var(--muted)}
+.lt-res{list-style:none;margin:0;padding:0;display:grid;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lt-res li{padding:10px 12px;border-bottom:1px solid var(--line);display:grid;gap:2px}
+.lt-res li:last-child{border-bottom:0}
+.lt-res small{color:var(--muted)}
 </style>
 
 <div id="app"></div>
 <div id="sheet"></div>
+<div id="leitor"></div>
 <div id="toast-root" aria-live="polite"></div>
 <div id="impressao" aria-hidden="true"></div>
 
@@ -525,7 +588,7 @@ const E = {
   devolvida:    { pos: 6, cor: 'end', rot: 'Devolvida ao Agendamento', fim: true },
   cancelada:    { pos: 6, cor: 'end', rot: 'Cancelada', fim: true }
 };
-const SELOS = { sigss: 'Veio do SIGSS', semlanc: 'Chegou sem lançamento', fora: 'Entrou fora do fluxo', manual: 'Agendamento lançado à mão' };
+const SELOS = { sigss: 'Veio do SIGSS', semlanc: 'Chegou sem lançamento', fora: 'Entrou fora do fluxo', manual: 'Agendamento lançado à mão', lida: 'Agendamento lido do papel' };
 const ICON = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
@@ -539,7 +602,9 @@ const ICON = {
   print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>',
   chat: '<path d="M4.5 19.5l1.2-3.6A8 8 0 1 1 8.4 18.5z"/><path d="M9 10.5h6M9 13.5h4"/>',
   inbox: '<path d="M3.5 13.5h5l1.5 3h4l1.5-3h5"/><path d="M5.8 5.5h12.4l2.3 8v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5z"/>',
-  grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'
+  grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
+  cam: '<path d="M4 8.5a2 2 0 0 1 2-2h2l1.5-2h5L16 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/>',
+  img: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="m4 17 5-5 4 4 2.5-2.5L20 18"/>'
 };
 const COLS = [
   { k: 'mandar',   rot: 'Na UBS, para mandar',          cor: 's1', un: g => g.etapa === 'ubs_mandar' ? g.holder : null },
@@ -1048,6 +1113,8 @@ function fazerAG() {
   if (L.decidir.length) h += sec('Decidir: o paciente não retirou', L.decidir.length, L.decidir.map(g => card(g,
     btn('decidir', g.id, 'Pedir a guia de volta', 'pri', ' data-v="devolver"') + btn('decidir', g.id, 'Arquivar na UBS', '', ' data-v="arquivar"'))).join(''),
     '', 'Se a vaga ainda pode ser usada por outro paciente, peça a guia de volta e remaneje no SIGSS.', { id: 'sec-decidir' });
+  if (L.agendar.length || L.fila.length || L.avisar.length) h += '<div class="lote-cta"><button type="button" class="btn big cam" data-act="leitor" data-alvo="lote">' + ic('cam') + 'Ler as guias agendadas, uma atrás da outra</button>' +
+    '<p class="cam-dica">Aponte para cada papel: o app acha a guia certa pelo protocolo, código, nome, nascimento e exame, e atualiza o agendamento.</p></div>';
   if (L.agendar.length) h += sec('Para agendar', L.agendar.length, L.agendar.map(g => card(g,
     btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim') + btn('fila', g.id, 'Sem vaga: fila'))).join(''),
     '', 'Agende no SIGSS como sempre. Em até 10 minutos a guia passa sozinha para "Avisar o paciente". No protótipo, use o botão amarelo.', { id: 'sec-agendar' });
@@ -1227,7 +1294,7 @@ function pintar(html, nova) {
   if (foco && document.getElementById(foco)) document.getElementById(foco).focus({ preventScroll: true });
   else if (!old || nova) { const h = document.getElementById('sh-tit'); if (h) h.focus({ preventScroll: true }); }
 }
-function fecharSheet() { $('#sheet').innerHTML = ''; sheetAtual = null; R = F = N = null; document.body.classList.remove('travado'); }
+function fecharSheet() { if (LT) fecharLeitor(); $('#sheet').innerHTML = ''; sheetAtual = null; R = F = N = null; document.body.classList.remove('travado'); }
 function focar(id) { const e = document.getElementById(id); if (e) e.focus(); }
 
 /* detalhe da guia */
@@ -1284,6 +1351,7 @@ function desenharGuia(nova) {
   if (g.ag) linhas.push(['Atendimento', fDia(g.ag.quando) + ' às ' + fHora(g.ag.quando)], ['Local', esc(g.ag.local)]);
   else if (g.agAnterior) linhas.push(['Agendamento cancelado', fAg(g.agAnterior)]);
   linhas.push(['Protocolo', g.protocolo ? '<span class="num">' + esc(g.protocolo) + '</span>' : '—']);
+  if (g.codigo) linhas.push([g.lida === 'ids' ? 'Código do IDS' : 'Código da guia', '<span class="num">' + esc(g.codigo) + '</span>' + (g.lida ? ' <span class="muted">lido pela câmera</span>' : '')]);
   linhas.push(['Telefone', (g.tel ? esc(g.tel) : '<span class="muted">sem telefone</span>') + (podeMexer(g) ? btn('telefone', g.id, g.tel ? 'Mudar' : 'Pôr telefone', 'fraco') : '')]);
   if (g.nasc) linhas.push(['Nascimento', fNasc(g.nasc)]);
   if (g.obs) linhas.push(['Observação', esc(g.obs)]);
@@ -1459,7 +1527,7 @@ function desenharNova(nova) {
   const modos = ubsMode ? [['ida', 'Vai para o Agendamento'], ['agendada', 'Já veio agendada']] : [['aqui', 'Chegou aqui para agendar'], ['agendada', 'Já está agendada']];
   const er = k => N.erros[k] ? '<span class="erro">' + N.erros[k] + '</span>' : '';
   const tel = '<div class="campo"><label for="n-tel">Telefone' + (ag ? '' : ' <span class="op">(opcional)</span>') + '</label><input id="n-tel" type="tel" inputmode="tel" autocomplete="off">' + er('tel') + '</div>';
-  const html = head('Nova guia') + '<form data-submit="nova-ok" novalidate><div class="sh-b">' +
+  const html = head('Nova guia') + '<form data-submit="nova-ok" novalidate><div class="sh-b">' + botaoLeitor('nova') +
     '<div class="campo"><span class="lab" id="lab-modo">Onde a guia está agora?</span><div class="seg" role="group" aria-labelledby="lab-modo">' + modos.map(([k, t]) => '<button type="button" data-act="nova-modo" data-v="' + k + '" aria-pressed="' + (N.modo === k) + '">' + t + '</button>').join('') + '</div></div>' +
     '<div class="campo"><label for="n-prot">Protocolo de acompanhamento <span class="op">(se tiver)</span></label><input id="n-prot" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="LIES-000000-0-00"><span class="achou" id="n-achou"></span></div>' +
     '<div class="campo"><label for="n-pac">Paciente</label><input id="n-pac" autocomplete="off">' + er('pac') + '</div>' +
@@ -1505,19 +1573,545 @@ function novaOk() {
     if (dt && hr) ag = { quando: new Date(dt + 'T' + hr).toISOString(), local: lc };
   }
   if (Object.keys(er).length) { N.erros = er; desenharNova(); const e = document.querySelector('.sheet .erro'); if (e && e.previousElementSibling) e.previousElementSibling.focus(); return; }
-  const q = agoraISO(), p = quem(), modo = N.modo;
+  const q = agoraISO(), p = quem(), modo = N.modo, lida = N.lida || null;
+  if (lida) { d.codigo = lida.codigo || ''; d.lida = lida.tipo; }
   agir('Guia lançada: ' + d.paciente, () => {
-    if (isUBS()) { if (modo === 'agendada') tLancarUBSAgendada(d, ubs, ag, q, p); else tLancarUBS(d, ubs, q, p); }
-    else { if (modo === 'agendada') tLancarAGAgendada(d, ubs, ag, q, p); else tLancarAG(d, ubs, q, p, 'fora'); }
+    let g;
+    if (isUBS()) g = modo === 'agendada' ? tLancarUBSAgendada(d, ubs, ag, q, p) : tLancarUBS(d, ubs, q, p);
+    else g = modo === 'agendada' ? tLancarAGAgendada(d, ubs, ag, q, p) : tLancarAG(d, ubs, q, p, 'fora');
+    if (g && lida) ev(g, q, p, 'Dados lidos do papel pela câmera (' + TIPOS_PAPEL[lida.tipo] + ') e conferidos por quem lançou');
   }, () => fecharSheet());
+}
+
+/* ------------------------------------------------------------------ leitura da guia pela câmera
+   Ideia do usuário (25/11/2026): apontar o celular para o papel e o app preencher os campos, sem digitar e sem
+   conta de integração. Tudo roda no aparelho: a imagem não sai dele e não é guardada; só os campos que a pessoa
+   confere vão para a guia. Código de barras: BarcodeDetector do navegador (Android) ou ZXing; texto: Tesseract.js
+   em português. Papéis conferidos em 25/11/2026 com exemplos reais (guardados só no E:\temp):
+   - protocolo da Lista de Espera do SIGSS: Code 128 "LIES-<n>-<d>-<dd>", nome, tipo e exame ou especialidade;
+   - guia de exame do SIGSS: Code 128 pequeno "EXAM-..." no alto, à direita; data por extenso; exame com o código SIGTAP;
+   - guia de consulta do SIGSS: "AGCO-..."; a especialidade vem do CBO;
+   - comprovante do IDS (CISCOPAR): Code 128 numérico de 13 dígitos no pé; "Data: dd/mm/aaaa às hh:mm"; não diz a UBS. */
+const LIB_ZXING = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+const LIB_OCR = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+const TIPOS_PAPEL = { protocolo: 'protocolo da Lista de Espera do SIGSS', exame: 'guia de exame do SIGSS', consulta: 'guia de consulta do SIGSS', ids: 'comprovante de agendamento do IDS (CISCOPAR)' };
+const PAPEL_AGENDADO = { exame: true, consulta: true, ids: true };
+const PRIV = '<p class="lt-priv">A imagem é lida aqui no aparelho e não é guardada nem enviada. Só os campos que você conferir vão para a guia.</p>';
+const MESES3 = MESES.map(m => norm(m).slice(0, 3)); // jan, fev, mar...
+const PARTICULAS = ['da', 'de', 'do', 'das', 'dos', 'e', 'di', 'du', 'por', 'com', 'em', 'na', 'no', 'nas', 'nos'];
+const SIGTAP_RE = /\d{2}[.,]\s?\d{2}[.,]\s?\d{2}[.,\s]\s?\d{3}\s?-?\s?\d/; // 02.11.02.003-6, também com espaço trocado pelo OCR
+// Local: tira o código do prestador no começo e o telefone no fim ("Telefone: (44) ...", ou o que o OCR fizer dele)
+const limparLocal = s => nomeProprio(String(s || '').replace(/^\S{0,2}\d{3,6}\s*-\s*/, '').replace(/\s+(?:Tel|Te1|Tei|fel|Fone|Telefone)\b.*$/i, '').replace(/\s+\S+:\s*\(?\d.*$/, '').replace(/[\s.,:;-]+$/, ''), true);
+// unidade solicitante da guia do SIGSS -> UBS do app: pelo código da unidade no SIGSS ou por um pedaço do nome
+// (nomes e códigos em referencias/UNIDADES-ASSIS.md)
+const UBS_SIGSS = { '7-1': 'ciasp1', '892-1': 'ciasp2', '59-1': 'osvaldo', '930-1': 'osvaldo', '55-1': 'silv', '6-1': 'terra', '5-1': 'nice', '3-1': 'azaury',
+  '329-1': 'mefig', '645-1': 'mefig', '11-1': 'brag', '4-1': 'encan', '617-1': 'cristo', '568-1': 'jussara', '768-1': 'monaco', '594-1': 'araca' };
+const UBS_NOMES = [['ciasp1', /CIASP\s*0?1\b/], ['ciasp2', /CIASP\s*0?2\b/], ['osvaldo', /OSVALDO|ISHIDA/], ['silv', /SILVEIR/], ['terra', /TERRA NOVA/],
+  ['nice', /\bNICE\b/], ['azaury', /AZAURY/], ['mefig', /EFIGENIA|FERRACINI/], ['brag', /BRAGANTINA/], ['encan', /ENCANTADO/], ['cristo', /CRISTO REI|GILIO|BORTOT/],
+  ['jussara', /JUSSARA|PANORAMA|PESTANA/], ['monaco', /MONACO|BELARMINO|FRAGOSO/], ['araca', /ARACA|SHEILA|ENOQUE/]];
+let LT = null, detector = null, zx = null, ocrW = null, ocrCb = null;
+const libs = {};
+
+function botaoLeitor(alvo) {
+  return '<button type="button" class="btn big cam" data-act="leitor" data-alvo="' + alvo + '">' + ic('cam') + 'Ler a guia com a câmera</button>' +
+    '<p class="cam-dica">' + (alvo === 'manual' ? 'Serve para a guia de agendamento do SIGSS e para o comprovante do IDS.' : 'Serve para o protocolo e as guias do SIGSS e para o comprovante do IDS.') + ' A imagem é lida no aparelho e não é guardada.</p>';
+}
+function carregarScript(src) {
+  if (!libs[src]) libs[src] = new Promise((ok, erro) => {
+    const s = document.createElement('script'); s.src = src; s.async = true;
+    s.onload = () => ok(); s.onerror = () => { delete libs[src]; s.remove(); erro(new Error('não carregou ' + src)); };
+    document.head.appendChild(s);
+  });
+  return libs[src];
+}
+const comPrazo = (p, ms, msg) => Promise.race([p, new Promise((_, erro) => setTimeout(() => erro(new Error(msg)), ms))]);
+const maiuscula = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+const d2 = n => String(n).padStart(2, '0');
+function isoData(dd, mm, aa) { const d = +dd, m = +mm, a = +aa; return d >= 1 && d <= 31 && m >= 1 && m <= 12 && a >= 1900 && a <= 2100 ? a + '-' + d2(m) + '-' + d2(d) : ''; }
+function isoHora(h, m) { h = +h; m = +m; return h >= 0 && h <= 23 && m >= 0 && m <= 59 ? d2(h) + ':' + d2(m) : ''; }
+function nomeProprio(s, siglas) { // "MARIA DA SILVA" -> "Maria da Silva"; com siglas, "CS DR OSVALDO" mantém "CS DR"
+  return String(s || '').replace(/\s+/g, ' ').trim().split(' ').map((p, i) => {
+    const l = p.toLowerCase();
+    if (i && PARTICULAS.indexOf(l) >= 0) return l;
+    if (siglas && /^\(?[A-Z0-9]{2,3}\)?[.,]?$/.test(p)) return p;
+    return l.replace(/^(\(?)(\p{L})/u, (_, a, b) => a + b.toUpperCase());
+  }).join(' ');
+}
+function frase(s) { const t = String(s || '').replace(/\s+/g, ' ').trim().toLowerCase().replace(/\(([a-z]{2,4})\)/g, (_, x) => '(' + x.toUpperCase() + ')'); return maiuscula(t); }
+function telBonito(s) {
+  const d = String(s || '').replace(/\D/g, '');
+  if (d.length === 11) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+  if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+  return d.length >= 8 ? d : '';
+}
+function procConsulta(s) { // "MÉDICO ORTOPEDISTA E TRAUMATOLOGISTA 225270" -> "Consulta com ortopedista e traumatologista"
+  const t = String(s || '').replace(/\s*\d{6}\s*$/, '').replace(/\s+/g, ' ').trim().toLowerCase().replace(/^m[eé]dic[oa]\s+/, '');
+  return t ? 'Consulta com ' + t : 'Consulta especializada';
+}
+function ubsDoTexto(s) {
+  const id = /^\s*(\d+-\d)\s*\//.exec(String(s || '')); if (id && UBS_SIGSS[id[1]]) return UBS_SIGSS[id[1]];
+  const u = norm(s).toUpperCase(); const k = UBS_NOMES.find(([, re]) => re.test(u)); return k ? k[0] : '';
+}
+function mesmoNome(a, b) {
+  const t = s => norm(s).toUpperCase().replace(/[^A-Z\s]/g, ' ').split(/\s+/).filter(x => x.length > 2);
+  const x = t(a), y = t(b); if (!x.length || !y.length) return true;
+  return x.filter(p => y.indexOf(p) >= 0).length / Math.min(x.length, y.length) >= 0.6;
+}
+function limparCodigo(t) {
+  const s = String(t || '').toUpperCase().replace(/\s+/g, '');
+  const m = /^(LIES|EXAM|AGCO)-?(\d+)-(\d)-(\d{2})$/.exec(s); if (m) return m[1] + '-' + m[2] + '-' + m[3] + '-' + m[4];
+  return /^\d{13}$/.test(s) ? s : null;
+}
+const tipoDoCodigo = c => !c ? null : /^LIES-/.test(c) ? 'protocolo' : /^EXAM-/.test(c) ? 'exame' : /^AGCO-/.test(c) ? 'consulta' : /^\d{13}$/.test(c) ? 'ids' : null;
+function tipoDoTexto(U) {
+  if (/CISCOPAR|COMPROVANTE DE AGENDAMENTO|CONSORCIO INTER/.test(U)) return 'ids';
+  if (/PROTOCOLO DE CADASTRO|PROTOCOLO DE ACOMPANHAMENTO/.test(U)) return 'protocolo';
+  if (/EXAM\s?-\s?\d|PROCEDIMENTOS AUTORIZADOS|AUTORIZACAO DE EXAMES/.test(U)) return 'exame';
+  if (/AGCO\s?-\s?\d|ATENCAO ESPECIALIZADA|CONSULTA MEDICA/.test(U)) return 'consulta';
+  if (/LIES\s?-\s?\d/.test(U)) return 'protocolo';
+  return null;
+}
+// Exames de uma guia, um por linha. faixa = texto relido só da faixa da tabela (aceita linha sem o código SIGTAP).
+function examesDoTexto(tipo, L, faixa) {
+  const ex = [];
+  if (tipo === 'ids') { // "131 - ELETROCARDIOGRAMA COM LAUDO (ECG) - CARDIOLOGIA 1 02.11.02.003-6": tira o código do IDS, a classe, a quantidade e o SIGTAP
+    L.forEach(l => { const i = l.search(SIGTAP_RE); if (i > 0) ex.push(l.slice(0, i)); });
+    if (!ex.length && faixa) L.forEach(l => { if (/^\d{1,6}\s*-\s*\p{L}{3,}/u.test(l)) ex.push(l); });
+    return ex.slice(0, 4).map(l => { const i = l.search(SIGTAP_RE); return frase((i > 0 ? l.slice(0, i) : l).replace(/\s*\|\s*/g, ' ').replace(/^\d{1,6}\s*-\s*/, '').replace(/\s+\d+\s*$/, '').replace(/\s*-\s+[^-]+$/, '')); }).filter(Boolean).join(' + ');
+  }
+  // SIGSS: "0205020186 - ULTRASSONOGRAFIA TRANSVAGINAL - Hora prevista: 08:00"
+  const limpa = s => frase(s.replace(/\s*-?\s*Hora\s+prevista.*$/i, '').replace(/[\s-]+$/, ''));
+  const i = L.findIndex(l => /Procedimentos\s+Autorizados/i.test(l));
+  if (i >= 0) for (let j = i + 1; j < Math.min(L.length, i + 8) && ex.length < 4; j++) { const x = /^0?\d{9,10}\s*-?\s*(.+)$/.exec(L[j]); if (x) ex.push(limpa(x[1])); else if (ex.length) break; }
+  if (!ex.length) L.forEach(l => { const x = /^0\d{9}\s*-?\s*(.+)$/.exec(l); if (x && ex.length < 4) ex.push(limpa(x[1])); });
+  return ex.filter(Boolean).join(' + ');
+}
+// Lê o texto do OCR (e o código de barras, se veio) e devolve os campos. Não inventa: o que não achou fica vazio.
+function analisarGuia(texto, codigo) {
+  const T = String(texto || '').replace(/[—–]/g, '-').replace(/[ \t]+/g, ' ');
+  const L = T.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const U = norm(T).toUpperCase();
+  const linha = re => { for (const l of L) { const m = re.exec(l); if (m) return m; } return null; };
+  const depois = re => { const i = L.findIndex(l => re.test(l)); return i >= 0 && i + 1 < L.length ? L[i + 1] : ''; };
+  const semLixo = s => String(s || '').replace(/[^\p{L}\s'.-]/gu, ' ');
+  const d = { tipo: null, codigo: codigo || '', protocolo: '', paciente: '', nasc: '', proc: '', data: '', hora: '', local: '', tel: '', unid: '', ubs: '', inclusao: '' };
+  if (!d.codigo) { const m = /(LIES|EXAM|AGCO)\s?-?\s?(\d{2,})\s?-\s?(\d)\s?[-\s]\s?(\d{2})(?!\d)/.exec(U); if (m) d.codigo = m[1] + '-' + m[2] + '-' + m[3] + '-' + m[4]; }
+  d.tipo = tipoDoCodigo(d.codigo) || tipoDoTexto(U);
+  if (!d.codigo && d.tipo === 'ids') { const m = /(?:^|\D)(\d{13})(?!\d)/.exec(T); if (m) d.codigo = m[1]; }
+  let m;
+  if (d.tipo === 'protocolo') {
+    if (/^LIES-/.test(d.codigo)) d.protocolo = d.codigo;
+    else if ((m = /LIES\s?-?\s?(\d+)\s?-\s?(\d)\s?-\s?(\d{2})(?!\d)/.exec(U))) d.protocolo = 'LIES-' + m[1] + '-' + m[2] + '-' + m[3];
+    const p = depois(/Usu.rio do Servi.o/i); if (p && /^[\p{L}\s'.-]{5,}$/u.test(p)) d.paciente = nomeProprio(p);
+    const tp = linha(/^Tipo:\s*(.+)$/i);
+    if (tp && /CONSULTA/.test(norm(tp[1]).toUpperCase())) { const c = depois(/CBO\s*\(Especialidade\)/i); if (c) d.proc = procConsulta(c); }
+    else { const e = depois(/Proced\w*\s*\/\s*Exame/i); if (e) d.proc = frase(e); }
+    if ((m = /Data\s*Inclus.o[\s:.\-|]*(\d{2})\/(\d{2})\/(\d{4})/i.exec(T))) d.inclusao = isoData(m[1], m[2], m[3]);
+  }
+  if (d.tipo === 'exame' || d.tipo === 'consulta') {
+    // "Data / Hora: 2 de dezembro de 2026 (quarta-feira) às 08:00"
+    if ((m = /(\d{1,2})\s*DE\s*([A-Z]{3,})\s*DE\s*(\d{4})[^\n]{0,40}?(\d{1,2})\s*[:H]\s*(\d{2})/.exec(U))) {
+      const mi = MESES3.indexOf(m[2].slice(0, 3).toLowerCase()); if (mi >= 0) d.data = isoData(m[1], mi + 1, m[3]); d.hora = isoHora(m[4], m[5]);
+    }
+    if ((m = linha(/^Local:\s*(.+)$/i))) d.local = limparLocal(m[1]);
+    if ((m = linha(/Paciente:\s*[\d\s.\-]*\/\s*(.+)$/i))) { // o telefone do paciente fica na mesma linha; o do Local é do prestador
+      const t = /\bTel\.*:?\s*([\d\s()\-]{8,})/i.exec(m[1]); if (t) d.tel = telBonito(t[1]);
+      d.paciente = nomeProprio(semLixo(m[1].replace(/\s+Tel\b.*$/i, '')));
+    }
+    if ((m = /Data\s*Nascimento[\s:.\-|]*(\d{2})\/(\d{2})\/(\d{4})/i.exec(T))) d.nasc = isoData(m[1], m[2], m[3]);
+    if ((m = linha(/Unid\.?\s*Solicitante:?\s*(.+)$/i))) { d.unid = m[1].replace(/^[\d\s\-]*\/\s*/, '').trim(); d.ubs = ubsDoTexto(m[1]); }
+    if (d.tipo === 'exame') d.proc = examesDoTexto('exame', L);
+    else if ((m = linha(/CBO\s*\(Especialidade\):?\s*(.+)$/i))) d.proc = procConsulta(m[1]);
+  }
+  if (d.tipo === 'ids') {
+    // "Data: 30/10/2026 (sexta-feira) às 08:00"; "Data de Emissão" e "Data de Impressão" ficam de fora
+    if ((m = /(?:^|\s)Data:\s*(\d{2})\/(\d{2})\/(\d{4})[^\n]{0,40}?(\d{1,2})\s*:\s*(\d{2})/m.exec(T))) { d.data = isoData(m[1], m[2], m[3]); d.hora = isoHora(m[4], m[5]); }
+    if ((m = linha(/^Local:\s*(.+)$/i))) d.local = limparLocal(m[1]);
+    if ((m = /Nome:\s*\d*\s*-?\s*(.+?)\s+CN[S5]\b/i.exec(T))) d.paciente = nomeProprio(semLixo(m[1]));
+    if ((m = /\bDN[\s:.\-|]*(\d{2})\/(\d{2})\/(\d{4})/i.exec(T))) d.nasc = isoData(m[1], m[2], m[3]);
+    if ((m = /Tel\.?\s*Celular:?\s*(\(?\d[\d\s()\-]{7,})/i.exec(T) || /Tel\.?\s*Contato:?\s*(\(?\d[\d\s()\-]{7,})/i.exec(T))) d.tel = telBonito(m[1]);
+    d.proc = examesDoTexto('ids', L);
+  }
+  return d;
+}
+// Só no protótipo: os 3 protocolos de exemplo completam nome e exame, como o app de verdade faria buscando no SIGSS.
+function completarExemplo(d) {
+  const k = d.protocolo && Object.keys(FILA_SIGSS).find(x => normProt(x) === normProt(d.protocolo)); if (!k) return;
+  d.exemplo = true; if (!d.paciente) d.paciente = FILA_SIGSS[k].paciente; if (!d.proc) d.proc = FILA_SIGSS[k].proc;
+}
+
+/* código de barras */
+async function prepararCodigo() {
+  if (detector === null && 'BarcodeDetector' in window) {
+    try { const f = await BarcodeDetector.getSupportedFormats(); detector = f.indexOf('code_128') >= 0 ? new BarcodeDetector({ formats: ['code_128'] }) : false; } catch (e) { detector = false; }
+  }
+  if (!zx) {
+    try {
+      await comPrazo(carregarScript(LIB_ZXING), 30000, 'zxing');
+      const h = new Map(); h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128]); h.set(ZXing.DecodeHintType.TRY_HARDER, true);
+      zx = new ZXing.MultiFormatReader(); zx.setHints(h);
+    } catch (e) { zx = null; }
+  }
+  return !!(detector || zx);
+}
+const tamanho = f => [f.videoWidth || f.naturalWidth || f.width, f.videoHeight || f.naturalHeight || f.height];
+function recorte(f, x, y, w, h, maxLado) {
+  const k = Math.min(1, maxLado / Math.max(w, h)); const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  c.getContext('2d', { willReadFrequently: true }).drawImage(f, x, y, w, h, 0, 0, c.width, c.height); return c;
+}
+async function codigoNaImagem(c, soNativo) {
+  if (detector) { try { for (const b of await detector.detect(c)) { const k = limparCodigo(b.rawValue); if (k) return k; } } catch (e) { } if (soNativo) return null; }
+  if (zx) {
+    // decodeWithState mantém as dicas (Code 128, "tentar mais"); decode() as apaga (conferido em 25/11/2026)
+    try { return limparCodigo(zx.decodeWithState(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(c)))).getText()); }
+    catch (e) { return null; } finally { try { zx.reset(); } catch (e) { } }
+  }
+  return null;
+}
+async function codigoNaFoto(img) { // folha inteira; alto à direita (EXAM/AGCO, pequeno); alto; pé; folha em tamanho cheio
+  const [w, h] = tamanho(img);
+  const partes = [[0, 0, w, h, 1800], [w * 0.45, 0, w * 0.55, h * 0.3, 1400], [0, 0, w, h * 0.4, 1800], [0, h * 0.6, w, h * 0.4, 1800], [0, 0, w, h, 3000]];
+  for (const [x, y, ww, hh, mx] of partes) { const k = await codigoNaImagem(recorte(img, x, y, ww, hh, mx)); if (k) return k; }
+  return null;
+}
+
+/* texto */
+const OCR_PASSOS = { 'loading tesseract core': 'Baixando o leitor de texto…', 'initializing tesseract': 'Preparando o leitor de texto…', 'loading language traineddata': 'Baixando o português do leitor…', 'initializing api': 'Preparando o leitor de texto…', 'recognizing text': 'Lendo o texto da guia…' };
+async function lerTexto(canvas, cb) {
+  if (!ocrW) {
+    ocrW = (async () => {
+      // se o lugar bloqueia downloads (a página de teste do Claude, por exemplo), avisa logo em vez de esperar
+      await comPrazo(fetch(LIB_OCR, { method: 'HEAD', mode: 'cors', cache: 'force-cache' }), 15000, 'sem acesso');
+      await comPrazo(carregarScript(LIB_OCR), 60000, 'sem leitor');
+      return Tesseract.createWorker('por', 1, { logger: m => { if (ocrCb) ocrCb(m); } });
+    })();
+    ocrW.catch(() => { ocrW = null; });
+  }
+  ocrCb = m => { const t = OCR_PASSOS[m.status]; if (t && cb) cb(t, m.status === 'recognizing text' ? (m.progress || 0) : 0); };
+  try {
+    const w = await comPrazo(ocrW, 120000, 'demorou'); const r = await comPrazo(w.recognize(canvas), 120000, 'demorou'); const dd = (r && r.data) || {};
+    return { texto: dd.text || '', linhas: (dd.lines || []).map(l => ({ t: l.text || '', y0: l.bbox ? l.bbox.y0 : 0, y1: l.bbox ? l.bbox.y1 : 0 })) };
+  } finally { ocrCb = null; }
+}
+function imagemDeBlob(b) {
+  return new Promise((ok, erro) => { const u = URL.createObjectURL(b); const i = new Image(); i.onload = () => { URL.revokeObjectURL(u); ok(i); }; i.onerror = () => { URL.revokeObjectURL(u); erro(new Error('imagem')); }; i.src = u; });
+}
+
+/* tela */
+function abrirLeitor(alvo) {
+  if (LT) fecharLeitor();
+  LT = { alvo, gid: alvo === 'manual' && sheetAtual ? sheetAtual.id : null, fase: 'camera', camera: 'abrindo', msgCam: null, codigo: null, stream: null, timer: null, ocupado: false, vez: 0, dados: null, semOcr: false, prog: '', pct: 0,
+    feitas: [], snap: null, escolhida: null, nao: [], lista: false, erroLote: '' };
+  $('#leitor').innerHTML = '<div class="lt" role="dialog" aria-modal="true" aria-labelledby="lt-tit"><div class="lt-h"><h3 id="lt-tit" tabindex="-1">' + (alvo === 'lote' ? 'Ler guias em sequência' : 'Ler a guia') + '</h3>' +
+    '<button type="button" class="btn fraco" data-act="lt-fechar">' + ic('x') + 'Fechar</button></div>' +
+    '<div class="lt-v"><video id="lt-video" playsinline muted autoplay></video><div class="lt-mira" id="lt-mira" hidden></div><div class="lt-msg" id="lt-msg" aria-live="polite"></div><div class="lt-sem" id="lt-sem" hidden></div></div>' +
+    '<div class="lt-p" id="lt-p"></div>' +
+    // fixos, fora do painel que é redesenhado: a foto escolhida não se perde se o painel mudar no meio
+    '<input type="file" id="lt-foto-cap" class="lt-file" accept="image/*" capture="environment" data-act="lt-foto" tabindex="-1" aria-hidden="true">' +
+    '<input type="file" id="lt-foto-gal" class="lt-file" accept="image/*" data-act="lt-foto" tabindex="-1" aria-hidden="true"></div>';
+  LT.video = $('#lt-video');
+  desenharLeitor(); $('#lt-tit').focus({ preventScroll: true });
+  prepararCodigo();
+  ligarCamera(LT);
+}
+function fecharLeitor() {
+  if (!LT) return; pararCamera(LT); LT = null; $('#leitor').innerHTML = '';
+  const b = document.querySelector('.sheet [data-act="leitor"]'); if (b) b.focus({ preventScroll: true });
+}
+function pararCamera(eu) {
+  clearTimeout(eu.timer); eu.timer = null;
+  if (eu.stream) { eu.stream.getTracks().forEach(t => t.stop()); eu.stream = null; }
+  if (eu.video) eu.video.srcObject = null;
+}
+async function ligarCamera(eu) {
+  eu.camera = 'abrindo'; eu.msgCam = null;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || window.isSecureContext === false) {
+    eu.camera = 'sem'; eu.msgCam = ['A câmera ao vivo não abre aqui.', 'Use "Tirar foto da guia": o celular abre a câmera dele e o app lê a foto.']; desenharLeitor(); return;
+  }
+  desenharLeitor();
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
+    if (LT !== eu || eu.fase !== 'camera') { st.getTracks().forEach(t => t.stop()); return; }
+    eu.stream = st; eu.video.srcObject = st; try { await eu.video.play(); } catch (e) { }
+    eu.camera = 'ok'; desenharLeitor(); varrer(eu);
+  } catch (e) {
+    if (LT !== eu) return;
+    eu.camera = 'sem';
+    eu.msgCam = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')
+      ? ['A câmera não foi liberada.', 'Para ler ao vivo, permita a câmera para este site no navegador. Ou use "Tirar foto da guia": dá no mesmo.']
+      : ['Não achei uma câmera para ler ao vivo.', 'Use "Tirar foto da guia" ou escolha uma foto já tirada.'];
+    desenharLeitor();
+  }
+}
+function varrer(eu) { // procura o código no vídeo, uns 5 quadros por segundo
+  if (LT !== eu || eu.fase !== 'camera' || !eu.stream) return;
+  const v = eu.video;
+  if (v.readyState >= 2 && v.videoWidth && !eu.ocupado && (detector || zx)) {
+    eu.ocupado = true; eu.vez++;
+    const w = v.videoWidth, h = v.videoHeight; // alterna o quadro inteiro e o meio em tamanho real (o EXAM- do SIGSS é pequeno)
+    const c = eu.vez % 2 ? recorte(v, 0, 0, w, h, 1280) : recorte(v, w * 0.15, h * 0.2, w * 0.7, h * 0.6, 1600);
+    codigoNaImagem(c, !!detector).then(k => {
+      eu.ocupado = false;
+      if (k && LT === eu && eu.fase === 'camera' && k !== eu.codigo) { eu.codigo = k; try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) { } desenharLeitor(); }
+    }, () => { eu.ocupado = false; });
+  }
+  eu.timer = setTimeout(() => varrer(eu), 200);
+}
+function desenharLeitor() {
+  const eu = LT; const box = $('#leitor .lt'); if (!eu || !box) return;
+  box.classList.toggle('cheio', eu.fase !== 'camera');
+  if (eu.fase === 'camera') {
+    const msg = $('#lt-msg'), sem = $('#lt-sem'), mira = $('#lt-mira');
+    mira.hidden = eu.camera !== 'ok'; mira.classList.toggle('achou', !!eu.codigo);
+    sem.hidden = eu.camera !== 'sem'; msg.hidden = eu.camera === 'sem';
+    if (eu.camera === 'sem') sem.innerHTML = '<b>' + eu.msgCam[0] + '</b><span>' + eu.msgCam[1] + '</span>';
+    msg.textContent = eu.camera === 'abrindo' ? 'Abrindo a câmera…'
+      : eu.codigo ? 'Código lido. Agora afaste o celular até a folha inteira caber na tela e toque em "Ler a guia".'
+      : 'Aponte para o código de barras. Na guia do SIGSS ele fica no alto, à direita; no comprovante do IDS, no pé da folha.';
+  }
+  $('#lt-p').innerHTML = '<div class="lt-in">' + (eu.fase === 'camera' ? painelCamera() : eu.fase === 'lendo' ? painelLendo() : eu.fase === 'resumo' ? painelResumo() : painelConferir()) + '</div>';
+}
+function painelCamera() {
+  const eu = LT; const tipo = tipoDoCodigo(eu.codigo);
+  const cod = eu.codigo ? '<div class="lt-cod">' + ic('check') + '<span class="lt-ok">Código lido:</span><code>' + esc(eu.codigo) + '</code><span class="muted">' + esc(maiuscula(TIPOS_PAPEL[tipo])) + '</span></div>' : '';
+  const foto = (cap, txt, cls) => '<label class="btn ' + cls + '" for="' + (cap ? 'lt-foto-cap' : 'lt-foto-gal') + '" tabindex="0" role="button" data-act="lt-rotulo">' + ic(cap ? 'cam' : 'img') + txt + '</label>';
+  const soProt = tipo === 'protocolo' && eu.alvo === 'nova' ? '<button type="button" class="btn" data-act="lt-so-codigo">Usar só o protocolo</button>' : '';
+  let corpo;
+  if (eu.camera === 'ok') corpo = '<div class="lt-bts"><button type="button" class="btn pri big" data-act="lt-ler">' + ic('guia') + 'Ler a guia</button></div><div class="lt-bts2">' + soProt + foto(false, 'Escolher uma foto já tirada', '') + '</div>';
+  else if (eu.camera === 'sem') corpo = '<div class="lt-bts">' + foto(true, 'Tirar foto da guia', 'pri big') + '</div><div class="lt-bts2">' + foto(false, 'Escolher uma foto já tirada', '') + '</div>';
+  else corpo = '<div class="lt-bts2">' + foto(false, 'Escolher uma foto já tirada', '') + '</div>';
+  let lote = '';
+  if (eu.alvo === 'lote') {
+    const ult = eu.feitas[eu.feitas.length - 1];
+    lote = (ult ? '<div class="lt-feito">' + ic('check') + '<span>' + esc(ult.nome) + ': ' + esc(ult.txt) + '.</span></div>' : '<p class="dica">Uma guia por vez: o app acha a guia no Agendamento e mostra o que vai mudar antes de gravar.</p>') +
+      (eu.feitas.length ? '<div class="lt-bts2"><span class="lt-conta" style="align-self:center;flex:1 1 auto">' + plural(eu.feitas.length, 'guia atualizada', 'guias atualizadas') + ' nesta sequência</span>' +
+        (eu.snap ? '<button type="button" class="btn" data-act="lt-desfazer">Desfazer a última</button>' : '') + '<button type="button" class="btn" data-act="lt-terminar">Terminar</button></div>' : '');
+  }
+  return lote + cod + corpo + '<p class="lt-priv">Dica: folha inteira na tela, de frente, com luz e sem sombra. ' + 'A imagem é lida aqui no aparelho e não é guardada nem enviada.</p>';
+}
+function painelResumo() {
+  const eu = LT;
+  return '<div class="lt-tipo">' + (eu.feitas.length ? plural(eu.feitas.length, 'guia atualizada', 'guias atualizadas') : 'Nenhuma guia atualizada') + '</div>' +
+    (eu.feitas.length ? '<ul class="lt-res">' + eu.feitas.map(x => '<li><b>' + esc(x.nome) + '</b><small>' + esc(x.txt) + '</small></li>').join('') + '</ul>' : '') +
+    '<p class="dica">As guias agendadas foram para "Avisar o paciente". Tudo fica na linha do tempo de cada guia.</p>' +
+    '<div class="lt-bts"><button type="button" class="btn pri big" data-act="lt-fechar">' + ic('check') + 'Pronto</button></div>';
+}
+function painelLendo() {
+  return '<div class="lt-prog"><b id="lt-prog-t">' + esc(LT.prog || 'Lendo…') + '</b><div class="lt-barra"><i id="lt-prog-b" style="width:' + (LT.pct || 3) + '%"></i></div>' +
+    '<p class="lt-priv">Na primeira vez o app baixa o leitor de texto (alguns MB); depois fica mais rápido. Leva de 5 a 20 segundos, conforme o celular.</p></div>';
+}
+function painelConferir() {
+  const eu = LT, d = eu.dados, lote = eu.alvo === 'lote', nova = eu.alvo === 'nova' || lote, ag = !!PAPEL_AGENDADO[d.tipo]; const g = eu.alvo === 'manual' && eu.gid ? G(eu.gid) : null;
+  const av = [];
+  if (eu.semOcr) av.push('<b>O texto não foi lido.</b> O leitor de texto não carregou neste navegador (sem internet ou bloqueado aqui; no site ele funciona). ' + (d.codigo ? 'O código foi lido; preencha o resto olhando o papel.' : 'Preencha olhando o papel.'));
+  else if (!d.tipo) av.push('<b>Não reconheci o papel.</b> Tire outra foto de frente, com a folha inteira na tela e boa luz.');
+  if (eu.alvo === 'manual' && d.tipo === 'protocolo') av.push('<b>Este papel é o protocolo da Lista de Espera:</b> não tem data nem local. Leia a guia do agendamento do SIGSS ou o comprovante do IDS.');
+  if (g && d.paciente && !mesmoNome(d.paciente, g.paciente)) av.push('<b>O nome no papel não é o desta guia.</b> No papel: ' + esc(d.paciente) + '. Na guia: ' + esc(g.paciente) + '. Confira se é o papel certo.');
+  if (eu.alvo === 'nova' && isUBS() && d.ubs && d.ubs !== S.papel) av.push('<b>No papel, a unidade solicitante é ' + esc(nomeUn(d.ubs)) + '.</b> Confira se a guia é desta UBS.');
+  const f = (id, rot, val, o) => {
+    o = o || {}; const falta = o.obrig && !val; const nota = val ? (o.notaLido || '') : (o.notaFalta || (o.obrig ? 'Não deu para ler: escreva olhando o papel.' : ''));
+    const inp = o.select ? '<select id="' + id + '">' + o.select + '</select>' : '<input id="' + id + '" type="' + (o.type || 'text') + '"' + (o.list ? ' list="' + o.list + '"' : '') + (o.mono ? ' spellcheck="false" autocapitalize="characters"' : '') + ' autocomplete="off" value="' + esc(val || '') + '">';
+    return '<div class="campo' + (val ? ' lido' : falta ? ' falta' : '') + '"><label for="' + id + '">' + rot + '</label>' + inp + (nota ? '<span class="lt-nota' + (falta ? ' falta' : '') + '">' + nota + '</span>' : '') + '</div>';
+  };
+  const semTel = d.tipo === 'ids' ? 'O comprovante do IDS não traz telefone: escreva.' : 'Não veio no papel: escreva.';
+  let c = '';
+  if (nova) {
+    if (d.tipo === 'protocolo' || d.protocolo) c += f('lt-prot', 'Protocolo de acompanhamento', d.protocolo, { mono: true, notaLido: d.exemplo ? 'Protocolo de exemplo do protótipo: nome e exame vieram da Lista de Espera fictícia.' : 'No app de verdade, o app busca o nome e o exame no SIGSS por este número.' });
+    c += f('lt-pac', 'Paciente', d.paciente, { obrig: true });
+    c += '<div class="grade2">' + f('lt-nasc', 'Data de nascimento', d.nasc, { type: 'date' }) + (ag ? f('lt-tel', 'Telefone', d.tel, lote ? { type: 'tel', notaFalta: 'Não veio no papel. A guia continua com o telefone que já tem.' } : { type: 'tel', obrig: true, notaFalta: semTel }) : '') + '</div>';
+    c += f('lt-proc', 'Exame ou consulta', d.proc, { obrig: true, list: 'l-procs' });
+    if (!isUBS()) c += f('lt-ubs', 'UBS do paciente', d.ubs, { obrig: true, notaLido: 'Pela unidade solicitante do papel.', notaFalta: d.tipo === 'ids' ? 'O comprovante do IDS não diz a UBS: escolha.' : 'Escolha a UBS.',
+      select: '<option value="">Escolha a UBS</option>' + UBS.map(u => '<option value="' + u.id + '"' + (u.id === d.ubs ? ' selected' : '') + '>' + esc(u.nome) + '</option>').join('') });
+  }
+  if (ag) c += '<div class="grade2">' + f('lt-data', 'Data do atendimento', d.data, { type: 'date', obrig: true }) + f('lt-hora', 'Hora', d.hora, { type: 'time', obrig: true }) + '</div>' +
+    f('lt-local', 'Local', d.local, { obrig: true, list: 'l-locais' }) + (nova ? '' : f('lt-tel', 'Telefone', d.tel || (g && g.tel) || '', { type: 'tel', obrig: true, notaFalta: semTel, notaLido: d.tel ? '' : 'Telefone que já estava na guia.' }));
+  const usa = d.tipo && (nova || ag);
+  const cab = '<div class="lt-tipo">' + (d.tipo ? maiuscula(TIPOS_PAPEL[d.tipo]) : 'Papel não reconhecido') + '</div>' +
+    (d.codigo ? '<div class="lt-cod"><span>' + (d.tipo === 'ids' ? 'Código do IDS' : 'Código') + ':</span><code>' + esc(d.codigo) + '</code></div>' : '');
+  if (lote) return cab + av.map(a => '<div class="lt-av">' + a + '</div>').join('') + '<div id="lt-achou">' + caixaAchou() + '</div>' +
+    (d.tipo ? '<p class="dica">O que o app leu do papel. Se algo estiver errado, corrija aqui: a busca acima se refaz sozinha.</p><div class="lt-campos">' + c + '</div>' : '') +
+    '<div class="lt-bts2"><button type="button" class="btn" data-act="lt-denovo">' + ic('cam') + 'Pular e ler o próximo</button><button type="button" class="btn" data-act="lt-terminar">Terminar</button></div>' + PRIV;
+  return cab + (usa ? '<p class="dica">Confira cada campo com o papel. O que estiver errado, corrija aqui antes de usar.</p>' : '') +
+    av.map(a => '<div class="lt-av">' + a + '</div>').join('') + (usa ? '<div class="lt-campos">' + c + '</div>' : '') +
+    '<div class="lt-bts">' + (usa ? '<button type="button" class="btn pri big" data-act="lt-usar">' + ic('check') + 'Usar estes dados</button>' : '') +
+    '<button type="button" class="btn big" data-act="lt-denovo">' + ic('cam') + 'Ler de novo</button></div>' + PRIV;
+}
+/* leitura em sequência (ideia do usuário, 25/11/2026): quem agendou passa as guias uma atrás da outra e o app
+   acha sozinho a guia que chegou no malote, por vários pontos do papel, e atualiza o agendamento. */
+const ETAPAS_AG = ['ag_agendar', 'ag_fila', 'ag_agendada'];
+const palavras = s => norm(s).toUpperCase().replace(/[^A-Z0-9\s]/g, ' ').split(/\s+/).filter(x => x.length > 2 && PARTICULAS.indexOf(x.toLowerCase()) < 0);
+function parecido(a, b) { const x = palavras(a), y = palavras(b); if (!x.length || !y.length) return 0; return x.filter(p => y.indexOf(p) >= 0).length / Math.max(x.length, y.length); }
+function dadosAtuais() { // o que foi lido, com as correções que a pessoa fez nos campos
+  const d = LT.dados; const v = id => { const e = document.getElementById(id); return e ? String(e.value || '').trim() : null; };
+  const o = Object.assign({}, d); [['paciente', 'lt-pac'], ['nasc', 'lt-nasc'], ['proc', 'lt-proc'], ['protocolo', 'lt-prot'], ['ubs', 'lt-ubs'], ['data', 'lt-data'], ['hora', 'lt-hora'], ['local', 'lt-local'], ['tel', 'lt-tel']].forEach(([k, id]) => { const x = v(id); if (x !== null) o[k] = x; });
+  return o;
+}
+function candidatos(d) {
+  const prot = normProt(d.protocolo);
+  return S.guias.filter(g => !fim(g) && LT.nao.indexOf(g.id) < 0).map(g => {
+    let p = 0; const por = [];
+    if (prot && g.protocolo && normProt(g.protocolo) === prot) { p += 100; por.push('protocolo'); }
+    if (d.codigo && g.codigo && g.codigo === d.codigo) { p += 100; por.push('código da guia'); }
+    const n = d.paciente ? parecido(d.paciente, g.paciente) : 0;
+    if (n >= 0.75) { p += 50; por.push('nome'); } else if (n >= 0.4) { p += 25; por.push('nome parecido'); }
+    if (d.nasc && g.nasc && d.nasc === g.nasc) { p += 35; por.push('nascimento'); }
+    if (d.proc && g.proc && parecido(d.proc, g.proc) >= 0.5) { p += 15; por.push('exame'); }
+    if (d.ubs && g.ubs === d.ubs) { p += 10; por.push('UBS'); }
+    return { g, p, por, aqui: ETAPAS_AG.indexOf(g.etapa) >= 0 };
+  }).filter(c => c.p >= 25).sort((a, b) => b.p - a.p || (b.aqui - a.aqui));
+}
+const quandoLido = d => d.data && d.hora ? new Date(d.data + 'T' + d.hora).toISOString() : '';
+function caixaAchou() {
+  const eu = LT, d = dadosAtuais(); if (!d.tipo) return '';
+  const ag = !!PAPEL_AGENDADO[d.tipo];
+  const cand = (c, extra) => '<button type="button" class="lt-cand" data-act="lt-escolher" data-id="' + c.g.id + '"><b>' + esc(c.g.paciente) + '</b><small>' + esc(c.g.proc) + ' · UBS ' + esc(nomeUn(c.g.ubs)) + ' · ' + esc(rotulo(c.g)) + '</small>' + (extra || '') + '</button>';
+  if (eu.lista) {
+    const todas = S.guias.filter(g => !fim(g) && ETAPAS_AG.indexOf(g.etapa) >= 0 && eu.nao.indexOf(g.id) < 0).map(g => ({ g, n: d.paciente ? parecido(d.paciente, g.paciente) : 0 })).sort((a, b) => b.n - a.n || (a.g.paciente < b.g.paciente ? -1 : 1));
+    return '<div class="lt-achou"><span class="t">Qual destas guias é este papel?</span><small>Guias que estão no Agendamento, as de nome mais parecido primeiro.</small><div class="lt-cands">' +
+      (todas.length ? todas.slice(0, 40).map(x => cand(x)).join('') : '<small>Nenhuma guia no Agendamento.</small>') + '</div><div class="lt-bts2"><button type="button" class="btn" data-act="lt-lista-x">Voltar</button></div></div>';
+  }
+  const cs = candidatos(d), best = cs[0], seg = cs[1];
+  const certa = eu.escolhida ? G(eu.escolhida) : best && best.aqui && best.p >= 80 && (!seg || seg.p <= best.p - 30) ? best.g : null;
+  const opcoes = '<div class="lt-bts2"><button type="button" class="btn" data-act="lt-lista">Escolher na lista</button><button type="button" class="btn" data-act="lt-como-nova">' + ic('plus') + 'Lançar como guia nova</button></div>';
+  if (certa) {
+    const c = cs.find(x => x.g.id === certa.id); const novo = ag && quandoLido(d) && d.local ? { quando: quandoLido(d), local: d.local } : null;
+    const igual = novo && certa.ag && certa.ag.quando === novo.quando && norm(certa.ag.local) === norm(novo.local);
+    let vai, bt;
+    if (ag && !novo) { vai = '<span class="lt-nota falta">Falta data, hora ou local: complete nos campos abaixo, olhando o papel.</span>'; bt = ''; }
+    else if (ag && igual) { vai = '<span class="vai">Já está com este agendamento: ' + esc(fAg(certa.ag)) + '.</span>'; bt = '<button type="button" class="btn pri big" data-act="lt-denovo">' + ic('cam') + 'Ler o próximo</button>'; }
+    else if (ag) { vai = '<span class="vai">' + (certa.ag ? 'Troca o agendamento de ' + esc(fAg(certa.ag)) + ' para ' : 'Fica agendada para ') + esc(fAg(novo)) + '.</span>'; bt = '<button type="button" class="btn pri big" data-act="lt-atualizar" data-id="' + certa.id + '">' + ic('check') + (certa.ag ? 'Trocar o agendamento' : 'Atualizar esta guia') + '</button>'; }
+    else { vai = '<span class="vai">Este papel é o protocolo: não muda o agendamento.' + (d.protocolo && !certa.protocolo ? ' O app guarda o protocolo na guia.' : '') + '</span>'; bt = '<button type="button" class="btn pri big" data-act="lt-atualizar" data-id="' + certa.id + '">' + ic('check') + (d.protocolo && !certa.protocolo ? 'Guardar o protocolo e ler o próximo' : 'Conferida: ler o próximo') + '</button>'; }
+    const outroNome = d.paciente && !mesmoNome(d.paciente, certa.paciente);
+    return '<div class="lt-achou ' + (outroNome ? 'talvez' : 'ok') + '"><span class="t ' + (outroNome ? 'talvez' : 'ok') + '">' + ic(outroNome ? 'alert' : 'check') + ' ' + (eu.escolhida ? 'Guia escolhida por você' : 'Achei a guia') + '</span><span class="quem">' + esc(certa.paciente) + '</span><small>' + esc(certa.proc) + ' · UBS ' + esc(nomeUn(certa.ubs)) + ' · ' + esc(rotulo(certa)) + '</small>' +
+      (c && c.por.length ? '<small>Bateu: ' + esc(c.por.join(', ')) + '.</small>' : '') +
+      (outroNome ? '<span class="lt-nota falta">O nome no papel (' + esc(d.paciente) + ') não é o desta guia. Confira se é o papel certo antes de atualizar.</span>' : '') + vai + bt + '<div class="lt-bts2"><button type="button" class="btn" data-act="lt-nao-e" data-id="' + certa.id + '">Não é esta</button></div></div>';
+  }
+  if (best && !best.aqui && best.p >= 80) {
+    const m = best.g.etapa === 'malote_ida' && M(best.g.maloteId);
+    return '<div class="lt-achou talvez"><span class="t talvez">' + ic('alert') + ' Achei, mas a guia não está no Agendamento</span><span class="quem">' + esc(best.g.paciente) + '</span><small>' + esc(rotulo(best.g)) + '</small>' +
+      (m ? '<small>Ela está no malote ' + esc(m.num) + ', que ainda não foi recebido. Receba o malote primeiro e leia este papel de novo.</small>' : '') + opcoes + '</div>';
+  }
+  const aqui = cs.filter(c => c.aqui);
+  if (aqui.length) return '<div class="lt-achou talvez"><span class="t talvez">Pode ser uma destas. Toque na certa:</span><div class="lt-cands">' + aqui.slice(0, 4).map(c => cand(c, '<small>Bateu: ' + esc(c.por.join(', ')) + '</small>')).join('') + '</div>' + opcoes + '</div>';
+  return '<div class="lt-achou talvez"><span class="t talvez">' + ic('alert') + ' Não achei esta guia no Agendamento</span><small>Confira o nome abaixo, escolha a guia na lista ou lance como guia nova.</small>' + opcoes + '</div>';
+}
+function desenharAchou() { const b = $('#lt-achou'); if (b && LT) b.innerHTML = caixaAchou(); }
+function atualizarDaLeitura(id) {
+  const eu = LT, g = G(id); if (!eu || !g) return;
+  const d = dadosAtuais(), ag = !!PAPEL_AGENDADO[d.tipo], q = agoraISO(), p = quem(), snap = JSON.stringify(S); const guard = [];
+  if (d.tel && !g.tel) { g.tel = d.tel; guard.push('telefone'); }
+  if (d.nasc && !g.nasc) g.nasc = d.nasc;
+  if (d.protocolo && !g.protocolo) { g.protocolo = normProt(d.protocolo) || d.protocolo; guard.push('protocolo'); }
+  if (d.codigo && d.tipo !== 'protocolo') g.codigo = d.codigo;
+  g.lida = d.tipo; let txt;
+  if (ag) {
+    const novo = { quando: quandoLido(d), local: d.local }; const era = g.ag;
+    g.ag = novo; g.avisado = false; g.agAnterior = null; if (!g.selos.includes('lida')) g.selos.push('lida'); set(g, 'ag_agendada', q);
+    ev(g, q, p, (era ? 'Agendamento trocado pela leitura do papel (era ' + fAg(era) + '): ' : 'Agendamento lido do papel pela câmera: ') + fAg(novo) + ' (' + TIPOS_PAPEL[d.tipo] + '), conferido por quem leu');
+    txt = 'agendada para ' + fAg(novo);
+  } else {
+    ev(g, q, p, 'Papel lido pela câmera (' + TIPOS_PAPEL[d.tipo] + ')' + (guard.length ? ': ' + guard.join(' e ') + ' guardado na guia' : ''));
+    txt = guard.length ? guard.join(' e ') + ' guardado' : 'conferida';
+  }
+  salvar(); render();
+  eu.feitas.push({ id: g.id, nome: g.paciente, txt }); eu.snap = snap;
+  proximaLeitura(eu);
+}
+function proximaLeitura(eu) { eu.fase = 'camera'; eu.codigo = null; eu.dados = null; eu.escolhida = null; eu.nao = []; eu.lista = false; eu.semOcr = false; desenharLeitor(); $('#lt-tit').focus({ preventScroll: true }); ligarCamera(eu); }
+function desfazerLeitura() {
+  const eu = LT; if (!eu || !eu.snap) return;
+  S = JSON.parse(eu.snap); eu.snap = null; const x = eu.feitas.pop(); salvar(); render(); desenharLeitor();
+  const t = $('#lt-p .lt-in'); if (t && x) t.insertAdjacentHTML('afterbegin', '<div class="lt-feito" style="color:var(--muted)">Desfeito: ' + esc(x.nome) + '.</div>');
+}
+function terminarLeitura() { const eu = LT; if (!eu) return; if (!eu.feitas.length) { fecharLeitor(); return; } pararCamera(eu); eu.fase = 'resumo'; desenharLeitor(); $('#lt-tit').focus({ preventScroll: true }); }
+function passoLeitura(eu, t, p) { if (LT !== eu) return; eu.prog = t; eu.pct = p; const a = $('#lt-prog-t'), b = $('#lt-prog-b'); if (a) a.textContent = t; if (b) b.style.width = p + '%'; }
+async function analisarImagem(eu, img) {
+  let texto = ''; eu.semOcr = false;
+  try {
+    passoLeitura(eu, 'Procurando o código de barras…', 8);
+    await prepararCodigo();
+    if (!eu.codigo) { try { eu.codigo = await comPrazo(codigoNaFoto(img), 20000, 'código'); } catch (e) { } }
+    if (LT !== eu) return;
+    passoLeitura(eu, 'Lendo o texto da guia…', 18);
+    const [w, h] = tamanho(img); const base = recorte(img, 0, 0, w, h, 2400); let r1 = null;
+    try { r1 = await lerTexto(base, (t, p) => passoLeitura(eu, t, 18 + Math.round(p * 70))); texto = r1.texto; }
+    catch (e) { eu.semOcr = true; }
+    if (LT !== eu) return;
+    eu.dados = analisarGuia(texto, eu.codigo);
+    // Faltou o exame? Relê só a faixa da tabela de exames, ampliada (na foto inteira as letras ficam pequenas).
+    const dd = eu.dados;
+    if (r1 && (dd.tipo === 'ids' || dd.tipo === 'exame') && !dd.proc && r1.linhas.length) {
+      const ini = r1.linhas.find(l => /Procedimentos\s*(Agendados|Autorizados)|Tel\.?\s*Celular|Resultado\s+Previsto/i.test(l.t));
+      const fim = ini && r1.linhas.find(l => l.y0 > ini.y1 && /Recomenda|Total de exames|Autorizado eletr|Registrado por|Observa/i.test(l.t));
+      if (ini) {
+        const k = h / base.height, y0 = Math.max(0, ini.y1 * k - 4 * k), y1 = Math.min(h, (fim ? fim.y0 : ini.y1 + base.height * 0.1) * k + 4 * k);
+        if (y1 - y0 > 10) {
+          passoLeitura(eu, 'Relendo a linha do exame…', 90);
+          const faixa = document.createElement('canvas'); const esc2 = Math.min(3, 2400 / w); faixa.width = Math.round(w * esc2); faixa.height = Math.round((y1 - y0) * esc2);
+          const fg = faixa.getContext('2d'); fg.imageSmoothingQuality = 'high'; fg.drawImage(img, 0, y0, w, y1 - y0, 0, 0, faixa.width, faixa.height);
+          try { const r2 = await lerTexto(faixa); const L2 = r2.texto.replace(/[—–]/g, '-').split(/\r?\n/).map(s => s.replace(/[ \t]+/g, ' ').trim()).filter(Boolean); dd.proc = examesDoTexto(dd.tipo, L2, true); } catch (e) { }
+          if (LT !== eu) return;
+        }
+      }
+    }
+    completarExemplo(eu.dados);
+  } catch (e) {
+    if (window.console) console.warn('leitura da guia:', e);
+    eu.dados = eu.dados || { tipo: tipoDoCodigo(eu.codigo), codigo: eu.codigo || '' }; eu.semOcr = true;
+  }
+  if (LT !== eu) return;
+  eu.fase = 'conferir'; desenharLeitor(); $('#lt-tit').focus({ preventScroll: true });
+}
+async function lerDaCamera() {
+  const eu = LT; if (!eu || eu.camera !== 'ok' || !eu.video.videoWidth) return;
+  const v = eu.video; const quadro = recorte(v, 0, 0, v.videoWidth, v.videoHeight, 4000); // reserva, se a foto em tamanho cheio falhar
+  eu.fase = 'lendo'; eu.prog = 'Tirando a foto…'; eu.pct = 3; desenharLeitor();
+  let img = null; const tr = eu.stream && eu.stream.getVideoTracks()[0];
+  if (tr && 'ImageCapture' in window) { try { img = await imagemDeBlob(await comPrazo(new ImageCapture(tr).takePhoto(), 8000, 'foto')); } catch (e) { img = null; } }
+  if (LT !== eu) return;
+  pararCamera(eu);
+  analisarImagem(eu, img || quadro);
+}
+async function lerArquivo(file) {
+  const eu = LT; if (!eu) return;
+  pararCamera(eu); eu.fase = 'lendo'; eu.prog = 'Abrindo a foto…'; eu.pct = 3; desenharLeitor();
+  let img; try { img = await imagemDeBlob(file); } catch (e) { if (LT !== eu) return; eu.fase = 'camera'; eu.camera = 'sem'; eu.msgCam = ['Não consegui abrir essa foto.', 'Tente outra foto, em JPG ou PNG.']; desenharLeitor(); return; }
+  if (LT !== eu) return;
+  analisarImagem(eu, img);
+}
+function lerDeNovo() { if (LT) proximaLeitura(LT); }
+function soCodigo() { const eu = LT; if (!eu || !eu.codigo) return; pararCamera(eu); eu.dados = analisarGuia('', eu.codigo); completarExemplo(eu.dados); eu.semOcr = false; eu.fase = 'conferir'; desenharLeitor(); }
+function usarLeitura() {
+  const eu = LT; if (!eu || !eu.dados) return;
+  const d = eu.dados, ag = !!PAPEL_AGENDADO[d.tipo], info = { tipo: d.tipo, codigo: d.codigo || '' };
+  const v = { prot: valor('lt-prot'), pac: valor('lt-pac'), nasc: valor('lt-nasc'), proc: valor('lt-proc'), ubs: valor('lt-ubs'), data: valor('lt-data'), hora: valor('lt-hora'), local: valor('lt-local'), tel: valor('lt-tel') };
+  const alvo = eu.alvo; fecharLeitor();
+  const por = (id, x) => { const e = document.getElementById(id); if (e && x) e.value = x; };
+  if (alvo === 'lote') { abrirNova(); preencherNova(v, info, ag, por); }
+  else if (alvo === 'nova' && N && sheetAtual && sheetAtual.tipo === 'nova') preencherNova(v, info, ag, por);
+  else if (alvo === 'manual' && sheetAtual && sheetAtual.tipo === 'manual') {
+    sheetAtual.lida = info; por('a-data', v.data); por('a-hora', v.hora); por('a-local', v.local); por('a-tel', v.tel);
+    toast('Agendamento lido do papel. Confira e toque em "Salvar agendamento".');
+  }
+}
+function preencherNova(v, info, ag, por) {
+  if (ag && N.modo !== 'agendada') { N.modo = 'agendada'; N.erros = {}; }
+  N.lida = info; desenharNova();
+  por('n-prot', v.prot); por('n-pac', v.pac); por('n-proc', v.proc); por('n-nasc', v.nasc); por('n-tel', v.tel); por('n-ubs', v.ubs);
+  por('n-data', v.data); por('n-hora', v.hora); por('n-local', v.local);
+  if (v.nasc || (!ag && v.tel)) { const m = document.querySelector('.sheet details.mais'); if (m) m.open = true; }
+  procurarProtocolo(valor('n-prot'));
+  toast('Campos preenchidos pelo papel. Confira e toque em "Lançar guia".');
 }
 
 /* folhas pequenas: lançar à mão, problema, resolver, transferir, telefone */
 function folhaForm(titulo, sub, corpo, acao, botao) { return head(titulo, sub) + '<form data-submit="' + acao + '" novalidate><div class="sh-b">' + corpo + '</div><div class="sh-f"><button type="submit" class="btn pri big">' + botao + '</button></div></form>'; }
 function abrirManual(id, erros) {
-  const g = G(id); sheetAtual = { tipo: 'manual', id }; erros = erros || {}; const er = k => erros[k] ? '<span class="erro">' + erros[k] + '</span>' : '';
+  const g = G(id); const lida = sheetAtual && sheetAtual.tipo === 'manual' && sheetAtual.id === id ? sheetAtual.lida : null;
+  sheetAtual = { tipo: 'manual', id, lida }; erros = erros || {}; const er = k => erros[k] ? '<span class="erro">' + erros[k] + '</span>' : '';
   pintar(folhaForm('Lançar o agendamento à mão', '<div class="g-meta"><span>' + esc(g.paciente) + ' · ' + esc(g.proc) + '</span></div>',
-    '<p class="dica">Use só quando o SIGSS não trouxer o agendamento sozinho. Os 6 dados são obrigatórios.</p>' +
+    '<p class="dica">Use só quando o SIGSS não trouxer o agendamento sozinho, como nos exames agendados no IDS do CISCOPAR. Os 6 dados são obrigatórios.</p>' + botaoLeitor('manual') +
     '<div class="grade2"><div class="campo"><label for="a-data">Data do atendimento</label><input id="a-data" type="date">' + er('data') + '</div><div class="campo"><label for="a-hora">Hora</label><input id="a-hora" type="time">' + er('hora') + '</div></div>' +
     '<div class="campo"><label for="a-local">Local</label><input id="a-local" list="l-locais">' + er('local') + '</div>' +
     '<div class="campo"><label for="a-tel">Telefone</label><input id="a-tel" type="tel" value="' + esc(g.tel) + '">' + er('tel') + '</div>' + listas(), 'manual-ok', 'Salvar agendamento'), !erros || !Object.keys(erros).length);
@@ -1644,6 +2238,20 @@ const ACOES = {
   'nova': () => abrirNova(),
   'nova-modo': el => { N.modo = el.dataset.v; N.erros = {}; desenharNova(); },
   'ex-prot': el => { const i = $('#n-prot'); if (!i) return; i.value = el.dataset.v; procurarProtocolo(i.value); i.focus(); },
+  'leitor': el => abrirLeitor(el.dataset.alvo),
+  'lt-fechar': () => fecharLeitor(),
+  'lt-ler': () => lerDaCamera(),
+  'lt-usar': () => usarLeitura(),
+  'lt-denovo': () => lerDeNovo(),
+  'lt-so-codigo': () => soCodigo(),
+  'lt-atualizar': el => atualizarDaLeitura(el.dataset.id),
+  'lt-escolher': el => { LT.escolhida = el.dataset.id; LT.lista = false; desenharAchou(); },
+  'lt-nao-e': el => { LT.nao.push(el.dataset.id); LT.escolhida = null; desenharAchou(); },
+  'lt-lista': () => { LT.lista = true; desenharAchou(); },
+  'lt-lista-x': () => { LT.lista = false; desenharAchou(); },
+  'lt-como-nova': () => usarLeitura(),
+  'lt-desfazer': () => desfazerLeitura(),
+  'lt-terminar': () => terminarLeitura(),
   'entreguei': el => { const g = G(el.dataset.id); agir('Entregue: ' + g.paciente + '.', () => tEntregar(g, q0(), quem())); },
   'reforcei': el => { const g = G(el.dataset.id); agir('Aviso reforçado por ligação: ' + g.paciente + '.', () => tReforcar(g, q0(), quem(), 'ligacao')); },
   'mensagem': el => { esconderBusca(); abrirMensagem(el.dataset.id); },
@@ -1687,6 +2295,7 @@ const MUDAR = {
   'ver-como': el => { S.papel = el.value; S.tab = el.value === ADM ? 'painel' : 'fazer'; S.filtro = {}; salvar(); fecharSheet(); render(); window.scrollTo(0, 0); },
   'conf': el => { const id = el.dataset.id; if (el.checked) R.ok.add(id); else { R.ok.delete(id); R.nao.delete(id); } desenharReceber(); },
   'nao-ubs': el => { R.nao.set(el.dataset.id, el.value); },
+  'lt-foto': el => { const f = el.files && el.files[0]; if (f && LT) lerArquivo(f); el.value = ''; },
   'fsel': el => { const id = el.dataset.id; if (el.checked) F.sel.add(id); else F.sel.delete(id); desenharFechar(); },
   'filtro-ubs': el => { S.filtro = Object.assign({}, S.filtro); if (el.value) S.filtro.u = el.value; else delete S.filtro.u; salvar(); render(); }
 };
@@ -1696,7 +2305,11 @@ const ENVIAR = {
     const g = G(sheetAtual.id); const dt = valor('a-data'), hr = valor('a-hora'), lc = valor('a-local'), tel = valor('a-tel'); const er = {};
     if (!dt) er.data = 'Escolha a data.'; if (!hr) er.hora = 'Escolha a hora.'; if (!lc) er.local = 'Escreva o local.'; if (!tel) er.tel = 'Escreva o telefone.';
     if (Object.keys(er).length) { abrirManual(g.id, er); return; }
-    agir('Agendamento lançado à mão: ' + g.paciente + '.', () => { g.tel = tel; tAgendar(g, { quando: new Date(dt + 'T' + hr).toISOString(), local: lc }, q0(), quem(), false); }, () => voltarParaGuia(g.id));
+    const lida = sheetAtual.lida;
+    agir('Agendamento lançado à mão: ' + g.paciente + '.', () => {
+      g.tel = tel; tAgendar(g, { quando: new Date(dt + 'T' + hr).toISOString(), local: lc }, q0(), quem(), false);
+      if (lida) { if (lida.codigo) g.codigo = lida.codigo; g.lida = lida.tipo; ev(g, q0(), quem(), 'Agendamento lido do papel pela câmera (' + TIPOS_PAPEL[lida.tipo] + ') e conferido por quem lançou'); }
+    }, () => voltarParaGuia(g.id));
   },
   'prob-ok': () => {
     const g = G(sheetAtual.id); const r = document.querySelector('.sheet input[name="motivo"]:checked'); const motivo = r ? r.value : 'Outro'; const txt = valor('pb-txt');
@@ -1726,10 +2339,11 @@ document.addEventListener('input', e => {
   const el = e.target;
   if (el.id === 'busca') buscar(el.value);
   if (el.id === 'n-prot') procurarProtocolo(el.value);
+  if (LT && LT.alvo === 'lote' && LT.fase === 'conferir' && el.id && el.id.indexOf('lt-') === 0) desenharAchou();
 });
 document.addEventListener('submit', e => { e.preventDefault(); const fn = ENVIAR[e.target.dataset.submit]; if (fn) fn(); });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if ($('#sheet .sheet')) fecharSheet(); else esconderBusca(); return; }
+  if (e.key === 'Escape') { if (LT) fecharLeitor(); else if ($('#sheet .sheet')) fecharSheet(); else esconderBusca(); return; }
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role="button"][data-act]')) { e.preventDefault(); e.target.click(); }
 });
 
