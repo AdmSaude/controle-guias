@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light">
-<meta name="prototipo-carimbo" content="438180d80e09">
+<meta name="prototipo-carimbo" content="b7a0d14e3b41">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a16207'/%3E%3Cpath d='M7 10.5h18v12H7z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M7 10.5l9 7 9-7' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script>window.cgImprimir = function () { window.print(); };</script>
@@ -721,7 +721,7 @@ function encerrarProblemas(g, q, txt) { abertos(g).forEach(p => resolverProb(p, 
 function set(g, etapa, q) { g.etapa = etapa; g.desde = q; }
 function protoFake() { const n = S.seqGuia; return 'LIES-9' + String(10000 + ((n * 7919) % 89000)).padStart(5, '0') + '-1-0' + ((n % 3) + 1); }
 function novaGuia(d) {
-  const g = Object.assign({ id: 'g' + (++S.seqGuia), paciente: '', nasc: '', tel: '', proc: '', protocolo: '', obs: '', urgente: false, transporte: false,
+  const g = Object.assign({ id: 'g' + (++S.seqGuia), paciente: '', nasc: '', tel: '', cns: '', telsSigss: [], nomeLancado: '', proc: '', protocolo: '', obs: '', urgente: false, transporte: false,
     ubs: null, holder: null, etapa: 'ubs_mandar', desde: null, maloteId: null, ag: null, avisado: false, avisoComo: null, reforcoEm: null,
     chegouEm: null, devolucao: false, repasse: false, selos: [], problemas: [], pulou: [], historico: [] }, d);
   S.guias.push(g); return g;
@@ -741,7 +741,7 @@ function tLancarAGAgendada(d, ubs, ag, q, por) {
 }
 function tSIGSS(d, ubs, ag, q) {
   const g = novaGuia(d); g.ubs = ubs; g.ag = ag; g.selos.push('sigss'); g.pulou = [1, 2]; if (!g.protocolo) g.protocolo = protoFake();
-  set(g, 'ag_agendada', q); ev(g, q, SIGSS_POR, 'Agendada no SIGSS: ' + fAg(ag) + '. O pedido entrou sozinho na fila e a guia foi impressa no Agendamento'); return g;
+  trazerPaciente(g, pacienteSIGSS(g), SEMEANDO); set(g, 'ag_agendada', q); ev(g, q, SIGSS_POR, 'Agendada no SIGSS: ' + fAg(ag) + '. O pedido entrou sozinho na fila e a guia foi impressa no Agendamento'); return g;
 }
 function tFechar(origem, destino, gs, q, por, portador) {
   const m = { id: 'm' + (++S.seqMal), num: 'MAL-' + String(S.seqMal).padStart(4, '0'), origem, destino, itens: gs.map(g => g.id),
@@ -791,7 +791,34 @@ function tAgendar(g, ag, q, por, viaSigss) {
   g.ag = ag; g.avisado = false; g.agAnterior = null;
   const s = viaSigss ? 'sigss' : 'manual'; if (!g.selos.includes(s)) g.selos.push(s);
   set(g, 'ag_agendada', q);
-  ev(g, q, viaSigss ? SIGSS_POR : por, viaSigss ? 'Agendada no SIGSS: ' + fAg(ag) + '. A guia andou sozinha para "Avisar o paciente"' : 'Agendamento lançado à mão, porque o SIGSS não trouxe: ' + fAg(ag));
+  const vem = viaSigss ? trazerPaciente(g, pacienteSIGSS(g), SEMEANDO) : [];
+  ev(g, q, viaSigss ? SIGSS_POR : por, viaSigss ? 'Agendada no SIGSS: ' + fAg(ag) + '. A guia andou sozinha para "Avisar o paciente"' + (vem.length ? '. Do cadastro do SIGSS: ' + vem.join(', ') : '') : 'Agendamento lançado à mão, porque o SIGSS não trouxe: ' + fAg(ag));
+}
+/* Dados do paciente que a função na nuvem traz do SIGSS junto com o agendamento (conferido em 26/11/2026, só leitura):
+   agendamentoExame/visualizar, agendamentoConsulta/visualiza e listaEspera/visualiza trazem o nome completo, o cartão do SUS
+   (isenNumCadSus) e até 3 telefones (entiTel1, entiTel2, entiTelCelular); o nascimento vem na consulta e na Lista de Espera.
+   No protótipo os dados são fictícios, sempre os mesmos para a mesma guia. */
+const NOME_COMPLETO_SIM = { 'Edson Luiz Martins': 'Edson Luiz Martins dos Santos', 'Ademir Nogueira': 'Ademir José Nogueira' };
+function pacienteSIGSS(g) {
+  const h = hashCod(g.id + '|' + g.paciente);
+  const tels = ['(44) 9' + (8100 + h % 1800) + '-' + (1000 + (h >>> 4) % 8999)];
+  if (h % 3 === 0) tels.push('(44) 3528-' + (1000 + (h >>> 7) % 8999));
+  return { nome: NOME_COMPLETO_SIM[g.paciente] || g.paciente, cns: cnsFake(g.id + g.paciente), tels };
+}
+const cnsFake = s => '7' + String(hashCod(s) % 1e7).padStart(7, '0') + String(hashCod(s + 'c') % 1e7).padStart(7, '0');
+const fCns = s => { const x = digitos(s); return x.length === 15 ? x.replace(/^(\d{3})(\d{4})(\d{4})(\d{4})$/, '$1 $2 $3 $4') : String(s || ''); };
+// Põe na guia o que veio do cadastro do SIGSS. O nome lançado fica guardado; o telefone escrito no app não é trocado.
+// semTel: nos dados fictícios iniciais, o telefone de cada guia fica como foi escrito (há guias sem telefone de propósito).
+let SEMEANDO = false;
+function trazerPaciente(g, p, semTel) {
+  const m = [];
+  if (p.nome && norm(p.nome) !== norm(g.paciente)) { if (!g.nomeLancado) g.nomeLancado = g.paciente; g.paciente = p.nome; m.push('nome completo'); }
+  if (p.cns && digitos(p.cns) !== digitos(g.cns)) { g.cns = digitos(p.cns); m.push('cartão do SUS'); }
+  const tels = semTel ? [] : (p.tels || []).filter(t => digitos(t).length >= 10);
+  if (!g.tel && tels.length) { g.tel = tels[0]; m.push('telefone'); }
+  const outros = tels.filter(t => digitos(t) !== digitos(g.tel));
+  if (outros.map(digitos).join() !== (g.telsSigss || []).map(digitos).join()) { g.telsSigss = outros; if (outros.length) m.push(outros.length > 1 ? 'outros telefones' : 'outro telefone'); }
+  return m;
 }
 function tFila(g, q, por) { set(g, 'ag_fila', q); ev(g, q, por, 'Sem vaga: entrou na fila do SIGSS. O papel fica no Agendamento até agendar'); }
 function tAvisar(g, como, q, por) {
@@ -833,6 +860,7 @@ function agFake(g) {
 }
 
 /* ------------------------------------------------------------------ dados fictícios */
+function semear() { SEMEANDO = true; try { seed(); } finally { SEMEANDO = false; } }
 function seed() {
   S = { v: 3, papel: 'jussara', tab: 'fazer', filtro: {}, guias: [], malotes: [], seqMal: 34, seqGuia: 0, seqProb: 0 };
   const T = emDU, A = 'Agendamento', V = 'Valdir (motorista)';
@@ -1377,7 +1405,10 @@ function desenharGuia(nova) {
   linhas.push(['Protocolo', g.protocolo ? '<span class="num">' + esc(g.protocolo) + '</span>' : '—']);
   if (g.codigo) linhas.push([g.lida === 'ids' ? 'Código do IDS' : 'Código da guia', '<span class="num">' + esc(g.codigo) + '</span>' + (g.lida ? ' <span class="muted">lido pelo código de barras</span>' : '')]);
   linhas.push(['Telefone', (g.tel ? esc(g.tel) : '<span class="muted">sem telefone</span>') + (podeMexer(g) ? btn('telefone', g.id, g.tel ? 'Mudar' : 'Pôr telefone', 'fraco') : '')]);
+  if (g.telsSigss && g.telsSigss.length) linhas.push(['Outros telefones', g.telsSigss.map(esc).join('<br>') + ' <span class="muted">do cadastro do SIGSS</span>']);
+  linhas.push(['Cartão do SUS', g.cns ? '<span class="num">' + esc(fCns(g.cns)) + '</span>' : '<span class="muted">ainda não veio do SIGSS</span>']);
   if (g.nasc) linhas.push(['Nascimento', fNasc(g.nasc)]);
+  if (g.nomeLancado) linhas.push(['Nome lançado', esc(g.nomeLancado) + ' <span class="muted">(o SIGSS trouxe o nome completo)</span>']);
   if (g.obs) linhas.push(['Observação', esc(g.obs)]);
   const hist = g.historico.slice().reverse().map(e => '<li><time>' + fQuando(e.em) + '</time><div>' + esc(e.texto) + '<span class="por">' + esc(e.por) + '</span></div></li>').join('');
   let sim = '';
@@ -1559,8 +1590,10 @@ function desenharNova(nova) {
     (!ubsMode ? '<div class="campo"><label for="n-ubs">UBS do paciente</label><select id="n-ubs"><option value="">Escolha a UBS</option>' + UBS.map(u => '<option value="' + u.id + '">' + esc(u.nome) + '</option>').join('') + '</select>' + er('ubs') + '</div>' : '') +
     (ag ? '<div class="grade2">' + campoData('n-data', 'Data do atendimento', er('data')) + campoHora('n-hora', 'Hora', er('hora')) + '</div>' +
       '<div class="campo"><label for="n-local">Local</label><input id="n-local" list="l-locais" autocomplete="off">' + er('local') + '</div>' + tel : '') +
-    '<details class="mais"' + (N.erros.nasc ? ' open' : '') + '><summary>Mais dados <span class="op" style="margin-left:6px">(opcional)</span></summary><div>' +
-    campoData('n-nasc', 'Data de nascimento', er('nasc')) + (ag ? '' : tel) +
+    '<details class="mais"' + (N.erros.nasc || N.erros.cns ? ' open' : '') + '><summary>Mais dados <span class="op" style="margin-left:6px">(opcional)</span></summary><div>' +
+    campoData('n-nasc', 'Data de nascimento', er('nasc')) +
+    '<div class="campo"><label for="n-cns">Cartão do SUS</label><input id="n-cns" inputmode="numeric" autocomplete="off" maxlength="18" placeholder="000 0000 0000 0000">' + er('cns') +
+    '<small class="dica">Se tiver no papel, ajuda o app a achar o agendamento no SIGSS.</small></div>' + (ag ? '' : tel) +
     '<label class="tog"><input type="checkbox" id="n-urg"> Urgente</label><label class="tog"><input type="checkbox" id="n-transp"> Precisa de transporte</label>' +
     '<div class="campo"><label for="n-obs">Observação</label><textarea id="n-obs"></textarea></div></div></details>' + listas() +
     '</div><div class="sh-f"><button type="submit" class="btn pri big">' + ic('plus') + 'Lançar guia</button></div></form>';
@@ -1587,9 +1620,10 @@ function procurarProtocolo(v) {
   } else box.innerHTML = 'Não achei esse protocolo na Lista de Espera. Confira o número ou preencha à mão. ' + exemplosProt();
 }
 function novaOk() {
-  const d = { paciente: valor('n-pac'), proc: valor('n-proc'), protocolo: valor('n-prot'), nasc: valorData('n-nasc'), tel: valor('n-tel'), urgente: valor('n-urg') === true, transporte: valor('n-transp') === true, obs: valor('n-obs') };
+  const d = { paciente: valor('n-pac'), proc: valor('n-proc'), protocolo: valor('n-prot'), nasc: valorData('n-nasc'), tel: valor('n-tel'), cns: digitos(valor('n-cns')), urgente: valor('n-urg') === true, transporte: valor('n-transp') === true, obs: valor('n-obs') };
   const er = {}; if (!d.paciente) er.pac = 'Escreva o nome do paciente.'; if (!d.proc) er.proc = 'Escreva o exame ou a consulta.';
   if (erroData('n-nasc', false)) er.nasc = erroData('n-nasc', false);
+  if (d.cns && d.cns.length !== 15) er.cns = 'O cartão do SUS tem 15 números.';
   const ubs = isUBS() ? S.papel : valor('n-ubs'); if (!ubs) er.ubs = 'Escolha a UBS do paciente.';
   let ag = null;
   if (N.modo === 'agendada') {
@@ -1724,7 +1758,7 @@ const NOMES_SIM = [['Aparecida Lemes da Rocha', '1961-03-14'], ['Jurandir Pires 
   ['Odair José Venâncio', '1968-06-30'], ['Terezinha Bortolini', '1949-01-08'], ['Gilmar Antunes da Silva', '1983-04-17'], ['Rosângela Ferraz', '1972-10-05'], ['Valdecir Moraes', '1958-07-23']];
 function dadosDaGuia(g, comAg) {
   const ag = g.ag || (comAg ? agFake(g) : null);
-  return { gid: g.id, paciente: g.paciente, nasc: g.nasc, tel: g.tel, proc: g.proc, ubs: g.ubs, protocolo: g.protocolo || '', situacao: ag ? 'AGD' : 'ESP',
+  return { gid: g.id, paciente: g.paciente, nasc: g.nasc, tel: g.tel, cns: g.cns || pacienteSIGSS(g).cns, proc: g.proc, ubs: g.ubs, protocolo: g.protocolo || '', situacao: ag ? 'AGD' : 'ESP',
     data: ag ? isoDia(ag.quando) : '', hora: ag ? fHora(ag.quando) : '', local: ag ? ag.local : '' };
 }
 function guiaParaSimular(cod, tipo) { // papel de verdade na leitura em sequência: escolhe uma guia fictícia do Agendamento, sempre a mesma para o mesmo código
@@ -1756,7 +1790,7 @@ function simSIGSS(cod, alvo, gid) {
       const [nome, nasc] = NOMES_SIM[hashCod(cod) % NOMES_SIM.length];
       const procs = PROCS.filter(p => tipo === 'consulta' ? /^Consulta/.test(p) : tipo === 'exame' ? !/^Consulta/.test(p) : true);
       const proc = procs[hashCod(cod + 'p') % procs.length]; const ag = tipo === 'protocolo' ? null : agFake({ proc });
-      r = { paciente: nome, nasc, tel: '(44) 9' + (8100 + hashCod(cod) % 1800) + '-' + (1000 + hashCod(cod + 't') % 8999), proc, ubs: isUBS() ? S.papel : UBS[hashCod(cod + 'u') % UBS.length].id,
+      r = { paciente: nome, nasc, tel: '(44) 9' + (8100 + hashCod(cod) % 1800) + '-' + (1000 + hashCod(cod + 't') % 8999), cns: cnsFake(cod), proc, ubs: isUBS() ? S.papel : UBS[hashCod(cod + 'u') % UBS.length].id,
         situacao: ag ? 'AGD' : 'ESP', data: ag ? isoDia(ag.quando) : '', hora: ag ? fHora(ag.quando) : '', local: ag ? ag.local : '' };
     }
     r.sim = true; S.sim = S.sim || {}; S.sim[cod] = r; salvar();
@@ -1932,7 +1966,7 @@ const AVISO_SIM = '<p class="lt-sim"><b>Simulação.</b> O protótipo não fala 
 function cartaoSIGSS(d) {
   if (d.semSigss) return '<div class="lt-sigss ids"><span class="t">' + ic('alert') + ' Este comprovante ainda não está ligado a uma guia</span><small>O número do IDS não existe no SIGSS. Na primeira vez, você escolhe a guia: o código fica guardado nela e, daí em diante, este papel acha a guia sozinho. O agendamento vem do SIGSS, pelo mesmo paciente com o mesmo exame.</small></div>';
   const l = []; const add = (k, v) => { if (v) l.push('<dt>' + k + '</dt><dd>' + v + '</dd>'); };
-  add('Paciente', '<b>' + esc(d.paciente) + '</b>'); add('Nascimento', esc(brDeIso(d.nasc)));
+  add('Paciente', '<b>' + esc(d.paciente) + '</b>'); add('Nascimento', esc(brDeIso(d.nasc))); add('Cartão do SUS', d.cns ? esc(fCns(d.cns)) : '');
   add(d.tipo === 'consulta' || /^Consulta/.test(d.proc || '') ? 'Consulta' : 'Exame', esc(d.proc)); add('UBS', d.ubs ? esc(nomeUn(d.ubs)) : '');
   if (d.tipo === 'protocolo') add('Situação', d.situacao === 'AGD' ? 'Agendado' : 'Na fila de espera, ainda sem agendamento');
   add('Data', d.data ? '<b>' + esc(fDataBr(d.data)) + '</b>' : ''); add('Hora', d.hora ? '<b>' + esc(d.hora) + '</b>' : ''); add('Local', esc(d.local)); add('Telefone', esc(d.tel));
@@ -2042,20 +2076,24 @@ function atualizarGuia(g, d) {
   if (d.nasc && !g.nasc) g.nasc = d.nasc;
   if (d.tipo === 'protocolo' && !g.protocolo) { g.protocolo = d.codigo; guard.push('protocolo'); }
   if (d.tipo !== 'protocolo' && g.codigo !== d.codigo) { g.codigo = d.codigo; g.lida = d.tipo; if (d.tipo === 'ids') guard.push('código do IDS'); }
+  // cadastro do paciente no SIGSS: no comprovante do IDS vem com o agendamento achado; nos outros papéis, na própria leitura
+  const vem = d.viaAg ? trazerPaciente(g, pacienteSIGSS(g)) : (d.cns && digitos(d.cns) !== digitos(g.cns) ? (g.cns = digitos(d.cns), ['cartão do SUS']) : []);
   const novo = agDeDados(d);
   const igual = novo && g.ag && g.ag.quando === novo.quando && norm(g.ag.local) === norm(novo.local);
   const fonte = d.viaAg ? 'achado nos agendamentos do SIGSS pelo paciente e exame (comprovante do IDS ' + d.codigo + ')' : 'buscado no SIGSS pelo código de barras da ' + TIPOS_PAPEL[d.tipo];
-  let txt, mudou = guard.length > 0;
+  let txt, mudou = guard.length > 0 || vem.length > 0;
+  const doCad = vem.length ? '. Do cadastro do SIGSS: ' + vem.join(', ') : '';
   if (novo && !igual) {
     const era = g.ag; g.ag = novo; g.avisado = false; g.agAnterior = null; g.lida = d.tipo;
     const selo = d.viaAg ? 'sigss' : 'lida'; if (!g.selos.includes(selo)) g.selos.push(selo); set(g, 'ag_agendada', q);
-    ev(g, q, p, (era ? 'Agendamento trocado (era ' + fAg(era) + ') para ' : 'Agendamento ') + fAg(novo) + ', ' + fonte);
+    ev(g, q, p, (era ? 'Agendamento trocado (era ' + fAg(era) + ') para ' : 'Agendamento ') + fAg(novo) + ', ' + fonte + doCad);
     txt = (era ? 'agendamento trocado para ' : 'agendada para ') + fAg(novo); mudou = true;
   } else {
     txt = novo ? 'já estava com este agendamento' : d.tipo === 'ids' ? 'agendamento ainda não apareceu no SIGSS: a guia anda sozinha quando aparecer' : d.situacao === 'ESP' ? 'ainda na fila do SIGSS, sem agendamento' : 'conferida';
-    if (guard.length) ev(g, q, p, 'Código de barras lido, ' + TIPOS_PAPEL[d.tipo] + ': ' + guard.join(' e ') + ' guardado na guia');
+    if (guard.length || vem.length) ev(g, q, p, 'Código de barras lido, ' + TIPOS_PAPEL[d.tipo] + (guard.length ? ': ' + guard.join(' e ') + ' guardado na guia' : '') + doCad);
   }
   if (guard.length) txt += ' (' + guard.join(' e ') + ' guardado)';
+  if (vem.length) txt += '; do SIGSS: ' + vem.join(', ');
   salvar(); render();
   return { id: g.id, nome: g.paciente, txt, mudou, snap: mudou ? snap : null };
 }
@@ -2135,7 +2173,7 @@ function preencherNova(d, info) {
   const ag = !!PAPEL_AGENDADO[d.tipo] || d.situacao === 'AGD';
   if (ag && N.modo !== 'agendada') { N.modo = 'agendada'; N.erros = {}; }
   N.lida = info; desenharNova();
-  poe('n-prot', d.tipo === 'protocolo' ? d.codigo : d.protocolo); poe('n-pac', d.paciente); poe('n-proc', d.proc); poeData('n-nasc', d.nasc); poe('n-tel', d.tel); poe('n-ubs', d.ubs);
+  poe('n-prot', d.tipo === 'protocolo' ? d.codigo : d.protocolo); poe('n-pac', d.paciente); poe('n-proc', d.proc); poeData('n-nasc', d.nasc); poe('n-tel', d.tel); poe('n-cns', d.cns ? fCns(d.cns) : ''); poe('n-ubs', d.ubs);
   poeData('n-data', d.data); poe('n-hora', d.hora); poe('n-local', d.local);
   if (d.nasc || (!ag && d.tel)) { const m = document.querySelector('.sheet details.mais'); if (m) m.open = true; }
   procurarProtocolo(valor('n-prot'));
@@ -2328,7 +2366,7 @@ const ACOES = {
   'desfazer': () => desfazer(),
   'tarefas': () => abrirTarefas(),
   'papel-teste': el => { S.papel = el.dataset.v; S.tab = 'fazer'; S.filtro = {}; salvar(); fecharSheet(); render(); window.scrollTo(0, 0); },
-  'reset': () => { seed(); salvar(); fecharSheet(); render(); toast('Os dados fictícios voltaram ao início.'); }
+  'reset': () => { semear(); salvar(); fecharSheet(); render(); toast('Os dados fictícios voltaram ao início.'); }
 };
 const MUDAR = {
   'ver-como': el => { S.papel = el.value; S.tab = el.value === ADM ? 'painel' : 'fazer'; S.filtro = {}; salvar(); fecharSheet(); render(); window.scrollTo(0, 0); },
@@ -2392,7 +2430,7 @@ document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role="button"][data-act]')) { e.preventDefault(); e.target.click(); }
 });
 
-S = carregar(); if (!S) { seed(); salvar(); }
+S = carregar(); if (!S) { semear(); salvar(); }
 render();
 })();
 </script>
