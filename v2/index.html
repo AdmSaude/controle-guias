@@ -283,6 +283,10 @@ main.wrap{padding-block:18px 120px;display:grid;gap:26px;align-content:start}
 
 /* formulários */
 .campo{display:grid;gap:6px;min-width:0}
+.campo.com-sug{position:relative}
+.sug-lista{position:absolute;left:0;right:0;z-index:5;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;box-shadow:var(--shadow);max-height:264px;overflow:auto;padding:4px}
+.sug-i{padding:11px 12px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1.3}
+.sug-i:hover,.sug-i.ativo{background:var(--ink-soft);color:var(--ink-hover)}
 .campo label,.campo .lab{font-weight:650;font-size:14px}
 .op{font-weight:400;color:var(--muted)}
 .campo input,.campo select,.campo textarea{min-height:48px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);padding:0 12px;width:100%;min-width:0}
@@ -614,7 +618,7 @@ const CONFIG = {
   SUPABASE_URL: 'https://lyblipgttbzqnqrahobc.supabase.co',
   SUPABASE_KEY: 'sb_publishable_0gIZPeONvcL41zke-zi_ww_ZiaICHzF',
   DIAS_HISTORICO: 90,
-  VERSAO: '2.0.1 (26/11/2026)'
+  VERSAO: '2.0.2 (26/11/2026)'
 };
 const DEMO = /[?&]demo\b/.test(location.search) && !window.CG2_BACKEND;
 const CHAVE = DEMO ? 'cg2-v2-demo' : 'cg2-v2-preferencias';
@@ -1630,9 +1634,9 @@ function desenharReceber(nova) {
   }).join('') + R.novos.map((d, i) => '<div class="conf-i"><input type="checkbox" checked disabled aria-label="Veio"><div class="conf-t"><span class="nome">' + esc(d.paciente) + '</span><small>' + esc(d.proc) + '</small><span class="selo" style="justify-self:start">Chegou sem lançamento</span></div><div class="conf-x">' + btn('novo-rm', '', ic('x'), 'fraco', ' data-i="' + i + '" aria-label="Tirar"') + '</div></div>').join('');
   const er = k => R.erros[k] ? '<span class="erro">' + R.erros[k] + '</span>' : '';
   const form = R.form ? '<div class="novo-form"><div class="campo"><label for="r-pac">Paciente</label><input id="r-pac" autocomplete="off">' + er('pac') + '</div>' +
-    '<div class="campo"><label for="r-proc">Exame ou consulta</label><input id="r-proc" list="l-procs" autocomplete="off">' + er('proc') + '</div>' +
+    '<div class="campo"><label for="r-proc">Exame ou consulta</label><input id="r-proc" data-sug="procs" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">' + er('proc') + '</div>' +
     (aUBS ? '<div class="grade2">' + campoData('r-data', 'Data do atendimento', er('data')) + campoHora('r-hora', 'Hora', er('hora')) + '</div>' +
-      '<div class="campo"><label for="r-local">Local</label><input id="r-local" list="l-locais">' + er('local') + '</div><div class="campo"><label for="r-tel">Telefone</label><input id="r-tel" type="tel">' + er('tel') + '</div>'
+      '<div class="campo"><label for="r-local">Local</label><input id="r-local" data-sug="locais" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">' + er('local') + '</div><div class="campo"><label for="r-tel">Telefone</label><input id="r-tel" type="tel">' + er('tel') + '</div>'
       : '<div class="campo"><label for="r-ubs">UBS do paciente</label><select id="r-ubs">' + UBS.map(u => '<option value="' + u.id + '"' + (u.id === m.origem ? ' selected' : '') + '>' + esc(u.nome) + '</option>').join('') + '</select></div>') +
     '<div class="acoes">' + btn('novo-add', '', 'Pôr na lista', 'pri') + btn('novo-cancelar', '', 'Cancelar') + '</div></div>'
     : btn('novo-abrir', '', ic('plus') + 'Veio um papel que não está na lista');
@@ -1645,7 +1649,54 @@ function desenharReceber(nova) {
     '<div class="sh-f"><button type="button" class="btn pri big" data-act="receber-ok">' + ic('check') + txt + '</button></div>';
   pintar(html, nova);
 }
-function listas() { return '<datalist id="l-procs">' + PROCS.map(p => '<option value="' + esc(p) + '">').join('') + '</datalist><datalist id="l-locais">' + LOCAIS.map(p => '<option value="' + esc(p) + '">').join('') + '</datalist>'; }
+// Sugestões dos campos "Exame ou consulta" e "Local" (26/11/2026): lista clara embaixo do campo, no lugar do datalist
+// do navegador (que no Chrome aparecia como uma tarja escura). Filtra enquanto digita e aceita qualquer texto.
+// Junta a lista fixa com o que já foi usado nas guias.
+function listas() { return ''; }
+function opcoesSug(tipo) {
+  const base = tipo === 'locais' ? LOCAIS : PROCS;
+  const usados = (S && S.guias || []).map(g => tipo === 'locais' ? g.ag && g.ag.local : g.proc).filter(Boolean);
+  const vistos = new Set(); const r = [];
+  base.concat(usados).forEach(t => { t = String(t).trim(); const k = norm(t); if (t && !vistos.has(k)) { vistos.add(k); r.push(t); } });
+  return r;
+}
+let SUG = null; // { input, lista, itens, ativo }
+function abrirSug(inp) {
+  const campo = inp.closest('.campo'); if (!campo) return;
+  if (!SUG || SUG.input !== inp) { fecharSug(); campo.classList.add('com-sug'); const l = document.createElement('div'); l.className = 'sug-lista'; l.id = inp.id + '-sug'; l.setAttribute('role', 'listbox'); campo.appendChild(l); SUG = { input: inp, lista: l, itens: [], ativo: -1 }; inp.setAttribute('aria-controls', l.id); }
+  const t = norm(inp.value.trim());
+  const todas = opcoesSug(inp.dataset.sug);
+  const itens = (t ? todas.filter(o => norm(o).indexOf(t) >= 0 && norm(o) !== t) : todas).slice(0, 8);
+  SUG.itens = itens; SUG.ativo = -1;
+  if (!itens.length) { SUG.lista.hidden = true; inp.setAttribute('aria-expanded', 'false'); return; }
+  SUG.lista.style.top = (inp.offsetTop + inp.offsetHeight + 4) + 'px';
+  SUG.lista.innerHTML = itens.map((o, i) => '<div class="sug-i" role="option" id="' + SUG.lista.id + '-' + i + '" data-i="' + i + '">' + esc(o) + '</div>').join('');
+  SUG.lista.hidden = false; inp.setAttribute('aria-expanded', 'true');
+}
+function marcarSug(i) {
+  if (!SUG) return; SUG.ativo = i;
+  SUG.lista.querySelectorAll('.sug-i').forEach((e, k) => e.classList.toggle('ativo', k === i));
+  const e = SUG.lista.querySelector('[data-i="' + i + '"]');
+  if (e) { SUG.input.setAttribute('aria-activedescendant', e.id); e.scrollIntoView({ block: 'nearest' }); } else SUG.input.removeAttribute('aria-activedescendant');
+}
+function escolherSug(i) { if (!SUG || !SUG.itens[i]) return; const inp = SUG.input; inp.value = SUG.itens[i]; fecharSug(); inp.focus(); }
+function fecharSug() {
+  if (!SUG) return; const { input, lista } = SUG; SUG = null;
+  input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant');
+  const c = lista.parentNode; lista.remove(); if (c) c.classList.remove('com-sug');
+}
+document.addEventListener('focusin', e => { const el = e.target; if (el.matches && el.matches('input[data-sug]')) abrirSug(el); });
+document.addEventListener('focusout', e => { if (SUG && e.target === SUG.input) setTimeout(() => { if (SUG && document.activeElement !== SUG.input) fecharSug(); }, 0); });
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('input[data-sug]')) abrirSug(e.target); });
+document.addEventListener('mousedown', e => { const o = e.target.closest && e.target.closest('.sug-i'); if (o && SUG) { e.preventDefault(); escolherSug(+o.dataset.i); } });
+document.addEventListener('keydown', e => { // fase de captura: Esc e Enter fecham a lista sem fechar a folha nem enviar o formulário
+  if (!SUG || e.target !== SUG.input || SUG.lista.hidden) return;
+  const n = SUG.itens.length;
+  if (e.key === 'ArrowDown') { e.preventDefault(); marcarSug((SUG.ativo + 1) % n); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); marcarSug(SUG.ativo <= 0 ? n - 1 : SUG.ativo - 1); }
+  else if (e.key === 'Enter' && SUG.ativo >= 0) { e.preventDefault(); e.stopPropagation(); escolherSug(SUG.ativo); }
+  else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fecharSug(); }
+}, true);
 function valor(id) { const e = document.getElementById(id); return e ? (e.type === 'checkbox' ? e.checked : String(e.value || '').trim()) : ''; }
 function addNovoReceber() {
   const m = M(R.mid), aUBS = m.destino !== AG; const d = { paciente: valor('r-pac'), proc: valor('r-proc') }; const er = {};
@@ -1716,10 +1767,10 @@ function desenharNova(nova) {
     '<div class="campo"><span class="lab" id="lab-modo">Onde a guia está agora?</span><div class="seg" role="group" aria-labelledby="lab-modo">' + modos.map(([k, t]) => '<button type="button" data-act="nova-modo" data-v="' + k + '" aria-pressed="' + (N.modo === k) + '">' + t + '</button>').join('') + '</div></div>' +
     '<div class="campo"><label for="n-prot">Protocolo de acompanhamento <span class="op">(se tiver)</span></label><input id="n-prot" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="LIES-000000-0-00"><span class="achou" id="n-achou"></span></div>' +
     '<div class="campo"><label for="n-pac">Paciente</label><input id="n-pac" autocomplete="off">' + er('pac') + '</div>' +
-    '<div class="campo"><label for="n-proc">Exame ou consulta</label><input id="n-proc" list="l-procs" autocomplete="off">' + er('proc') + '</div>' +
+    '<div class="campo"><label for="n-proc">Exame ou consulta</label><input id="n-proc" data-sug="procs" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">' + er('proc') + '</div>' +
     (!ubsMode ? '<div class="campo"><label for="n-ubs">UBS do paciente</label><select id="n-ubs"><option value="">Escolha a UBS</option>' + UBS.map(u => '<option value="' + u.id + '">' + esc(u.nome) + '</option>').join('') + '</select>' + er('ubs') + '</div>' : '') +
     (ag ? '<div class="grade2">' + campoData('n-data', 'Data do atendimento', er('data')) + campoHora('n-hora', 'Hora', er('hora')) + '</div>' +
-      '<div class="campo"><label for="n-local">Local</label><input id="n-local" list="l-locais" autocomplete="off">' + er('local') + '</div>' + tel : '') +
+      '<div class="campo"><label for="n-local">Local</label><input id="n-local" data-sug="locais" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">' + er('local') + '</div>' + tel : '') +
     '<details class="mais"' + (N.erros.nasc || N.erros.cns ? ' open' : '') + '><summary>Mais dados <span class="op" style="margin-left:6px">(opcional)</span></summary><div>' +
     campoData('n-nasc', 'Data de nascimento', er('nasc')) +
     '<div class="campo"><label for="n-cns">Cartão do SUS</label><input id="n-cns" inputmode="numeric" autocomplete="off" maxlength="18" placeholder="000 0000 0000 0000">' + er('cns') +
@@ -2436,7 +2487,7 @@ function abrirManual(id, erros) {
   pintar(folhaForm('Lançar o agendamento à mão', '<div class="g-meta"><span>' + esc(g.paciente) + ' · ' + esc(g.proc) + '</span></div>',
     '<p class="dica">Use só quando o SIGSS não trouxer o agendamento sozinho: quando o agendamento não foi passado no SIGSS ou o nome do paciente está diferente lá. Todos os dados são obrigatórios.</p>' + botaoLeitor('manual') +
     '<div class="grade2">' + campoData('a-data', 'Data do atendimento', er('data')) + campoHora('a-hora', 'Hora', er('hora')) + '</div>' +
-    '<div class="campo"><label for="a-local">Local</label><input id="a-local" list="l-locais">' + er('local') + '</div>' +
+    '<div class="campo"><label for="a-local">Local</label><input id="a-local" data-sug="locais" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">' + er('local') + '</div>' +
     '<div class="campo"><label for="a-tel">Telefone</label><input id="a-tel" type="tel" value="' + esc(g.tel) + '">' + er('tel') + '</div>' + listas(), 'manual-ok', 'Salvar agendamento'), !erros || !Object.keys(erros).length);
 }
 function abrirProblema(id, erro) {
