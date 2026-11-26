@@ -619,7 +619,7 @@ const CONFIG = {
   SUPABASE_URL: 'https://lyblipgttbzqnqrahobc.supabase.co',
   SUPABASE_KEY: 'sb_publishable_0gIZPeONvcL41zke-zi_ww_ZiaICHzF',
   DIAS_HISTORICO: 90,
-  VERSAO: '2.0.3 (26/11/2026)'
+  VERSAO: '2.1.0 (26/11/2026)'
 };
 const DEMO = /[?&]demo\b/.test(location.search) && !window.CG2_BACKEND;
 const CHAVE = DEMO ? 'cg2-v2-demo' : 'cg2-v2-preferencias';
@@ -675,6 +675,7 @@ const E = {
   malote_ida:   { pos: 2, cor: 's2', rot: 'No malote, indo ao Agendamento' },
   ag_agendar:   { pos: 3, cor: 's3', rot: 'No Agendamento, para agendar' },
   ag_fila:      { pos: 3, cor: 's3', rot: 'No Agendamento, na fila do SIGSS (sem vaga)' },
+  ag_regulacao: { pos: 3, cor: 's3', rot: 'No Agendamento, na regulação do SIGSS' },
   ag_agendada:  { pos: 3, cor: 's3', rot: 'Agendada, no Agendamento' },
   malote_volta: { pos: 4, cor: 's2', rot: 'No malote, indo à UBS' },
   ubs_paciente: { pos: 5, cor: 's5', rot: 'Na UBS, esperando o paciente' },
@@ -707,6 +708,7 @@ const COLS = [
   { k: 'ida',      rot: 'Malote indo ao Agendamento',   cor: 's2', un: g => g.etapa === 'malote_ida' ? (M(g.maloteId) || {}).origem : null },
   { k: 'agendar',  rot: 'No Agendamento, para agendar', cor: 's3', un: g => g.etapa === 'ag_agendar' ? g.ubs : null },
   { k: 'fila',     rot: 'Na fila (sem vaga)',           cor: 's3', un: g => g.etapa === 'ag_fila' ? g.ubs : null, semPrazo: true },
+  { k: 'regulacao', rot: 'Na regulação',                cor: 's3', un: g => g.etapa === 'ag_regulacao' ? g.ubs : null, semPrazo: true },
   { k: 'agendada', rot: 'Agendada, no Agendamento',     cor: 's3', un: g => g.etapa === 'ag_agendada' ? g.ubs : null },
   { k: 'volta',    rot: 'Malote indo à UBS',            cor: 's2', un: g => g.etapa === 'malote_volta' ? (M(g.maloteId) || {}).destino : null },
   { k: 'paciente', rot: 'Na UBS, esperando o paciente', cor: 's5', un: g => (g.etapa === 'ubs_paciente' || g.etapa === 'nao_retirou') ? g.holder : null }
@@ -773,7 +775,7 @@ const fim = g => !!E[g.etapa].fim;
 /* ------------------------------------------------------------------ prazos */
 function inicioEtapa(g) { if (g.etapa === 'malote_ida' || g.etapa === 'malote_volta') { const m = M(g.maloteId); return m ? m.fechadoEm : g.desde; } return g.desde; }
 function prazo(g) {
-  if (fim(g) || g.etapa === 'ag_fila') return null;
+  if (fim(g) || g.etapa === 'ag_fila' || g.etapa === 'ag_regulacao') return null;
   if (g.etapa === 'ubs_paciente') { const a = addDU(g.chegouEm || g.desde, 2); if (g.ag) { const b = addDU(new Date(g.ag.quando), -1); return b < a ? b : a; } return a; }
   return addDU(inicioEtapa(g), 2);
 }
@@ -844,6 +846,7 @@ function chegar(g, m, q, por) {
   if (m.destino === AG) {
     if (g.devolucao) { set(g, 'devolvida', q); encerrarProblemas(g, q, 'Devolução recebida'); ev(g, q, por, 'Devolução recebida no Agendamento (malote ' + m.num + '). Libere a vaga no SIGSS'); }
     else if (g.ag) { set(g, 'ag_agendada', q); ev(g, q, por, 'Chegou no Agendamento (malote ' + m.num + '). Já está agendada: segue para a UBS ' + nomeUn(g.ubs) + ' no próximo malote'); }
+    else if (reguAberta(g)) { set(g, 'ag_regulacao', q); ev(g, q, por, 'Chegou no Agendamento (malote ' + m.num + '). O pedido ainda está na regulação do SIGSS (' + (NOME_REGU[g.regulacao.status] || 'na regulação') + '): o papel espera o regulador'); }
     else { set(g, 'ag_agendar', q); ev(g, q, por, 'Chegou no Agendamento (malote ' + m.num + ')'); }
   } else {
     g.holder = m.destino; g.chegouEm = q; g.repasse = false; set(g, 'ubs_paciente', q);
@@ -911,6 +914,55 @@ function trazerPaciente(g, p, semTel) {
   return m;
 }
 function tFila(g, q, por) { set(g, 'ag_fila', q); ev(g, q, por, 'Sem vaga: entrou na fila do SIGSS. O papel fica no Agendamento até agendar'); }
+/* Regulação municipal (26/11/2026). Alguns pedidos vão do atendimento para o regulador do SIGSS e só entram na fila depois
+   de autorizados (como AUR). O papel pode chegar antes: fica em "Na regulação" até o regulador decidir, sem prazo de alerta.
+   Caminhos: o Agendamento marca ("Está na regulação"), a UBS ou o Agendamento lê o código SORE do papel, ou a guia lançada
+   com SORE chega pelo malote ainda pendente. A leitura automática confere a situação a cada rodada (a mesma regra, na função).
+   g.regulacao = { regu: {idp, ids}, codigo: 'SORE-...', status, desde (última mudança), pedido, gravidade, conferidoEm } */
+const NOME_REGU = { SOLICITADO: 'aguardando o regulador', EM_ANALISE: 'em análise pelo regulador', DEVOLVIDO: 'devolvido ao médico',
+  AUTORIZADO: 'autorizado pelo regulador', CANCELADA: 'cancelado na regulação', NEGADO: 'negado na regulação' };
+const REGU_FINAIS = ['AUTORIZADO', 'CANCELADA', 'NEGADO'];
+const reguAberta = g => !!(g.regulacao && g.regulacao.status && REGU_FINAIS.indexOf(g.regulacao.status) < 0);
+const reguDe = x => { const r = {}; if (!x) return r; ['regu', 'codigo', 'status', 'desde', 'pedido', 'gravidade'].forEach(k => { if (x[k]) r[k] = x[k]; }); return r; };
+function reguTxt(g) {
+  const r = g.regulacao || {}; const st = maiuscula(NOME_REGU[r.status] || 'na regulação');
+  if (!r.desde) return st + (g.etapa === 'ag_regulacao' ? ' (aqui desde ' + fDia(g.desde) + ')' : '');
+  const n = du(r.desde, new Date());
+  return st + (n > 0 ? ' há ' + plural(n, 'dia útil', 'dias úteis') : ' desde ' + fDia(r.desde));
+}
+function problemaRegu(g, r, q) {
+  if (abertos(g).some(p => p.motivo === 'Cancelado na regulação')) return;
+  g.problemas.push(prob('Cancelado na regulação', 'O pedido foi ' + (r.status === 'NEGADO' ? 'negado' : 'cancelado') + ' na regulação do SIGSS' + (r.desde ? ' em ' + fDia(r.desde) : '') +
+    '. Não vai para a fila: o papel pode ser descartado (cancele a guia).', q, SIGSS_POR, true));
+}
+function tRegulacao(g, q, por, r) {
+  r = reguDe(r);
+  g.regulacao = Object.assign({}, g.regulacao || {}, r, { marcadaEm: q });
+  if (r.regu) g.sigss = Object.assign({}, g.sigss || {}, { regu: r.regu });
+  set(g, 'ag_regulacao', q);
+  ev(g, q, por, 'Está na regulação do SIGSS' + (r.codigo ? ' (' + r.codigo + ')' : '') + ': o pedido ainda não está na fila. O papel fica no Agendamento até o regulador decidir' +
+    (r.status && r.status !== 'SOLICITADO' ? '. Situação: ' + NOME_REGU[r.status] : ''));
+  if (r.status === 'CANCELADA' || r.status === 'NEGADO') problemaRegu(g, r, q);
+}
+// Situação lida no SIGSS (botão "Conferir", código SORE ou modo de treino). Devolve false se nada mudou.
+function tReguAtualizar(g, r, q, por) {
+  r = reguDe(r); const era = g.regulacao || {};
+  if (era.status === r.status && (!r.desde || era.desde === r.desde) && (!r.regu || (era.regu && era.regu.idp === r.regu.idp))) return false;
+  g.regulacao = Object.assign({}, era, r, { conferidoEm: q });
+  if (r.regu) g.sigss = Object.assign({}, g.sigss || {}, { regu: r.regu });
+  const quando = r.desde ? ' em ' + fDia(r.desde) : '';
+  if (r.status === 'AUTORIZADO') {
+    ev(g, q, por, 'O regulador autorizou' + quando + (r.codigo ? ' (' + r.codigo + ')' : '') + '. O pedido entrou na fila do SIGSS');
+    if (g.etapa === 'ag_regulacao') { set(g, 'ag_agendar', q); ev(g, q, 'Sistema', 'Voltou para "Para agendar"'); }
+  } else if (r.status === 'CANCELADA' || r.status === 'NEGADO') {
+    problemaRegu(g, r, q); ev(g, q, por, 'Pedido ' + (r.status === 'NEGADO' ? 'negado' : 'cancelado') + ' na regulação' + quando);
+  } else ev(g, q, por, 'Na regulação: ' + (NOME_REGU[r.status] || 'situação lida') + quando);
+  return true;
+}
+function tReguSaiu(g, q, por) {
+  if (g.regulacao) g.regulacao = Object.assign({}, g.regulacao, { status: 'AUTORIZADO', saiuMarcadoEm: q });
+  set(g, 'ag_agendar', q); ev(g, q, por, 'Saiu da regulação: o pedido já está na fila do SIGSS. Voltou para "Para agendar"');
+}
 function tAvisar(g, como, q, por) {
   g.avisado = true; g.avisoComo = como;
   ev(g, q, por, { ligacao: 'Paciente avisado por ligação', whats: 'Paciente avisado por WhatsApp', nao: 'Não conseguiu avisar o paciente. A UBS reforça quando a guia chegar' }[como]);
@@ -1097,7 +1149,7 @@ function comQuem(g) {
     case 'ubs_mandar': case 'ubs_paciente': case 'nao_retirou': return 'UBS ' + nomeUn(g.holder);
     case 'arquivada': return 'UBS ' + nomeUn(g.holder) + ' (arquivada)';
     case 'malote_ida': case 'malote_volta': { const m = M(g.maloteId); return m ? 'malote ' + m.num + ' (' + nomeUn(m.origem) + ' → ' + nomeUn(m.destino) + ')' : 'malote'; }
-    case 'ag_agendar': case 'ag_fila': case 'ag_agendada': case 'devolvida': return 'Agendamento';
+    case 'ag_agendar': case 'ag_fila': case 'ag_regulacao': case 'ag_agendada': case 'devolvida': return 'Agendamento';
     case 'entregue': return 'paciente';
     default: return '—';
   }
@@ -1132,6 +1184,7 @@ function metaHTML(g, comEtapa) {
   if (g.etapa === 'malote_ida' || g.etapa === 'malote_volta') { const m = M(g.maloteId); if (m) partes.push('malote ' + m.num + ', saiu ' + fQuando(m.fechadoEm)); }
   if (g.etapa === 'ag_agendar') partes.push('aqui desde ' + fQuando(g.desde));
   if (g.etapa === 'ag_fila') partes.push('na fila desde ' + fDia(g.desde));
+  if (g.etapa === 'ag_regulacao') partes.push(esc(reguTxt(g)));
   if (g.ag && g.etapa !== 'ag_agendar' && g.etapa !== 'ag_fila') partes.push('<b>' + fDia(g.ag.quando) + ' às ' + fHora(g.ag.quando) + '</b> · ' + esc(g.ag.local));
   const pz = prazoTxt(g); if (pz) partes.push(pz);
   return partes.map(p => '<span>' + p + '</span>').join('');
@@ -1145,6 +1198,7 @@ function ondeHTML(g) {
   if (g.etapa === 'malote_ida' || g.etapa === 'malote_volta') { const m = M(g.maloteId); if (m) p.push('malote <span class="mono">' + m.num + '</span>, saiu ' + fQuando(m.fechadoEm)); }
   if (g.etapa === 'ag_agendar') p.push('aqui desde ' + fQuando(g.desde));
   if (g.etapa === 'ag_fila') p.push('na fila desde ' + fDia(g.desde));
+  if (g.etapa === 'ag_regulacao') p.push(esc(reguTxt(g)));
   if ((!isUBS() || g.ubs !== S.papel) && g.ubs) p.push(unDot(g.ubs));
   return p.map(x => '<span>' + x + '</span>').join('');
 }
@@ -1216,7 +1270,7 @@ function listasUBS(me) {
 function listasAG() {
   const chegando = S.malotes.filter(m => m.destino === AG && !m.recebidoEm).sort((a, b) => a.fechadoEm < b.fechadoEm ? -1 : 1);
   const prob = S.guias.filter(g => !fim(g) && temProblema(g) && (
-    g.etapa === 'ag_agendar' || g.etapa === 'ag_fila' || (g.etapa === 'ag_agendada' && !g.avisado) ||
+    g.etapa === 'ag_agendar' || g.etapa === 'ag_fila' || g.etapa === 'ag_regulacao' || (g.etapa === 'ag_agendada' && !g.avisado) ||
     ((g.etapa === 'malote_ida' || g.etapa === 'malote_volta') && abertos(g).some(p => p.motivo === 'Faltou no malote'))));
   const pid = new Set(prob.map(g => g.id));
   const decidir = S.guias.filter(g => g.etapa === 'nao_retirou');
@@ -1226,7 +1280,8 @@ function listasAG() {
   S.guias.filter(g => g.etapa === 'ag_agendada' && g.avisado).forEach(g => { (porUbs[g.ubs] = porUbs[g.ubs] || []).push(g); });
   const grupos = UBS.filter(u => porUbs[u.id]).map(u => [u.id, porUbs[u.id].sort(porInicio)]);
   const fila = S.guias.filter(g => g.etapa === 'ag_fila').sort(porInicio);
-  return { chegando, prob, decidir, agendar, avisar, grupos, fila, badge: chegando.length + prob.length + decidir.length + agendar.length + avisar.length + grupos.length };
+  const regulacao = S.guias.filter(g => g.etapa === 'ag_regulacao' && !pid.has(g.id)).sort(porInicio);
+  return { chegando, prob, decidir, agendar, avisar, grupos, fila, regulacao, badge: chegando.length + prob.length + decidir.length + agendar.length + avisar.length + grupos.length };
 }
 function acoesProb(g) {
   const p = abertos(g)[0]; const m = M(g.maloteId); let h = '';
@@ -1269,7 +1324,7 @@ function fazerAG() {
   const total = L.grupos.reduce((a, x) => a + x[1].length, 0);
   let h = resumoFazer([['sec-chegou', L.chegando.length, L.chegando.length === 1 ? 'malote chegou' : 'malotes chegaram', 's2'], ['sec-prob', L.prob.length, 'com problema', 'bad', true],
     ['sec-decidir', L.decidir.length, 'decidir: não retirou', 'warn'], ['sec-agendar', L.agendar.length, 'para agendar', 's3'], ['sec-avisar', L.avisar.length, 'avisar o paciente', 's3'],
-    ['sec-mandar', total, 'para mandar às UBS', 's2'], ['sec-fila', L.fila.length, 'na fila do SIGSS', 'end']]);
+    ['sec-mandar', total, 'para mandar às UBS', 's2'], ['sec-regulacao', L.regulacao.length, 'na regulação', 'end'], ['sec-fila', L.fila.length, 'na fila do SIGSS', 'end']]);
   if (L.chegando.length) h += sec('Chegou malote para você', L.chegando.length, L.chegando.map(m => maloteCard(m, btn('receber', m.id, ic('check') + 'Conferir e receber', 'pri'))).join(''), '', '', { id: 'sec-chegou' });
   if (L.prob.length) h += sec('Com problema', L.prob.length, L.prob.map(g => card(g, acoesProb(g))).join(''), 'bad', '', { id: 'sec-prob' });
   if (L.decidir.length) h += sec('Decidir: o paciente não retirou', L.decidir.length, L.decidir.map(g => card(g,
@@ -1278,7 +1333,7 @@ function fazerAG() {
   if (L.agendar.length || L.fila.length || L.avisar.length) h += '<div class="lote-cta"><button type="button" class="btn big cam" data-act="leitor" data-alvo="lote">' + ic('cam') + 'Ler as guias agendadas, uma atrás da outra</button>' +
     '<p class="cam-dica">Aponte para o código de barras de cada papel: o app busca no SIGSS, acha a guia e atualiza o agendamento. No comprovante do IDS, toque na guia uma vez e o código fica guardado nela.</p></div>';
   const acoesAgendar = g => g.sugestao ? btn('sug-sim', g.id, ic('check') + 'É este agendamento', 'pri') + btn('sug-nao', g.id, 'Não é')
-    : (DEMO ? btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim') : btn('procurar', g.id, ic('search') + 'Procurar no SIGSS')) + btn('fila', g.id, 'Sem vaga: fila');
+    : (DEMO ? btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim') : btn('procurar', g.id, ic('search') + 'Procurar no SIGSS')) + btn('fila', g.id, 'Sem vaga: fila') + btn('regulacao', g.id, 'Na regulação');
   if (L.agendar.length) h += sec('Para agendar', L.agendar.length, L.agendar.map(g => card(g, acoesAgendar(g))).join(''),
     '', 'Agende no SIGSS como sempre, pelo pedido ou direto na agenda, também as do CISCOPAR depois de marcar no IDS. Em até 10 minutos a guia passa sozinha para "Avisar o paciente".' + (DEMO ? ' No modo de treino, use o botão amarelo.' : ' Com pressa, toque em "Procurar no SIGSS".'), { id: 'sec-agendar' });
   if (L.avisar.length) h += sec('Avisar o paciente', L.avisar.length, L.avisar.map(g => card(g,
@@ -1292,12 +1347,19 @@ function fazerAG() {
         '<button type="button" class="btn pri" data-act="fechar" data-dest="' + u + '">' + ic('box') + 'Fechar malote</button></article>';
     }).join(''), '', 'Um malote por UBS. Feche quando o malote for sair.', { id: 'sec-mandar', grade: true });
   }
+  if (L.regulacao.length) h += '<details class="sec mais" id="sec-regulacao"><summary>Na regulação do SIGSS <span class="cont" style="margin-left:8px">' + L.regulacao.length + '</span></summary><div class="lista">' +
+    '<p class="dica">O pedido está com o regulador e ainda não entrou na fila do SIGSS. O papel fica aqui. Quando o regulador autorizar, a guia volta sozinha para "Para agendar"; se cancelar, aparece em "Com problema". Sem prazo de alerta.</p>' +
+    L.regulacao.map(g => card(g, acoesRegu(g))).join('') + '</div></details>';
   if (L.fila.length) h += '<details class="sec mais" id="sec-fila"><summary>Na fila do SIGSS, sem vaga <span class="cont" style="margin-left:8px">' + L.fila.length + '</span></summary><div class="lista">' +
     '<p class="dica">O papel fica aqui. Quando o SIGSS agendar, a guia volta sozinha para "Avisar o paciente". Sem prazo de alerta.</p>' +
     L.fila.map(g => card(g, g.sugestao ? btn('sug-sim', g.id, ic('check') + 'É este agendamento', 'pri') + btn('sug-nao', g.id, 'Não é')
       : DEMO ? btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim') : btn('procurar', g.id, ic('search') + 'Procurar no SIGSS'))).join('') + '</div></details>';
-  if (!L.chegando.length && !L.prob.length && !L.decidir.length && !L.agendar.length && !L.avisar.length && !L.grupos.length && !L.fila.length) h = vazio('Nada para fazer agora.');
+  if (!L.chegando.length && !L.prob.length && !L.decidir.length && !L.agendar.length && !L.avisar.length && !L.grupos.length && !L.fila.length && !L.regulacao.length) h = vazio('Nada para fazer agora.');
   return h;
+}
+function acoesRegu(g) {
+  if (DEMO) return btn('simregu', g.id, 'Simular: regulador autorizou', 'sim', ' data-v="AUTORIZADO"') + btn('simregu', g.id, 'Simular: devolveu ao médico', 'sim', ' data-v="DEVOLVIDO"') + btn('regu-saiu', g.id, 'Já está na fila');
+  return btn('regu-conferir', g.id, ic('search') + 'Conferir no SIGSS') + btn('regu-saiu', g.id, 'Já está na fila');
 }
 
 /* ------------------------------------------------------------------ onde parou, guias, malotes */
@@ -1502,7 +1564,13 @@ function acoesDetalhe(g) {
       a.push('<p class="dica">Agende no SIGSS. A guia anda sozinha quando o SIGSS mostrar o agendamento' + (DEMO ? '.' : ' (até 10 minutos), ou toque em "Procurar no SIGSS agora".') + '</p>');
       if (!DEMO) a.push(btn('procurar', g.id, ic('search') + 'Procurar no SIGSS agora'));
       if (g.etapa === 'ag_agendar') a.push(btn('fila', g.id, 'Sem vaga: deixar na fila'));
+      a.push(btn('regulacao', g.id, 'Está na regulação'));
       mais.push(btn('manual', g.id, 'O SIGSS não trouxe: lançar à mão'), btn('transferir', g.id, 'Transferir para outra UBS'), btn('problema', g.id, 'Marcar problema'), btn('cancelar', g.id, 'Cancelar guia', 'perigo'));
+    } else if (g.etapa === 'ag_regulacao') {
+      a.push('<p class="dica">O pedido está com o regulador e ainda não está na fila do SIGSS. ' + (DEMO ? 'Quando o regulador autorizar, a guia volta para "Para agendar".' : 'O app confere sozinho e, quando o regulador autorizar, a guia volta para "Para agendar".') + '</p>');
+      if (!DEMO) a.push(btn('regu-conferir', g.id, ic('search') + 'Conferir no SIGSS agora'));
+      a.push(btn('regu-saiu', g.id, 'Já está na fila: agendar'));
+      mais.push(btn('transferir', g.id, 'Transferir para outra UBS'), btn('problema', g.id, 'Marcar problema'), btn('cancelar', g.id, 'Cancelar guia', 'perigo'));
     } else if (g.etapa === 'ag_agendada') {
       if (!g.avisado) a.push(btn('avisei', g.id, ic('phone') + 'Liguei', 'pri', ' data-v="ligacao"'), btn('mensagem', g.id, ic('chat') + 'WhatsApp'), btn('avisei', g.id, 'Não atende', '', ' data-v="nao"'));
       else a.push('<p class="dica">Vai no próximo malote para a UBS ' + esc(nomeUn(g.ubs)) + '.</p>');
@@ -1525,6 +1593,9 @@ function desenharGuia(nova) {
   if (g.ag) linhas.push(['Atendimento', fDia(g.ag.quando) + ' às ' + fHora(g.ag.quando)], ['Local', esc(g.ag.local)]);
   else if (g.agAnterior) linhas.push(['Agendamento cancelado', fAg(g.agAnterior)]);
   linhas.push(['Protocolo', g.protocolo ? '<span class="num">' + esc(g.protocolo) + '</span>' : '—']);
+  if (g.regulacao && (g.regulacao.status || g.regulacao.codigo || g.etapa === 'ag_regulacao')) linhas.push(['Regulação', esc(reguTxt(g)) +
+    (g.regulacao.codigo ? ' · <span class="num">' + esc(g.regulacao.codigo) + '</span>' : '') + (g.regulacao.gravidade ? ' · gravidade ' + esc(g.regulacao.gravidade.toLowerCase()) : '') +
+    (g.regulacao.conferidoEm ? ' <span class="muted">(conferido ' + fQuando(g.regulacao.conferidoEm) + ')</span>' : '')]);
   if (g.codigo) linhas.push([g.lida === 'ids' ? 'Código do IDS' : 'Código da guia', '<span class="num">' + esc(g.codigo) + '</span>' + (g.lida ? ' <span class="muted">lido pelo código de barras</span>' : '')]);
   linhas.push(['Telefone', (g.tel ? esc(g.tel) : '<span class="muted">sem telefone</span>') + (podeMexer(g) ? btn('telefone', g.id, g.tel ? 'Mudar' : 'Pôr telefone', 'fraco') : '')]);
   if (g.telsSigss && g.telsSigss.length) linhas.push(['Outros telefones', g.telsSigss.map(esc).join('<br>') + ' <span class="muted">do cadastro do SIGSS</span>']);
@@ -1536,6 +1607,7 @@ function desenharGuia(nova) {
   let sim = '';
   if (DEMO && isAG() && (g.etapa === 'ag_agendar' || g.etapa === 'ag_fila')) sim = btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim');
   if (DEMO && (isAG() || isUBS()) && g.ag && !fim(g) && !abertos(g).some(p => p.motivo === 'Prestador desmarcou ou remarcou')) sim += btn('simcancelou', g.id, 'Simular: SIGSS cancelou o agendamento', 'sim');
+  if (DEMO && isAG() && g.etapa === 'ag_regulacao') sim += ['AUTORIZADO', 'DEVOLVIDO', 'CANCELADA'].map(v => btn('simregu', g.id, 'Simular: ' + NOME_REGU[v].replace(' pelo regulador', '').replace(' na regulação', ''), 'sim', ' data-v="' + v + '"')).join('');
   const html = head(esc(g.paciente), sub, sheetAtual.voltar) + '<div class="sh-b">' +
     '<div class="agora" style="' + cv(E[g.etapa].cor) + '"><div class="rot">' + esc(rotulo(g)) + '</div><div>Com: <b>' + esc(comQuem(g)) + '</b> · ' + tempoTxt(g) + '</div>' + prazoTxt(g) + stepper(g, true) +
     (g.pulou.length && E[g.etapa].pos > 1 ? '<small class="muted">Traço pontilhado: etapa sem registro no app.</small>' : '') + '</div>' +
@@ -1840,7 +1912,7 @@ function novaOk() {
   }
   if (Object.keys(er).length) { N.erros = er; desenharNova(); const e = document.querySelector('.sheet .erro'); const c = e && e.closest('.campo'); const i = c && c.querySelector('input,select,textarea'); if (i) i.focus(); return; }
   const q = agoraISO(), p = quem(), modo = N.modo, lida = N.lida || null;
-  if (lida) { d.codigo = lida.codigo || ''; d.lida = lida.tipo; }
+  if (lida && lida.tipo !== 'regulacao') { d.codigo = lida.codigo || ''; d.lida = lida.tipo; }
   // o que veio do SIGSS (código de barras ou protocolo) fica na guia: ajuda a leitura automática a achar o agendamento
   const lidos = N.lidaDados || N.protDados;
   if (!DEMO && lidos && !lidos.erro && lidos.paciente && parecido(lidos.paciente, d.paciente) >= 0.5) {
@@ -1849,10 +1921,13 @@ function novaOk() {
     if (agRef && N.modo === 'agendada') d.sigssAg = agRef;
     const outros = (lidos.tels || []).filter(t => digitos(t).length >= 10 && digitos(t) !== digitos(d.tel)); if (outros.length) d.telsSigss = outros.slice(0, 3);
   }
+  // papel SORE: a guia guarda o pedido de regulação; se ainda estiver pendente quando chegar ao Agendamento, vai para "Na regulação"
+  if (lidos && !lidos.erro && lidos.regulacao && lidos.paciente && parecido(lidos.paciente, d.paciente) >= 0.5) d.regulacao = Object.assign(reguDe(lidos.regulacao), { conferidoEm: agoraISO() });
   agir('Guia lançada: ' + d.paciente, () => {
     let g;
     if (isUBS()) g = modo === 'agendada' ? tLancarUBSAgendada(d, ubs, ag, q, p) : tLancarUBS(d, ubs, q, p);
     else g = modo === 'agendada' ? tLancarAGAgendada(d, ubs, ag, q, p) : tLancarAG(d, ubs, q, p, 'fora');
+    if (g && g.etapa === 'ag_agendar' && reguAberta(g)) { set(g, 'ag_regulacao', q); ev(g, q, p, 'O pedido está na regulação do SIGSS (' + NOME_REGU[g.regulacao.status] + '): o papel fica no Agendamento até o regulador decidir'); }
     if (g && lida) ev(g, q, p, lida.tipo === 'ids' ? 'Código do comprovante do IDS guardado na guia; os dados foram escritos por quem lançou'
       : 'Código de barras lido (' + TIPOS_PAPEL[lida.tipo] + '): dados buscados no SIGSS e conferidos por quem lançou');
   }, () => fecharSheet());
@@ -1929,7 +2004,7 @@ function atualizarExt(el) {
    NO PROTÓTIPO NÃO HÁ SIGSS: simSIGSS() inventa a resposta. Código de um papel de verdade é ligado a uma guia fictícia,
    sempre a mesma para o mesmo código, com aviso na tela. A imagem é lida no aparelho e não é guardada nem enviada. */
 const LIB_ZXING = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
-const TIPOS_PAPEL = { protocolo: 'protocolo da Lista de Espera do SIGSS', exame: 'guia de exame do SIGSS', consulta: 'guia de consulta do SIGSS', ids: 'comprovante do IDS do CISCOPAR' };
+const TIPOS_PAPEL = { protocolo: 'protocolo da Lista de Espera do SIGSS', exame: 'guia de exame do SIGSS', consulta: 'guia de consulta do SIGSS', regulacao: 'pedido de regulação do SIGSS (SORE)', ids: 'comprovante do IDS do CISCOPAR' };
 const PAPEL_AGENDADO = { exame: true, consulta: true, ids: true };
 const PARTICULAS = ['da', 'de', 'do', 'das', 'dos', 'e', 'di', 'du', 'por', 'com', 'em', 'na', 'no', 'nas', 'nos'];
 let LT = null, detector = null, zx = null;
@@ -1957,10 +2032,10 @@ function mesmoNome(a, b) {
 }
 function limparCodigo(t) {
   const s = String(t || '').toUpperCase().replace(/\s+/g, '');
-  const m = /^(LIES|EXAM|AGCO)-?(\d+)-(\d)-(\d{2})$/.exec(s); if (m) return m[1] + '-' + m[2] + '-' + m[3] + '-' + m[4];
+  const m = /^(LIES|EXAM|AGCO|SORE)-?(\d+)-(\d)-(\d{2})$/.exec(s); if (m) return m[1] + '-' + m[2] + '-' + m[3] + '-' + m[4];
   return /^\d{13}$/.test(s) ? s : null;
 }
-const tipoDoCodigo = c => !c ? null : /^LIES-/.test(c) ? 'protocolo' : /^EXAM-/.test(c) ? 'exame' : /^AGCO-/.test(c) ? 'consulta' : /^\d{13}$/.test(c) ? 'ids' : null;
+const tipoDoCodigo = c => !c ? null : /^LIES-/.test(c) ? 'protocolo' : /^EXAM-/.test(c) ? 'exame' : /^AGCO-/.test(c) ? 'consulta' : /^SORE-/.test(c) ? 'regulacao' : /^\d{13}$/.test(c) ? 'ids' : null;
 const hashCod = s => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const isoDia = iso => { const d = new Date(iso); return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); };
 const agDeDados = d => !d.cancelado && d.data && d.hora && d.local ? { quando: new Date(d.data + 'T' + d.hora).toISOString(), local: d.local } : null;
@@ -1996,7 +2071,8 @@ function simSIGSS(cod, alvo, gid) {
   if (tipo === 'protocolo') {
     if (FILA_SIGSS[cod]) r = { paciente: FILA_SIGSS[cod].paciente, proc: FILA_SIGSS[cod].proc, ubs: isUBS() ? S.papel : UBS[hashCod(cod) % UBS.length].id, situacao: 'ESP', exemplo: true };
     else { const g = S.guias.find(x => !fim(x) && x.protocolo && normProt(x.protocolo) === cod); if (g) r = dadosDaGuia(g, false); }
-  } else { const g = S.guias.find(x => x.codigo === cod); if (g) r = dadosDaGuia(g, true); }
+  } else if (tipo === 'regulacao') { const g = S.guias.find(x => !fim(x) && x.regulacao && x.regulacao.codigo === cod); if (g) r = Object.assign(dadosDaGuia(g, false), { gid: g.id, regulacao: g.regulacao }); }
+  else { const g = S.guias.find(x => x.codigo === cod); if (g) r = dadosDaGuia(g, true); }
   if (!r && S.sim && S.sim[cod]) r = S.sim[cod];
   if (!r) {
     const g = alvo === 'manual' && gid ? G(gid) : alvo === 'lote' ? guiaParaSimular(cod, tipo) : null;
@@ -2004,10 +2080,11 @@ function simSIGSS(cod, alvo, gid) {
     else {
       const [nome, nasc] = NOMES_SIM[hashCod(cod) % NOMES_SIM.length];
       const procs = PROCS.filter(p => tipo === 'consulta' ? /^Consulta/.test(p) : tipo === 'exame' ? !/^Consulta/.test(p) : true);
-      const proc = procs[hashCod(cod + 'p') % procs.length]; const ag = tipo === 'protocolo' ? null : agFake({ proc });
+      const proc = procs[hashCod(cod + 'p') % procs.length]; const ag = tipo === 'protocolo' || tipo === 'regulacao' ? null : agFake({ proc });
       r = { paciente: nome, nasc, tel: '(44) 9' + (8100 + hashCod(cod) % 1800) + '-' + (1000 + hashCod(cod + 't') % 8999), cns: cnsFake(cod), proc, ubs: isUBS() ? S.papel : UBS[hashCod(cod + 'u') % UBS.length].id,
         situacao: ag ? 'AGD' : 'ESP', data: ag ? isoDia(ag.quando) : '', hora: ag ? fHora(ag.quando) : '', local: ag ? ag.local : '' };
     }
+    if (tipo === 'regulacao') { r.situacao = 'REG'; r.data = r.hora = r.local = ''; r.regulacao = { codigo: cod, status: 'SOLICITADO', desde: new Date(Date.now() - 3 * 864e5).toISOString() }; }
     r.sim = true; S.sim = S.sim || {}; S.sim[cod] = r; salvar();
   }
   return Object.assign({}, r, { tipo, codigo: cod }, tipo === 'protocolo' ? { protocolo: cod } : {});
@@ -2031,7 +2108,7 @@ async function sigssCodigo(cod) {
 }
 // Converte a resposta da função para o formato que as telas usam.
 function deSigss(x, tipo, cod) {
-  return { tipo: tipo || (x.tipo === 'exame' ? 'exame' : x.tipo === 'consulta' ? 'consulta' : 'protocolo'), codigo: cod || x.codigo,
+  return { tipo: tipo || (x.tipo === 'exame' ? 'exame' : x.tipo === 'consulta' ? 'consulta' : x.tipo === 'regulacao' ? 'regulacao' : 'protocolo'), codigo: cod || x.codigo, regulacao: x.regulacao || null,
     paciente: x.paciente || '', nasc: x.nasc || '', cns: x.cns || '', tels: x.tels || [], tel: (x.tels || [])[0] || '',
     proc: x.proc || '', ubs: ubsDoSigss(x.ubsNome), ubsNome: x.ubsNome || '', protocolo: x.tipo === 'protocolo' ? x.codigo : '',
     situacao: x.situacao || '', cancelado: !!x.cancelado, data: x.data || '', hora: x.hora || '', local: x.local || '',
@@ -2214,7 +2291,7 @@ function painelCamera() {
   const foto = (cap, txt, cls) => '<label class="btn ' + cls + '" for="' + (cap ? 'lt-foto-cap' : 'lt-foto-gal') + '" tabindex="0" role="button" data-act="lt-rotulo">' + ic(cap ? 'cam' : 'img') + txt + '</label>';
   const dig = eu.digitar ? '<form class="lt-dig" data-submit="lt-dig" novalidate><label for="lt-cod-dig">Número que está embaixo do código de barras</label><div class="lt-dig-l"><input id="lt-cod-dig" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="EXAM-000000-0-00">' +
     '<button type="submit" class="btn pri">' + ic('search') + 'Buscar</button></div>' + (eu.erroDig ? '<span class="erro">' + esc(eu.erroDig) + '</span>' : '') +
-    '<small>LIES-…, EXAM-…, AGCO-… ou os 13 números do comprovante do IDS.' + (DEMO ? ' No modo de treino, qualquer código nesse formato funciona.</small>' + exemplosCodigo(eu.alvo) : '</small>') + '</form>' : '';
+    '<small>LIES-…, EXAM-…, AGCO-…, SORE-… ou os 13 números do comprovante do IDS.' + (DEMO ? ' No modo de treino, qualquer código nesse formato funciona.</small>' + exemplosCodigo(eu.alvo) : '</small>') + '</form>' : '';
   const digBt = eu.digitar ? '' : '<button type="button" class="btn" data-act="lt-digitar">Digitar o número</button>';
   const corpo = eu.camera === 'sem' ? '<div class="lt-bts">' + foto(true, 'Tirar foto do código', 'pri big') + '</div><div class="lt-bts2">' + foto(false, 'Escolher uma foto já tirada', '') + digBt + '</div>'
     : '<div class="lt-bts2">' + digBt + foto(false, 'Escolher uma foto já tirada', '') + '</div>';
@@ -2239,6 +2316,7 @@ function cartaoSIGSS(d) {
   add('Paciente', '<b>' + esc(d.paciente) + '</b>'); add('Nascimento', esc(brDeIso(d.nasc))); add('Cartão do SUS', d.cns ? esc(fCns(d.cns)) : '');
   add(d.tipo === 'consulta' || /^Consulta/.test(d.proc || '') ? 'Consulta' : 'Exame', esc(d.proc)); add('UBS', d.ubs ? esc(nomeUn(d.ubs)) : '');
   if (d.tipo === 'protocolo') add('Situação', d.situacao === 'AGD' ? 'Agendado' : d.situacao === 'EXC' ? '<b>Excluído da Lista de Espera</b>' : 'Na fila de espera, ainda sem agendamento');
+  else if (d.tipo === 'regulacao' && d.regulacao) add('Regulação', '<b>' + esc(maiuscula(NOME_REGU[d.regulacao.status] || 'na regulação')) + '</b>' + (d.regulacao.desde ? ' desde ' + esc(fDia(d.regulacao.desde)) : ''));
   else if (d.cancelado) add('Situação', '<b>Desmarcado ou cancelado no SIGSS</b>');
   add('Data', d.data ? '<b>' + esc(fDataBr(d.data)) + '</b>' : ''); add('Hora', d.hora ? '<b>' + esc(d.hora) + '</b>' : ''); add('Local', esc(d.local)); add('Telefone', esc(d.tel));
   return '<div class="lt-sigss"><span class="t">' + ic('check') + (d.doApp ? ' Este comprovante já está ligado a uma guia' : ' Achei no SIGSS') + '</span><dl class="lt-dados">' + l.join('') + '</dl>' +
@@ -2258,6 +2336,7 @@ function painelResultado() {
   }
   if (d.cancelado && !d.erro) av.push('<b>No SIGSS, este agendamento está desmarcado ou cancelado.</b> Confira antes de usar.');
   if (g && !d.semSigss && !d.erro) {
+    if (d.tipo === 'regulacao') { av.push('<b>Este papel é o pedido de regulação:</b> não tem agendamento. Leia a guia de agendamento.'); usa = false; }
     if (d.tipo === 'protocolo' && d.situacao !== 'AGD') { av.push('<b>Este pedido ainda está na fila do SIGSS:</b> não tem agendamento. Leia a guia de agendamento.'); usa = false; }
     if (d.tipo === 'protocolo' && d.situacao === 'AGD' && !d.local) { av.push('<b>O protocolo não traz o local do agendamento.</b> Leia a guia de agendamento (EXAM ou AGCO) ou escreva o local.'); }
     if (d.paciente && !mesmoNome(d.paciente, g.paciente)) av.push('<b>' + (d.doApp ? 'Este comprovante está ligado à guia de outro paciente:' : 'No SIGSS, este código é de outro paciente:') + '</b> ' + esc(d.paciente) + '. A guia é de ' + esc(g.paciente) + '. Confira se é o papel certo.');
@@ -2271,14 +2350,15 @@ function painelResultado() {
    a guia que chegou no malote e atualiza o agendamento. Com a busca no SIGSS a guia se acha com segurança: pelo protocolo
    (LIES) ou pelo mesmo paciente com o mesmo exame (EXAM e AGCO, e o comprovante do IDS pelos agendamentos da pessoa). O comprovante do IDS é ligado à guia uma vez, pela pessoa.
    Quando há dúvida, o app para e pergunta. */
-const ETAPAS_AG = ['ag_agendar', 'ag_fila', 'ag_agendada'];
+const ETAPAS_AG = ['ag_agendar', 'ag_fila', 'ag_regulacao', 'ag_agendada'];
 const palavras = s => norm(s).toUpperCase().replace(/[^A-Z0-9\s]/g, ' ').split(/\s+/).filter(x => x.length > 2 && PARTICULAS.indexOf(x.toLowerCase()) < 0);
 function parecido(a, b) { const x = palavras(a), y = palavras(b); if (!x.length || !y.length) return 0; return x.filter(p => y.indexOf(p) >= 0).length / Math.max(x.length, y.length); }
 function candidatos(d) {
   return S.guias.filter(g => !fim(g) && LT.nao.indexOf(g.id) < 0).map(g => {
     let p = 0; const por = [];
     if (d.tipo === 'protocolo' && g.protocolo && normProt(g.protocolo) === d.codigo) { p += 100; por.push('protocolo'); }
-    if (d.tipo !== 'protocolo' && g.codigo && g.codigo === d.codigo) { p += 100; por.push(d.tipo === 'ids' ? 'código do IDS guardado na guia' : 'código da guia'); }
+    if (d.tipo === 'regulacao') { const a = g.regulacao || {}, b = d.regulacao || {}; if ((a.codigo && a.codigo === d.codigo) || (a.regu && b.regu && String(a.regu.idp) === String(b.regu.idp))) { p += 100; por.push('pedido de regulação'); } }
+    else if (d.tipo !== 'protocolo' && g.codigo && g.codigo === d.codigo) { p += 100; por.push(d.tipo === 'ids' ? 'código do IDS guardado na guia' : 'código da guia'); }
     else if (d.sigss && d.sigss.ag && g.sigssAg && String(g.sigssAg.idp) === String(d.sigss.ag.idp) && String(g.sigssAg.ids) === String(d.sigss.ag.ids)) { p += 100; por.push('agendamento do SIGSS'); }
     // o mesmo paciente: cadastro do SIGSS (código ou cartão do SUS); no demo, a guia fictícia ligada ao código; senão, nome e nascimento
     if (d.gid && d.gid === g.id) { p += 60; por.push('paciente'); }
@@ -2304,6 +2384,12 @@ function bateCodigoExame(g, d) {
 }
 function certaDe(cs) { const best = cs[0], seg = cs[1]; return best && best.aqui && best.p >= 80 && (!seg || seg.p <= best.p - 30) ? best : null; }
 function oQueMuda(g, d) {
+  if (d.tipo === 'regulacao') {
+    const st = (d.regulacao || {}).status;
+    if (st === 'AUTORIZADO') return 'O regulador autorizou: o pedido está na fila do SIGSS.' + (g.etapa === 'ag_regulacao' ? ' A guia volta para "Para agendar".' : '');
+    if (st === 'CANCELADA' || st === 'NEGADO') return 'O pedido foi ' + (st === 'NEGADO' ? 'negado' : 'cancelado') + ' na regulação: abre um problema para descartar o papel.';
+    return (g.etapa === 'ag_agendar' || g.etapa === 'ag_fila' ? 'A guia vai para "Na regulação": ' : 'Na regulação: ') + (NOME_REGU[st] || 'situação lida') + '.';
+  }
   const novo = agDeDados(d);
   if (d.cancelado) return 'No SIGSS este agendamento está desmarcado ou cancelado: a guia não muda.';
   if (!novo) return d.tipo === 'protocolo' ? (d.situacao === 'AGD' ? 'O SIGSS diz que já foi agendado' + (d.data ? ' (' + brDeIso(d.data) + (d.hora ? ' às ' + d.hora : '') + ')' : '') + ', mas o protocolo não traz o local. A guia anda sozinha quando a leitura automática achar o agendamento, ou leia a guia de agendamento.'
@@ -2367,6 +2453,16 @@ function desenharAchou() { const b = $('#lt-achou'); if (b && LT) b.innerHTML = 
 function atualizarGuia(g, d, escolhida) {
   if (pausado()) { avisarPausa(); return { id: g.id, nome: g.paciente, txt: 'não gravado: sistema em manutenção', mudou: false, snap: null }; }
   const q = agoraISO(), p = quem(), snap = DEMO ? JSON.stringify(S) : JSON.stringify(g), guard = [];
+  if (d.tipo === 'regulacao') { // papel SORE: só a situação na regulação; o código do papel da guia (EXAM, AGCO, IDS) não muda
+    const r = reguDe(d.regulacao); let mudou;
+    if ((g.etapa === 'ag_agendar' || g.etapa === 'ag_fila') && r.status && REGU_FINAIS.indexOf(r.status) < 0) { tRegulacao(g, q, p, r); mudou = true; }
+    else mudou = tReguAtualizar(g, r, q, p);
+    if (!DEMO) guardaIsen(g, d.isen);
+    const txt = r.status === 'AUTORIZADO' ? 'autorizado pelo regulador' + (g.etapa === 'ag_agendar' ? ': voltou para "Para agendar"' : '') : (NOME_REGU[r.status] || 'situação lida') + (g.etapa === 'ag_regulacao' ? ' (fica em "Na regulação")' : '');
+    const depois = JSON.stringify(g); if (!DEMO && depois !== snap) mudou = true;
+    salvar(); render();
+    return { id: g.id, nome: g.paciente, txt: mudou ? txt : 'regulação sem mudança: ' + txt, mudou, snap: mudou ? (DEMO ? snap : [{ k: 'g:' + g.id, antes: snap, depois }]) : null };
+  }
   if (d.tel && !g.tel) { g.tel = d.tel; guard.push('telefone'); }
   if (d.nasc && !g.nasc) g.nasc = d.nasc;
   if (d.tipo === 'protocolo' && !g.protocolo) { g.protocolo = d.codigo; guard.push('protocolo'); }
@@ -2949,6 +3045,44 @@ function desenharProcurar(nova) {
     '<div class="sh-f">' + (PROC.carregando ? '' : btn('procurar', g.id, ic('search') + 'Procurar de novo', 'big')) + btn('guia', g.id, 'Voltar à guia', 'big') + '</div>', nova);
 }
 
+/* regulação: o pedido da guia na regulação do SIGSS (função sigss-consulta, acao 'regulacao'; só leitura) */
+async function reguDoPaciente(g) {
+  const gs = g.sigss || {};
+  const r = await BACK.sigss({ acao: 'regulacao', regu: (g.regulacao && g.regulacao.regu) || gs.regu || null, isen: gs.isen || null, cns: g.cns || '',
+    nome: g.paciente, nasc: g.nasc || '', tipo: gs.tipo || (/^consulta/i.test(g.proc) ? 'CON' : null), sigtap: gs.sigtap || '', cbo: gs.cbo || '', proc: g.proc });
+  if (!r || !r.ok) throw new Error((r && r.motivo) || 'O SIGSS não respondeu.');
+  const l = (r.regulacoes || []).filter(x => x.bate);
+  return { melhor: l.find(x => REGU_FINAIS.indexOf(x.status) < 0) || l[0] || null, isen: r.isen || null, motivo: r.motivo || '' };
+}
+const guardaIsen = (g, isen) => { if (isen && !(g.sigss && g.sigss.isen)) g.sigss = Object.assign({}, g.sigss || {}, { isen }); };
+let REGU_OCUPADO = null;
+async function marcarRegulacao(id) {
+  const g = G(id); if (!g || REGU_OCUPADO) return; if (pausado()) { avisarPausa(); return; }
+  if (DEMO) { agir('Na regulação: ' + g.paciente + '. O papel fica aqui até o regulador decidir.', () => tRegulacao(g, q0(), quem(), { status: 'SOLICITADO', desde: q0(), codigo: 'SORE-' + (3000 + hashCod(g.id) % 900) + '-1-' + p2(hashCod(g.id + 'd') % 100) })); return; }
+  REGU_OCUPADO = id; toast('Procurando o pedido na regulação do SIGSS…');
+  let res = null, erro = '';
+  try { res = await reguDoPaciente(g); } catch (e) { erro = textoErro(e); }
+  REGU_OCUPADO = null;
+  const g2 = G(id); if (!g2 || (g2.etapa !== 'ag_agendar' && g2.etapa !== 'ag_fila')) return;
+  const r = res && res.melhor;
+  if (r && r.status === 'AUTORIZADO') { agir('No SIGSS o regulador já autorizou este pedido' + (r.desde ? ' em ' + fDia(r.desde) : '') + ': ele está na fila. Pode agendar.', () => { g2.regulacao = Object.assign({}, g2.regulacao || {}, reguDe(r), { conferidoEm: q0() }); guardaIsen(g2, res.isen); ev(g2, q0(), quem(), 'Conferido na regulação do SIGSS: o regulador já autorizou' + (r.codigo ? ' (' + r.codigo + ')' : '') + '. O pedido está na fila'); }); return; }
+  agir(r ? 'Na regulação: ' + g2.paciente + ' (' + NOME_REGU[r.status] + ').' : 'Marcada como na regulação. ' + (erro || res.motivo || 'Não achei este pedido na regulação do SIGSS.') + ' O app confere de novo sozinho.',
+    () => { tRegulacao(g2, q0(), quem(), r || {}); if (res) guardaIsen(g2, res.isen); if (!r) ev(g2, q0(), 'Sistema', 'O pedido não foi achado na regulação do SIGSS na hora de marcar' + (erro ? ' (' + erro + ')' : '')); });
+}
+async function conferirRegu(id) {
+  const g = G(id); if (!g || REGU_OCUPADO) return;
+  REGU_OCUPADO = id; toast('Conferindo na regulação do SIGSS…');
+  let res = null, erro = '';
+  try { res = await reguDoPaciente(g); } catch (e) { erro = textoErro(e); }
+  REGU_OCUPADO = null;
+  const g2 = G(id); if (!g2 || g2.etapa !== 'ag_regulacao') return;
+  const r = res && res.melhor;
+  if (!r) { toast(erro || (res && res.motivo) || 'Não achei este pedido na regulação do SIGSS. Se ele já entrou na fila, toque em "Já está na fila".'); return; }
+  const era = g2.regulacao || {};
+  if (era.status === r.status && (!r.desde || era.desde === r.desde)) { toast('Sem mudança: ' + reguTxt(g2) + '.'); return; }
+  agir(r.status === 'AUTORIZADO' ? 'O regulador autorizou: ' + g2.paciente + ' voltou para "Para agendar".' : 'Regulação: ' + NOME_REGU[r.status] + '.', () => { tReguAtualizar(g2, r, q0(), quem()); guardaIsen(g2, res.isen); });
+}
+
 /* ------------------------------------------------------------------ ações */
 function agir(msg, fn, depois) {
   if (pausado()) { avisarPausa(); return; }
@@ -3007,6 +3141,10 @@ const ACOES = {
   'decidir': el => { const g = G(el.dataset.id), v = el.dataset.v; agir(v === 'devolver' ? 'A UBS vai mandar a guia de volta.' : 'Guia arquivada na UBS.', () => tDecidir(g, v, q0(), quem())); },
   'avisei': el => { const g = G(el.dataset.id), v = el.dataset.v; agir(v === 'nao' ? 'Marcado: não atende. A UBS reforça.' : 'Paciente avisado: ' + g.paciente + '.', () => tAvisar(g, v, q0(), quem())); },
   'fila': el => { const g = G(el.dataset.id); agir('Na fila do SIGSS: ' + g.paciente + '.', () => tFila(g, q0(), quem())); },
+  'regulacao': el => marcarRegulacao(el.dataset.id),
+  'regu-conferir': el => conferirRegu(el.dataset.id),
+  'regu-saiu': el => { const g = G(el.dataset.id); agir('Saiu da regulação: ' + g.paciente + ' voltou para "Para agendar".', () => tReguSaiu(g, q0(), quem())); },
+  'simregu': el => { const g = G(el.dataset.id), v = el.dataset.v; agir('Regulação: ' + NOME_REGU[v] + '.', () => tReguAtualizar(g, { status: v, desde: q0(), codigo: g.regulacao && g.regulacao.codigo }, q0(), SIGSS_POR)); },
   'simagendou': el => { const g = G(el.dataset.id); agir('O SIGSS agendou ' + g.paciente + '.', () => tAgendar(g, agFake(g), q0(), quem(), true)); },
   'simcancelou': el => { const g = G(el.dataset.id); agir('O SIGSS cancelou o agendamento de ' + g.paciente + '.', () => tSimCancelou(g, q0())); },
   'achei': el => { const g = G(el.dataset.id); agir('Vai no próximo malote: ' + g.paciente + '.', () => tAchei(g, q0(), quem())); },
