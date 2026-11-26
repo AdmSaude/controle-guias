@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light">
-<meta name="prototipo-carimbo" content="a0edfc1f610d">
+<meta name="prototipo-carimbo" content="438180d80e09">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a16207'/%3E%3Cpath d='M7 10.5h18v12H7z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M7 10.5l9 7 9-7' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script>window.cgImprimir = function () { window.print(); };</script>
@@ -1140,7 +1140,7 @@ function fazerAG() {
     '<p class="cam-dica">Aponte para o código de barras de cada papel: o app busca no SIGSS, acha a guia e atualiza o agendamento. No comprovante do IDS, toque na guia uma vez e o código fica guardado nela.</p></div>';
   if (L.agendar.length) h += sec('Para agendar', L.agendar.length, L.agendar.map(g => card(g,
     btn('simagendou', g.id, 'Simular: SIGSS agendou', 'sim') + btn('fila', g.id, 'Sem vaga: fila'))).join(''),
-    '', 'Agende no SIGSS pelo pedido da Lista de Espera ("Agendar"), também as do CISCOPAR depois de marcar no IDS. Em até 10 minutos a guia passa sozinha para "Avisar o paciente". No protótipo, use o botão amarelo.', { id: 'sec-agendar' });
+    '', 'Agende no SIGSS como sempre, pelo pedido ou direto na agenda, também as do CISCOPAR depois de marcar no IDS. Em até 10 minutos a guia passa sozinha para "Avisar o paciente". No protótipo, use o botão amarelo.', { id: 'sec-agendar' });
   if (L.avisar.length) h += sec('Avisar o paciente', L.avisar.length, L.avisar.map(g => card(g,
     btn('avisei', g.id, ic('phone') + 'Liguei', 'pri', ' data-v="ligacao"') + btn('mensagem', g.id, ic('chat') + 'WhatsApp') + btn('avisei', g.id, 'Não atende', '', ' data-v="nao"'))).join(''), '', '', { id: 'sec-avisar' });
   if (L.grupos.length) {
@@ -1673,8 +1673,9 @@ function atualizarExt(el) {
    - EXAM-<agendamento>-<d>-<dd> (guia de exame): paciente, exame, data, hora e destino;
    - AGCO-<agendamento>-<d>-<dd> (guia de consulta): paciente, data, hora, profissional e destino;
    - comprovante do IDS (13 dígitos): o número não existe no SIGSS (conferido em 25/11/2026). A guia do CISCOPAR é
-     passada no SIGSS pelo pedido da Lista de Espera e o agendamento vem pelo protocolo (LIES) da própria guia. O código
-     do IDS só liga o papel à guia: a pessoa escolhe a guia uma vez e, daí em diante, esse papel acha a guia sozinho.
+     passada no SIGSS como as outras (pelo pedido ou direto na agenda), e o agendamento vem da leitura dos agendamentos
+     novos do SIGSS, pelo mesmo paciente com o mesmo exame ou especialidade (desenho de 26/11/2026). O código do IDS só
+     liga o papel à guia: a pessoa escolhe a guia uma vez e, daí em diante, esse papel acha a guia sozinho.
    EXAM e AGCO não guardam o número do pedido: a guia se acha pelo mesmo paciente no SIGSS com o mesmo exame.
    NO PROTÓTIPO NÃO HÁ SIGSS: simSIGSS() inventa a resposta. Código de um papel de verdade é ligado a uma guia fictícia,
    sempre a mesma para o mesmo código, com aviso na tela. A imagem é lida no aparelho e não é guardada nem enviada. */
@@ -1763,17 +1764,17 @@ function simSIGSS(cod, alvo, gid) {
   return Object.assign({}, r, { tipo, codigo: cod }, tipo === 'protocolo' ? { protocolo: cod } : {});
 }
 const buscarSIGSS = (cod, eu) => new Promise(ok => setTimeout(() => ok(simSIGSS(cod, eu.alvo, eu.gid)), 450));
-// Comprovante do IDS: o agendamento vem do protocolo (LIES) da guia escolhida, consultado na hora em que o papel é lido.
-// Conferido em 25/11/2026: guia do CISCOPAR passada no SIGSS pelo pedido da Lista de Espera fica AGD, com a data e a hora.
+// Comprovante do IDS: o agendamento da guia escolhida vem dos agendamentos do SIGSS, pelo mesmo paciente com o mesmo
+// exame ou especialidade. O app de verdade faz isso sozinho a cada 10 minutos com os agendamentos novos e, na leitura,
+// procura na hora os agendamentos da pessoa (vale para guia passada pelo pedido ou direto na agenda; desenho de 26/11/2026).
 // No protótipo, a guia sem agendamento recebe um agendamento fictício (simulação), sempre o mesmo nesta leitura.
-function agPeloProtocolo(g) {
-  LT.agProt = LT.agProt || {};
-  if (!(g.id in LT.agProt)) {
-    if (g.ag) LT.agProt[g.id] = { data: isoDia(g.ag.quando), hora: fHora(g.ag.quando), local: g.ag.local, ja: true };
-    else if (g.protocolo) { const a = agFake(g); LT.agProt[g.id] = { data: isoDia(a.quando), hora: fHora(a.quando), local: a.local, sim: true }; }
-    else LT.agProt[g.id] = null;
+function agNosAgendamentos(g) {
+  LT.agAch = LT.agAch || {};
+  if (!(g.id in LT.agAch)) {
+    if (g.ag) LT.agAch[g.id] = { data: isoDia(g.ag.quando), hora: fHora(g.ag.quando), local: g.ag.local, ja: true };
+    else { const a = agFake(g); LT.agAch[g.id] = { data: isoDia(a.quando), hora: fHora(a.quando), local: a.local, sim: true }; }
   }
-  return LT.agProt[g.id];
+  return LT.agAch[g.id];
 }
 
 /* código de barras */
@@ -1825,7 +1826,7 @@ function imagemDeBlob(b) {
 function abrirLeitor(alvo) {
   if (LT) fecharLeitor();
   LT = { alvo, gid: alvo === 'manual' && sheetAtual ? sheetAtual.id : null, fase: 'camera', camera: 'abrindo', msgCam: null, codigo: null, stream: null, timer: null, ocupado: false, vez: 0,
-    dados: null, buscando: false, ultimo: null, digitar: false, erroDig: '', aviso: '', feitas: [], snap: null, escolhida: null, nao: [], lista: false, agProt: {} };
+    dados: null, buscando: false, ultimo: null, digitar: false, erroDig: '', aviso: '', feitas: [], snap: null, escolhida: null, nao: [], lista: false, agAch: {} };
   $('#leitor').innerHTML = '<div class="lt" role="dialog" aria-modal="true" aria-labelledby="lt-tit"><div class="lt-h"><h3 id="lt-tit" tabindex="-1">' + (alvo === 'lote' ? 'Ler guias em sequência' : 'Ler o código de barras') + '</h3>' +
     '<button type="button" class="btn fraco" data-act="lt-fechar">' + ic('x') + 'Fechar</button></div>' +
     '<div class="lt-v"><video id="lt-video" playsinline muted autoplay></video><div class="lt-mira" id="lt-mira" hidden></div><div class="lt-msg" id="lt-msg" aria-live="polite"></div><div class="lt-sem" id="lt-sem" hidden></div></div>' +
@@ -1929,7 +1930,7 @@ function painelResumo() {
 }
 const AVISO_SIM = '<p class="lt-sim"><b>Simulação.</b> O protótipo não fala com o SIGSS: este código foi ligado a dados fictícios, sempre os mesmos para o mesmo código. No app de verdade, estes dados vêm do SIGSS.</p>';
 function cartaoSIGSS(d) {
-  if (d.semSigss) return '<div class="lt-sigss ids"><span class="t">' + ic('alert') + ' Este comprovante ainda não está ligado a uma guia</span><small>O número do IDS não existe no SIGSS. Na primeira vez, você escolhe a guia: o código fica guardado nela e, daí em diante, este papel acha a guia sozinho. O agendamento vem do SIGSS pelo protocolo da guia.</small></div>';
+  if (d.semSigss) return '<div class="lt-sigss ids"><span class="t">' + ic('alert') + ' Este comprovante ainda não está ligado a uma guia</span><small>O número do IDS não existe no SIGSS. Na primeira vez, você escolhe a guia: o código fica guardado nela e, daí em diante, este papel acha a guia sozinho. O agendamento vem do SIGSS, pelo mesmo paciente com o mesmo exame.</small></div>';
   const l = []; const add = (k, v) => { if (v) l.push('<dt>' + k + '</dt><dd>' + v + '</dd>'); };
   add('Paciente', '<b>' + esc(d.paciente) + '</b>'); add('Nascimento', esc(brDeIso(d.nasc)));
   add(d.tipo === 'consulta' || /^Consulta/.test(d.proc || '') ? 'Consulta' : 'Exame', esc(d.proc)); add('UBS', d.ubs ? esc(nomeUn(d.ubs)) : '');
@@ -1961,7 +1962,7 @@ function painelResultado() {
 
 /* leitura em sequência (ideia do usuário, 25/11/2026): quem agendou passa os papéis um atrás do outro e o app acha sozinho
    a guia que chegou no malote e atualiza o agendamento. Com a busca no SIGSS a guia se acha com segurança: pelo protocolo
-   (LIES) ou pelo mesmo paciente com o mesmo exame (EXAM e AGCO). O comprovante do IDS é ligado à guia uma vez, pela pessoa.
+   (LIES) ou pelo mesmo paciente com o mesmo exame (EXAM e AGCO, e o comprovante do IDS pelos agendamentos da pessoa). O comprovante do IDS é ligado à guia uma vez, pela pessoa.
    Quando há dúvida, o app para e pergunta. */
 const ETAPAS_AG = ['ag_agendar', 'ag_fila', 'ag_agendada'];
 const palavras = s => norm(s).toUpperCase().replace(/[^A-Z0-9\s]/g, ' ').split(/\s+/).filter(x => x.length > 2 && PARTICULAS.indexOf(x.toLowerCase()) < 0);
@@ -2006,13 +2007,12 @@ function caixaAchou() {
   const cs = d.semSigss ? [] : candidatos(d);
   const certa = eu.escolhida ? G(eu.escolhida) : (certaDe(cs) || {}).g;
   if (certa && d.semSigss) {
-    const r = agPeloProtocolo(certa);
-    const corpo = r && r.ja ? '<span class="vai">Já veio do SIGSS: ' + esc(fAg(certa.ag)) + '. O app só guarda o código do IDS nesta guia.</span>'
-      : r ? '<span class="vai">Busquei no SIGSS pelo protocolo ' + esc(certa.protocolo) + ': agendada para ' + esc(fAg(agDeDados(r))) + '.</span>' +
-        '<p class="lt-sim"><b>Simulação.</b> No app de verdade, este agendamento vem do protocolo no SIGSS quando a guia foi passada pelo pedido da Lista de Espera. Se ela ainda não foi passada, o app avisa e guarda só o código.</p>'
-      : '<div class="lt-av"><b>Esta guia não tem protocolo do SIGSS.</b> O app não consegue buscar o agendamento. Guarde o código e lance o agendamento à mão na guia.</div>';
+    const r = agNosAgendamentos(certa);
+    const corpo = r.ja ? '<span class="vai">Já veio do SIGSS: ' + esc(fAg(certa.ag)) + '. O app só guarda o código do IDS nesta guia.</span>'
+      : '<span class="vai">Procurei nos agendamentos do SIGSS desta pessoa e achei: ' + esc(fAg(agDeDados(r))) + '.</span>' +
+        '<p class="lt-sim"><b>Simulação.</b> No app de verdade, o app procura nos agendamentos do SIGSS o mesmo paciente com o mesmo exame ou especialidade, como faz sozinho a cada 10 minutos. Vale para a guia passada pelo pedido ou direto na agenda. Se o agendamento ainda não estiver lá, o app guarda o código e a guia anda sozinha quando ele aparecer.</p>';
     return '<div class="lt-achou ok"><span class="t ok">' + ic('check') + ' Guia escolhida por você</span><span class="quem">' + esc(certa.paciente) + '</span><small>' + esc(certa.proc) + ' · UBS ' + esc(nomeUn(certa.ubs)) + ' · ' + esc(rotulo(certa)) + '</small>' + corpo +
-      '<button type="button" class="btn pri big" data-act="lt-atualizar" data-id="' + certa.id + '">' + ic('check') + (r && r.ja ? 'Guardar o código nesta guia' : r ? 'Guardar o código e atualizar a guia' : 'Guardar só o código') + '</button>' +
+      '<button type="button" class="btn pri big" data-act="lt-atualizar" data-id="' + certa.id + '">' + ic('check') + (r.ja ? 'Guardar o código nesta guia' : 'Guardar o código e atualizar a guia') + '</button>' +
       '<div class="lt-bts2"><button type="button" class="btn" data-act="lt-nao-e" data-id="' + certa.id + '">Não é esta</button></div></div>';
   }
   if (d.semSigss) return lista();
@@ -2035,7 +2035,7 @@ function caixaAchou() {
   return '<div class="lt-achou talvez"><span class="t talvez">' + ic('alert') + ' Não achei esta guia no Agendamento</span><small>Escolha a guia na lista ou lance como guia nova.</small>' + opcoes + '</div>';
 }
 function desenharAchou() { const b = $('#lt-achou'); if (b && LT) b.innerHTML = caixaAchou(); }
-// Grava na guia o que veio do SIGSS (no comprovante do IDS, pelo protocolo da guia). Devolve o que aconteceu, para a linha da sequência.
+// Grava na guia o que veio do SIGSS (no comprovante do IDS, pelos agendamentos da pessoa). Devolve o que aconteceu, para a linha da sequência.
 function atualizarGuia(g, d) {
   const q = agoraISO(), p = quem(), snap = JSON.stringify(S), guard = [];
   if (d.tel && !g.tel) { g.tel = d.tel; guard.push('telefone'); }
@@ -2044,15 +2044,15 @@ function atualizarGuia(g, d) {
   if (d.tipo !== 'protocolo' && g.codigo !== d.codigo) { g.codigo = d.codigo; g.lida = d.tipo; if (d.tipo === 'ids') guard.push('código do IDS'); }
   const novo = agDeDados(d);
   const igual = novo && g.ag && g.ag.quando === novo.quando && norm(g.ag.local) === norm(novo.local);
-  const fonte = d.viaProt ? 'buscado no SIGSS pelo protocolo da guia (comprovante do IDS ' + d.codigo + ')' : 'buscado no SIGSS pelo código de barras da ' + TIPOS_PAPEL[d.tipo];
+  const fonte = d.viaAg ? 'achado nos agendamentos do SIGSS pelo paciente e exame (comprovante do IDS ' + d.codigo + ')' : 'buscado no SIGSS pelo código de barras da ' + TIPOS_PAPEL[d.tipo];
   let txt, mudou = guard.length > 0;
   if (novo && !igual) {
     const era = g.ag; g.ag = novo; g.avisado = false; g.agAnterior = null; g.lida = d.tipo;
-    const selo = d.viaProt ? 'sigss' : 'lida'; if (!g.selos.includes(selo)) g.selos.push(selo); set(g, 'ag_agendada', q);
+    const selo = d.viaAg ? 'sigss' : 'lida'; if (!g.selos.includes(selo)) g.selos.push(selo); set(g, 'ag_agendada', q);
     ev(g, q, p, (era ? 'Agendamento trocado (era ' + fAg(era) + ') para ' : 'Agendamento ') + fAg(novo) + ', ' + fonte);
     txt = (era ? 'agendamento trocado para ' : 'agendada para ') + fAg(novo); mudou = true;
   } else {
-    txt = novo ? 'já estava com este agendamento' : d.tipo === 'ids' ? 'sem agendamento no SIGSS: lance à mão na guia' : d.situacao === 'ESP' ? 'ainda na fila do SIGSS, sem agendamento' : 'conferida';
+    txt = novo ? 'já estava com este agendamento' : d.tipo === 'ids' ? 'agendamento ainda não apareceu no SIGSS: a guia anda sozinha quando aparecer' : d.situacao === 'ESP' ? 'ainda na fila do SIGSS, sem agendamento' : 'conferida';
     if (guard.length) ev(g, q, p, 'Código de barras lido, ' + TIPOS_PAPEL[d.tipo] + ': ' + guard.join(' e ') + ' guardado na guia');
   }
   if (guard.length) txt += ' (' + guard.join(' e ') + ' guardado)';
@@ -2083,7 +2083,7 @@ async function processarCodigo(eu, cod) {
 function atualizarDaLeitura(id) {
   const eu = LT, g = G(id); if (!eu || !g) return;
   const d = Object.assign({}, eu.dados);
-  if (d.semSigss) { const r = agPeloProtocolo(g); if (r) Object.assign(d, { data: r.data, hora: r.hora, local: r.local, viaProt: true }); }
+  if (d.semSigss) { const r = agNosAgendamentos(g); Object.assign(d, { data: r.data, hora: r.hora, local: r.local, viaAg: true }); }
   registrarFeita(eu, atualizarGuia(g, d));
   proximaLeitura(eu);
 }
@@ -2148,7 +2148,7 @@ function abrirManual(id, erros) {
   const g = G(id); const lida = sheetAtual && sheetAtual.tipo === 'manual' && sheetAtual.id === id ? sheetAtual.lida : null;
   sheetAtual = { tipo: 'manual', id, lida }; erros = erros || {}; const er = k => erros[k] ? '<span class="erro">' + erros[k] + '</span>' : '';
   pintar(folhaForm('Lançar o agendamento à mão', '<div class="g-meta"><span>' + esc(g.paciente) + ' · ' + esc(g.proc) + '</span></div>',
-    '<p class="dica">Use só quando o SIGSS não trouxer o agendamento sozinho: quando a guia não tem protocolo ou foi passada no SIGSS sem o pedido da Lista de Espera. Todos os dados são obrigatórios.</p>' + botaoLeitor('manual') +
+    '<p class="dica">Use só quando o SIGSS não trouxer o agendamento sozinho: quando o agendamento não foi passado no SIGSS ou o nome do paciente está diferente lá. Todos os dados são obrigatórios.</p>' + botaoLeitor('manual') +
     '<div class="grade2">' + campoData('a-data', 'Data do atendimento', er('data')) + campoHora('a-hora', 'Hora', er('hora')) + '</div>' +
     '<div class="campo"><label for="a-local">Local</label><input id="a-local" list="l-locais">' + er('local') + '</div>' +
     '<div class="campo"><label for="a-tel">Telefone</label><input id="a-tel" type="tel" value="' + esc(g.tel) + '">' + er('tel') + '</div>' + listas(), 'manual-ok', 'Salvar agendamento'), !erros || !Object.keys(erros).length);
